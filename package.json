@@ -1,0 +1,71 @@
+{
+  "name": "brahmax",
+  "version": "1.0.0",
+  "description": "BrahmAX — AI/ML library for JavaScript & TypeScript",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.cjs.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rollup -c rollup.config.ts --configPlugin typescript",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write src/**/*.ts",
+    "docs": "typedoc src/index.ts",
+    "prepare": "husky"
+  },
+  "keywords": [
+    "brahmax",
+    "BrahmAX",
+    "ai",
+    "ml",
+    "machine-learning"
+  ],
+  "author": "Urvesh Gohil",
+  "license": "MIT",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.0.9",
+      "onFail": "download"
+    }
+  },
+  "type": "module",
+  "devDependencies": {
+    "@changesets/cli": "^2.31.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-typescript": "^12.3.0",
+    "@types/jest": "^30.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.59.3",
+    "@typescript-eslint/parser": "^8.59.3",
+    "eslint": "^10.3.0",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "jest": "^30.4.2",
+    "lint-staged": "^17.0.4",
+    "prettier": "^3.8.3",
+    "rollup": "^4.60.4",
+    "rollup-plugin-dts": "^6.4.1",
+    "ts-jest": "^29.4.9",
+    "ts-node": "^10.9.2",
+    "typedoc": "^0.28.19",
+    "typescript": "^6.0.3"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
+}
