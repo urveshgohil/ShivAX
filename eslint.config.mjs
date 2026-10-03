@@ -1,16 +1,14 @@
-import tseslint from '@typescript-eslint/eslint-plugin';
-import tsparser from '@typescript-eslint/parser';
-import prettier from 'eslint-config-prettier';
-
+// TypeScript is checked by tsc; lint JavaScript tooling without compiler API dependencies.
 export default [
+    { ignores: ['dist/**', 'node_modules/**', '.pnpm-store/**', '.husky/**'] },
     {
-        files: ['src/**/*.ts'],
-        languageOptions: { parser: tsparser },
-        plugins: { '@typescript-eslint': tseslint },
+        files: ['**/*.mjs'],
         rules: {
-            ...tseslint.configs.recommended.rules,
-            '@typescript-eslint/no-explicit-any': 'warn',
+            'no-eval': 'error',
+            'no-implied-eval': 'error',
+            'no-new-func': 'error',
+            'no-debugger': 'error',
+            'no-duplicate-imports': 'error',
         },
     },
-    prettier,
 ];

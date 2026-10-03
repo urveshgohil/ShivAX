@@ -4,6 +4,10 @@
 /node_modules
 /.pnp
 .pnp.js
+.husky
+.pnpm-store
+/tests
+/scripts
 
 # testing
 /coverage
@@ -24,4 +28,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 package-lock.json
-pnpm-lock.yaml
+*.tgz
+.env
+.env.*
+!.env.example
+*.pem
+*.key

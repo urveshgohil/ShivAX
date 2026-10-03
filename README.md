@@ -1,4 +1,46 @@
-# BrahmAX
+# ShivAX
+
+JavaScript AI/ML library with TypeScript declarations. Currently a scaffold:
+only `VERSION` and the public types are implemented; algorithms are coming later.
+
+## Package usage
+
+Requires Node.js 22 or newer. Both module formats are supported:
+
+```js
+import { VERSION } from 'shivax';
+// CommonJS: const { VERSION } = require('shivax');
+```
+
+The production package has zero runtime dependencies and no installation hooks.
+Development tools are not installed by consumers. Builds publish only the two
+JavaScript entry points, declarations, package metadata, and documentation.
+
+## Development and release checks
+
+Use pnpm 12.8.1 and commit `pnpm-lock.yaml` with dependency changes.
+
+```sh
+pnpm install --frozen-lockfile
+pnpm lint
+pnpm test
+pnpm audit
+npm pack --dry-run --ignore-scripts
+```
+
+`pnpm lint` checks TypeScript with the compiler and lints JavaScript tooling.
+`pnpm test` rebuilds before checking ESM/CommonJS loading and package invariants.
+For watch mode, build once, then run `pnpm dev` alongside `pnpm test:watch`.
+Packing runs lint and tests automatically. GitLab CI also runs the dependency
+audit. No automated publishing or deployment is configured.
+
+See [SECURITY.md](SECURITY.md) for vulnerability reporting and security
+requirements for future AI features and applications using this library.
+
+## License
+
+Copyright 2025-2026 Urvesh Gohil. Licensed under [Apache License 2.0](LICENSE).
+See [NOTICE](NOTICE) for attribution.
 
 
 
@@ -15,14 +57,14 @@ Already a pro? Just edit this README.md and make it your own. Want to make it ea
 
 ```
 cd existing_repo
-git remote add origin https://gitlab.com/urveshgohil.developer/brahmax.git
+git remote add origin https://gitlab.com/urveshgohil.developer/shivax.git
 git branch -M main
 git push -uf origin main
 ```
 
 ## Integrate with your tools
 
-* [Set up project integrations](https://gitlab.com/urveshgohil.developer/brahmax/-/settings/integrations)
+* [Set up project integrations](https://gitlab.com/urveshgohil.developer/shivax/-/settings/integrations)
 
 ## Collaborate with your team
 
