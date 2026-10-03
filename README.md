@@ -1,7 +1,58 @@
 # ShivAX
 
-JavaScript AI/ML library with TypeScript declarations. Currently a scaffold:
-only `VERSION` and the public types are implemented; algorithms are coming later.
+Dependency-free JavaScript AI/ML foundations with TypeScript declarations:
+CPU tensors, matrix math, dense neural networks, and bag-of-words text features.
+Training uses mini-batch SGD with explicit backpropagation, tanh hidden layers,
+and binary cross-entropy, softmax cross-entropy, or mean squared error.
+
+## Phase 1 examples
+
+```sh
+pnpm example:xor
+pnpm example:regression
+pnpm example:text
+pnpm example:digits
+```
+
+The digit demo starts at http://127.0.0.1:4173, or the next available port through
+4182 if it is occupied. Open the URL printed in your terminal.
+It requires your own labeled dataset; no MNIST data or pretrained weights are
+bundled. See [examples/README.md](examples/README.md) for the data schema and limits.
+
+```js
+import { Tensor, NeuralNet, BagOfWords } from 'shivax';
+
+const a = new Tensor([1, 2, 3, 4], [2, 2]);
+console.log(a.matmul(a).data); // Float32Array [7, 10, 15, 22]
+
+const net = new NeuralNet({ layers: [2, 8, 1], task: 'binary', seed: 42 });
+net.train([[0, 0], [0, 1], [1, 0], [1, 1]], [[0], [1], [1], [0]], {
+  epochs: 2000, learningRate: 0.5, batchSize: 4,
+});
+console.log(net.predictClass([0, 1])); // 1
+```
+
+Tensors use row-major Float32 storage and return defensive data copies. Tensor
+operations return new tensors; element-wise operations require equal shapes
+(scalars are supported), and matrix multiplication/transpose require rank 2.
+Neural networks use Float64 parameter buffers for CPU training stability.
+`predict` accepts one feature vector; classification returns probabilities and
+regression returns numeric outputs. Multiclass targets are probability vectors
+summing to one (normally one-hot). Normalize features and regression targets.
+
+`train` is synchronous and mutates the model. It returns per-epoch losses and
+supports an `onEpoch(epoch, loss)` callback (return `false` to stop). For a
+responsive UI and immediate cancellation, run training in a worker as the digit
+demo does. Repeated training calls continue from existing weights. Failed or
+cancelled training can retain updates from completed batches.
+
+Fit `BagOfWords` on training data only and retain that fitted vocabulary with the
+model. Unknown words are ignored and empty/unknown-only input produces a zero
+vector. The current tokenizer handles Unicode letters/numbers and normalizes
+counts by the total known-token count. It is a simple baseline, not a language model.
+
+These are educational CPU implementations. There is no GPU backend, automatic
+differentiation engine, model persistence, or production accuracy guarantee yet.
 
 ## Package usage
 

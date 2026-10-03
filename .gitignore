@@ -6,8 +6,6 @@
 .pnp.js
 .husky
 .pnpm-store
-/tests
-/scripts
 
 # testing
 /coverage

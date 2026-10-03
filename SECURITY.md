@@ -1,8 +1,8 @@
 # Security policy
 
-ShivAX is currently a types-and-version scaffold. It does not yet implement
-training, inference, model loading, network requests, or a hosted API. There are
-no production dependencies or consumer installation scripts. Dependency audits
+ShivAX implements local CPU tensors, dense-network training/inference, and text
+features. It does not load executable models, make network requests, or host an
+API. There are no production dependencies or consumer installation scripts. Dependency audits
 cover known published advisories; they are not a security certification.
 
 ## Reporting a vulnerability
@@ -26,7 +26,23 @@ No response-time guarantee is currently established.
 - Keep registry tokens in CI secrets, use least privilege and registry MFA, and
   never log credentials. Only authorized maintainers should publish releases.
 
-## Requirements for future AI features and deployments
+## Current limits
+
+Tensors reject nonfinite and Float32-overflowing values and cap each allocation
+at 1,048,576 elements. Matrix multiplication caps its scalar product work at
+50 million terms. Networks cap widths at 4096, layers at 8, and parameters at
+one million. Training validates shapes and classification targets before updates;
+each call caps input/target elements at ten million and the product of epochs,
+samples and parameter count at 250 million. These are work estimates, not time
+or memory isolation guarantees. Large synchronous calls can still block the
+caller: use a worker, as the digit example does. Failed training may retain
+earlier completed batch updates; it is not transactional.
+
+Text features limit per-document length, corpus size, and vocabulary. These
+checks handle plain arrays and strings, not hostile JavaScript objects/getters
+executing inside your own process. Do not execute untrusted code in-process.
+
+## Requirements for further AI features and deployments
 
 - Treat datasets, prompts, model files, and model output as untrusted input.
   Validate finite numeric values, array dimensions, and configuration ranges at

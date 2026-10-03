@@ -1,6 +1,11 @@
 // ShivAX — AI/ML library
-// Phase 1: types only — algorithms coming soon
+// Dependency-free CPU foundations.
 
 export type { Vector, Matrix, Label, ModelConfig } from './types/index.js';
+export { Tensor, MAX_TENSOR_ELEMENTS } from './core/Tensor.js';
+export { dot, sigmoid, softmax, seededRandom } from './core/math.js';
+export { NeuralNet } from './nn/NeuralNet.js';
+export type { NeuralNetOptions, TrainOptions, TrainingResult, Task } from './nn/NeuralNet.js';
+export { BagOfWords } from './text/BagOfWords.js';
 
 export const VERSION = '0.1.0';

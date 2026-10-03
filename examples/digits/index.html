@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; worker-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>ShivAX · Digit lab</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main>
+    <p>SHIVAX / CPU FOUNDATIONS</p>
+    <h1>Teach a network to read your digits.</h1>
+    <p>This demo starts untrained. Supply labeled MNIST-style data to train a small dense network locally in a worker. No images leave your browser.</p>
+    <label for="dataset">Training JSON (maximum 5 MB, 50–500 samples)</label>
+    <input id="dataset" type="file" accept=".json,application/json">
+    <p>Format: <code>{"images": [[784 pixel values from 0 to 1], ...], "labels": [0, ...]}</code>. Use white digits on black backgrounds, 28 × 28 pixels. Include all ten classes.</p>
+    <button id="train" disabled>Train 30 epochs</button>
+    <button id="stop" disabled>Stop and discard model</button>
+    <p id="status" role="status" aria-live="polite">Load labeled data to begin. This is an educational demo, not a pretrained recognizer.</p>
+    <h2>Draw a digit</h2>
+    <canvas id="drawing" width="280" height="280" aria-label="Draw a digit using a mouse or touch. This input requires a pointer."></canvas>
+    <div><button id="clear">Clear</button><button id="predict" disabled>Recognize</button></div>
+    <p id="result" role="status" aria-live="polite">No prediction yet.</p>
+    <p>The canvas crop is centered and resized to fit a 20 × 20 region within 28 × 28. Accuracy depends on your data and drawing style; the displayed score is not calibrated confidence.</p>
+  </main>
+  <script type="module" src="./app.mjs"></script>
+</body>
+</html>
