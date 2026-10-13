@@ -13,6 +13,7 @@
 # production
 /build
 /dist
+/datasets
 
 # misc
 .DS_Store

@@ -7,6 +7,9 @@ const routes = new Map([
     ['/style.css', ['examples/digits/style.css', 'text/css']],
     ['/app.mjs', ['examples/digits/app.mjs', 'text/javascript']],
     ['/worker.mjs', ['examples/digits/worker.mjs', 'text/javascript']],
+    ['/preprocess.mjs', ['examples/digits/preprocess.mjs', 'text/javascript']],
+    ['/drawing.mjs', ['examples/digits/drawing.mjs', 'text/javascript']],
+    ['/training.mjs', ['examples/digits/training.mjs', 'text/javascript']],
     ['/dist/index.esm.js', ['dist/index.esm.js', 'text/javascript']],
 ]);
 const server = createServer(async (request, response) => {

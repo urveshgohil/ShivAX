@@ -23,7 +23,7 @@
     "example:xor": "pnpm build && node examples/xor.mjs",
     "example:regression": "pnpm build && node examples/regression.mjs",
     "example:text": "pnpm build && node examples/text-classifier.mjs",
-    "example:digits": "pnpm build && node scripts/serve-examples.mjs",
+    "example:digits": "pnpm build && node --watch scripts/serve-examples.mjs",
     "build": "node scripts/clean.mjs && tsc && rollup -c rollup.config.mjs",
     "dev": "tsc --watch",
     "test": "pnpm build && node --test tests/*.test.mjs",
