@@ -20,6 +20,7 @@
     "SECURITY.md"
   ],
   "scripts": {
+    "example:core": "pnpm build && node --experimental-strip-types examples/core.ts",
     "example:xor": "pnpm build && node examples/xor.mjs",
     "example:regression": "pnpm build && node examples/regression.mjs",
     "example:text": "pnpm build && node examples/text-classifier.mjs",

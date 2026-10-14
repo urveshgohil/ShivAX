@@ -5,6 +5,8 @@ The `pnpm example:*` commands rebuild automatically. These examples are not
 included in the npm tarball.
 
 - `pnpm example:xor`: a 2 → 8 → 1 binary network learns XOR.
+- `pnpm example:core`: a typed example of Adam/Leaky ReLU, momentum regression,
+  versioned inference serialization, and reusable evaluation utilities.
 - `pnpm example:regression`: a one-input linear dense layer predicts synthetic
   house prices after feature/target normalization. This is not a real valuation model.
 - `pnpm example:text`: a fitted bag-of-words vocabulary feeds an 8-unit hidden

@@ -1,5 +1,11 @@
 # ShivAX
 
+The neural-network core also supports opt-in ReLU/Leaky ReLU/sigmoid hidden
+activations, momentum/Adam optimizers, He initialization, inference JSON
+serialization, and reusable classification/regression metrics. Defaults remain
+tanh + Xavier + SGD. See [Phase 3 core guide](docs/neuralnet-phase3.md) and run
+`pnpm example:core` for the typed example.
+
 Dependency-free JavaScript AI/ML foundations with TypeScript declarations:
 CPU tensors, matrix math, dense neural networks, and bag-of-words text features.
 Training uses mini-batch SGD with explicit backpropagation, tanh hidden layers,
