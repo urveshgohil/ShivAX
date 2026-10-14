@@ -10,6 +10,9 @@ const routes = new Map([
     ['/preprocess.mjs', ['examples/digits/preprocess.mjs', 'text/javascript']],
     ['/drawing.mjs', ['examples/digits/drawing.mjs', 'text/javascript']],
     ['/training.mjs', ['examples/digits/training.mjs', 'text/javascript']],
+    ['/live-inference.mjs', ['examples/digits/live-inference.mjs', 'text/javascript']],
+    ['/model-store.mjs', ['examples/digits/model-store.mjs', 'text/javascript']],
+    ['/dashboard.mjs', ['examples/digits/dashboard.mjs', 'text/javascript']],
     ['/dist/index.esm.js', ['dist/index.esm.js', 'text/javascript']],
 ]);
 const server = createServer(async (request, response) => {

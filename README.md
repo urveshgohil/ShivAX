@@ -1,5 +1,9 @@
 # ShivAX
 
+Run `pnpm example:digits` for the framework-free browser playground: live digit
+inference, normalized previews, training charts, confusion matrices, and local
+model save/load/export/import. See [the playground guide](docs/digit-phase4.md).
+
 The neural-network core also supports opt-in ReLU/Leaky ReLU/sigmoid hidden
 activations, momentum/Adam optimizers, He initialization, inference JSON
 serialization, and reusable classification/regression metrics. Defaults remain

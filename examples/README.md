@@ -1,5 +1,11 @@
 # CPU examples
 
+The digit demo is now a responsive local ML playground with live/manual
+recognition, loss/accuracy charts, inspectable evaluation metrics, and explicit
+IndexedDB save/load plus model JSON export/import. It never restores models
+automatically. Discard deletes active and saved models. See
+[Phase 4 guide](../docs/digit-phase4.md) for usage and verified testing.
+
 Run examples from the repository after `pnpm install --frozen-lockfile`.
 The `pnpm example:*` commands rebuild automatically. These examples are not
 included in the npm tarball.
