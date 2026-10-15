@@ -35,10 +35,12 @@ const image = (n: UINode) => /^(image|img)$/i.test(n.role ?? '');
 const key = (...parts: unknown[]) => JSON.stringify(parts);
 
 /** Deterministic comparison of measured properties through the canonical matcher. */
-export function analyzeUI(baseline: UISnapshot, target: UISnapshot, options: UIAnalysisOptions = {}): UIAnalysisResult {
+export function analyzeUI(baseline: UISnapshot, target: UISnapshot, options: UIAnalysisOptions = {}, onPhase?: (phase: 'matching' | 'comparing') => void): UIAnalysisResult {
     validateUIAnalysisOptions(options);
     // Matching validates scene data, normalization and workspace boundaries.
+    onPhase?.('matching');
     const matching = matchUISnapshots(baseline, target, options.matchingOptions);
+    onPhase?.('comparing');
     let work = 0;
     const tick = () => { if (++work > (options.maxWork ?? 250_000)) throw new RangeError('UI analysis work limit exceeded'); };
     const a = index(baseline, matching.ignoredReferenceWrappers, tick), b = index(target, matching.ignoredTargetWrappers, tick);

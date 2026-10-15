@@ -143,3 +143,15 @@ test('reordered cards retain identity by group anchors rather than repeated butt
     assert.equal(result.matches.find(m => m.referenceId === 'rbeta-button').targetId, 'tbeta-button');
     assert.equal(result.matches.length, page.length);
 });
+
+test('large unique-text sibling sets match within the default budget without forcing repeated labels', () => {
+    const entries = [['root', 'main', 'Catalog']];
+    for (let i = 0; i < 600; i++) entries.push([`heading-${i}`, 'heading', `Unique service ${i}`, 'root', 0, i * 60]);
+    const reference = scene('r-', entries), target = scene('t-', entries);
+    target.nodes.reverse(); target.relationships.reverse();
+    const result = matchUISnapshots(reference, target);
+    assert.equal(result.matches.length, entries.length);
+    for (const match of result.matches) assert.equal(match.targetId, match.referenceId.replace(/^r-/, 't-'));
+    assert.ok(result.work < 250000);
+    assert.throws(() => matchUISnapshots(reference, target, { maxWork: 1 }), /work limit/);
+});

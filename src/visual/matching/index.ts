@@ -138,16 +138,23 @@ export function matchUISnapshots(reference: UISnapshot, target: UISnapshot, opti
     const buckets = new Map<string, UINode[]>();
     for (const n of bb) { const key = `${level(n)}:${role(n)}`; const list = buckets.get(key) ?? []; list.push(n); buckets.set(key, list); }
 
+    // Mappings are fixed within one search pass. Reuse hierarchy/sibling evidence
+    // instead of walking the same DOM subtree for every candidate pair.
+    let regionReference = new Map<string, string | undefined>(), regionTarget = new Map<string, string | undefined>();
+    let siblingsReference = new Map<string, Set<string>>(), siblingsTarget = new Map<string, Set<string>>();
     function matchedRegion(s: Scene, id: string, mapping: Map<string, string>): string | undefined {
+        const cache = s === a ? regionReference : regionTarget;
+        if (cache.has(id)) return cache.get(id);
         let p = s.parent.get(id), closest: string | undefined;
         while (p !== undefined) {
             tick();
             if (mapping.has(p)) {
                 closest ??= p;
-                if (level(s.nodes.get(p)!) === 0) return p;
+                if (level(s.nodes.get(p)!) === 0) { cache.set(id, p); return p; }
             }
             p = s.parent.get(p);
         }
+        cache.set(id, closest);
         return closest;
     }
     let localReference = new Map<string, Set<string>>(), localTarget = new Map<string, Set<string>>();
@@ -221,9 +228,14 @@ export function matchUISnapshots(reference: UISnapshot, target: UISnapshot, opti
         if (wrapperContext) add('siblings', 1, 'accepted local sibling identities agree across raw wrapper subtrees',
             Math.min(a.parentQuality.get(x.id)!, b.parentQuality.get(y.id)!));
         if (sameParent && p !== undefined) {
-            const siblings = new Set((a.children.get(p) ?? []).filter(id => { tick(); return id !== x.id; }).map(id => accepted.get(id)).filter((id): id is string => id !== undefined));
+            let siblings = siblingsReference.get(p);
+            if (!siblings) {
+                siblings = new Set((a.children.get(p) ?? []).map(id => { tick(); return accepted.get(id); }).filter((id): id is string => id !== undefined));
+                siblingsReference.set(p, siblings);
+            }
             if (siblings.size) {
-                const other = new Set((b.children.get(q) ?? []).filter(id => { tick(); return id !== y.id; }));
+                let other = siblingsTarget.get(q!);
+                if (!other) { other = new Set((b.children.get(q) ?? []).map(id => { tick(); return id; })); siblingsTarget.set(q!, other); }
                 add('siblings', [...siblings].filter(id => other.has(id)).length / siblings.size, 'accepted siblings in the same component group', Math.min(a.parentQuality.get(x.id)!, b.parentQuality.get(y.id)!));
             }
         }
@@ -267,10 +279,17 @@ export function matchUISnapshots(reference: UISnapshot, target: UISnapshot, opti
     function search(currentLevel: number, phase: Phase = 'all') {
         // Accepted mappings change between stages; cached sibling sets must not.
         localReference = new Map(); localTarget = new Map();
+        regionReference = new Map(); regionTarget = new Map();
+        siblingsReference = new Map(); siblingsTarget = new Map();
         const rows = new Map<string, MatchCandidate[]>(), columns = new Map<string, MatchCandidate[]>();
         for (const x of aa) {
             tick(); if (accepted.has(x.id) || level(x) !== currentLevel) continue;
-            for (const y of buckets.get(`${currentLevel}:${role(x)}`) ?? []) {
+            const text = normalizeText(x.text);
+            const exact = text ? b.texts.get(JSON.stringify([role(x), text])) : undefined;
+            // candidate() already excludes different text when an exact counterpart
+            // exists. Index the same eligible targets without evaluating every peer.
+            const candidates = exact?.length ? exact.map(id => b.nodes.get(id)!) : buckets.get(`${currentLevel}:${role(x)}`) ?? [];
+            for (const y of candidates) {
                 if (reverse.has(y.id)) continue;
                 const c = candidate(x, y, phase); if (!c) continue;
                 const row = rows.get(x.id) ?? []; row.push(c); rows.set(x.id, row);

@@ -251,3 +251,16 @@ test('new schema fields validate, color channels are not length-scaled, and inva
     assert.throws(() => analyzeUI(baseline, target, { maxWork: 1 }), /work limit/);
     target.scope.kind = 'company'; assert.throws(() => analyzeUI(baseline, target), /scope/);
 });
+
+
+test('optional analysis phase observer reports real matcher and comparison boundaries', () => {
+    const { baseline, target } = paired();
+    const phases = [];
+    const observed = analyzeUI(baseline, target, {}, phase => phases.push(phase));
+    assert.deepEqual(phases, ['matching', 'comparing']);
+    assert.deepEqual(observed, analyzeUI(baseline, target));
+    const invalid = structuredClone(target); invalid.scope.id = 'different';
+    const failed = [];
+    assert.throws(() => analyzeUI(baseline, invalid, {}, phase => failed.push(phase)), /scope/);
+    assert.deepEqual(failed, ['matching']);
+});
