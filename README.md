@@ -1,5 +1,11 @@
 # ShivAX
 
+The dependency-free [UI scene graph API](docs/visual-scene-graph.md) provides
+validated URL/Figma/PNG measurement types, CSS-pixel normalization, provenance,
+and geometry helpers. [Semantic element matching](docs/visual-matching.md) adds
+hierarchical, one-to-one correspondence with evidence scores and explicit
+ambiguity; it does not report visual/style differences.
+
 Run `pnpm example:digits` for the framework-free browser playground: live digit
 inference, normalized previews, training charts, confusion matrices, and local
 model save/load/export/import. See [the playground guide](docs/digit-phase4.md).

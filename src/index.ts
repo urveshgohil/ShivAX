@@ -11,5 +11,6 @@ export type { OptimizerName, OptimizerOptions, OptimizerConfig } from './nn/opti
 export { classificationAccuracy, crossEntropy, evaluateClassification, evaluateRegression } from './metrics/evaluation.js';
 export type { ClassMetrics, ClassificationMetrics, RegressionMetrics } from './metrics/evaluation.js';
 export { BagOfWords } from './text/BagOfWords.js';
+export * from './visual/index.js';
 
 export const VERSION = '0.1.0';
