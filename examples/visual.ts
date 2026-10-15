@@ -3,7 +3,7 @@ import {
     type UISnapshot, type Measurement,
 } from 'shivax';
 
-// Caller-supplied estimates, not measurements extracted or predicted by Shivax.
+// Caller-supplied estimates, not measurements extracted or predicted by ShivAX.
 function estimated<T>(value: T): Measurement<T> {
     return {
         status: 'known', value,

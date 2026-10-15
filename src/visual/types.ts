@@ -6,7 +6,7 @@ export interface SourceProvenance {
     sourceType: SourceType;
     kind: 'computed' | 'design' | 'estimated' | 'unknown';
     method: string;
-    /** Opaque local identifier; never fetched or executed by Shivax. */
+    /** Opaque local identifier; never fetched or executed by ShivAX. */
     reference?: string;
 }
 export type Measurement<T> = {

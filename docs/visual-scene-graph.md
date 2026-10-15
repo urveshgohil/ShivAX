@@ -1,6 +1,6 @@
 # UI scene graph — Phase 1
 
-Shivax now accepts a dependency-free, versioned UI scene representation. This is
+ShivAX now accepts a dependency-free, versioned UI scene representation. This is
 a data/geometry API, not a scanner, element matcher, comparison engine or trained
 visual model. All exports are additive through `shivax` (ESM/CJS/declarations).
 Tensor, NeuralNet, optimizers, model serialization and BagOfWords are unchanged.
@@ -16,7 +16,7 @@ node --experimental-strip-types examples/visual.ts
 `UISnapshot` version 1 contains `sourceType` (`url`, `figma`, `png`), `scope`,
 `viewport`, `coordinates`, `nodes` and `relationships`. IDs are local to one
 snapshot; they do not establish identity across sources. Scope has a `company`
-or `personal` kind and a caller-owned namespace ID. Shivax performs no storage,
+or `personal` kind and a caller-owned namespace ID. ShivAX performs no storage,
 network access, global caching or cross-snapshot merging. Applications must
 enforce workspace authorization and separate storage; scope metadata alone is
 not a security boundary. Do not put secrets or personal content in reference IDs.
@@ -27,7 +27,7 @@ size, weight, numeric line height and letter/word spacing. Layout includes
 display, four paddings, four margins and row/column gaps. Missing optional
 properties are unavailable, not zero. CSS values such as unresolved `normal`,
 percentages or `auto` must be resolved by the adapter or explicitly unknown;
-Shivax never guesses them. Negative margins/letter spacing and coordinates are
+ShivAX never guesses them. Negative margins/letter spacing and coordinates are
 valid; widths, heights, padding and gaps cannot be negative.
 
 Every supplied property uses `Measurement<T>`:
@@ -50,7 +50,7 @@ them to exact measurements. Unknown bounds remain unknown, not empty rectangles.
 `ElementRelationship` references two existing local IDs, a type (`parent-child`,
 `contains`, `labelled-by`), provenance and confidence. Self/duplicate edges and
 multiple parents/parent cycles are rejected. Relationships are supplied by the
-adapter; Shivax does not infer them or verify claimed containment from geometry.
+adapter; ShivAX does not infer them or verify claimed containment from geometry.
 The parent-child subset forms a forest; other links need not form a tree.
 
 ## Coordinate normalization

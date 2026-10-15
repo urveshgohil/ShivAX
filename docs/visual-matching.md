@@ -183,5 +183,5 @@ and strong content/sibling evidence. No real-site annotated dataset was availabl
 in this phase.
 
 Inspectra's legacy engines are untouched. Integration/migration to this single
-Shivax matcher, style-difference reporting, extraction, UI workflows, model
+ShivAX matcher, style-difference reporting, extraction, UI workflows, model
 training and SLM features are not part of this implementation.
