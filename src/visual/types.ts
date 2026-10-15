@@ -16,6 +16,8 @@ export type Measurement<T> = {
 };
 
 export interface BoundingRectangle { x: number; y: number; width: number; height: number }
+/** Canonical sRGB channels 0–255 and alpha 0–1; adapters resolve CSS colors. */
+export interface RGBAColor { r: number; g: number; b: number; a: number }
 export interface TypographyProperties {
     fontFamily?: Measurement<string>;
     fontSize?: Measurement<number>;
@@ -24,6 +26,8 @@ export interface TypographyProperties {
     lineHeight?: Measurement<number>;
     letterSpacing?: Measurement<number>;
     wordSpacing?: Measurement<number>;
+    color?: Measurement<RGBAColor>;
+    textAlign?: Measurement<'left' | 'right' | 'center' | 'start' | 'end' | 'justify'>;
 }
 export interface LayoutProperties {
     display?: Measurement<string>;
@@ -37,6 +41,9 @@ export interface LayoutProperties {
     marginLeft?: Measurement<number>;
     rowGap?: Measurement<number>;
     columnGap?: Measurement<number>;
+    flexDirection?: Measurement<'row' | 'row-reverse' | 'column' | 'column-reverse'>;
+    alignItems?: Measurement<string>;
+    justifyContent?: Measurement<string>;
 }
 export interface UINode {
     id: string;
@@ -49,7 +56,7 @@ export interface UINode {
 export interface ElementRelationship {
     from: string;
     to: string;
-    type: 'parent-child' | 'contains' | 'labelled-by';
+    type: 'parent-child' | 'contains' | 'labelled-by' | 'heading-description' | 'image-content';
     provenance: SourceProvenance;
     confidence: Confidence;
 }
@@ -71,7 +78,7 @@ export interface UISnapshot {
     nodes: readonly UINode[];
     relationships: readonly ElementRelationship[];
 }
-/** Configuration only: this phase does not perform matching or comparison. */
+/** Common comparison controls; analyzeUI adds policy and per-property tolerances. */
 export interface ComparisonOptions {
     geometryToleranceCssPx?: number;
     minConfidence?: number;

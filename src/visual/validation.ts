@@ -3,9 +3,9 @@ import type { BoundingRectangle, ComparisonOptions, UISnapshot, UINode, SourceTy
 
 export const MAX_UI_NODES = 10_000;
 const MAX_LENGTH = 1_000_000_000;
-const typography = ['fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'wordSpacing'];
+const typography = ['fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'wordSpacing', 'color', 'textAlign'];
 const layout = ['display', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
-    'marginTop', 'marginRight', 'marginBottom', 'marginLeft', 'rowGap', 'columnGap'];
+    'marginTop', 'marginRight', 'marginBottom', 'marginLeft', 'rowGap', 'columnGap', 'flexDirection', 'alignItems', 'justifyContent'];
 type RecordValue = Record<string, unknown>;
 function fail(name: string): never { throw new TypeError(`Invalid UI scene: ${name}`); }
 function object(value: unknown, keys: readonly string[]): RecordValue {
@@ -81,7 +81,7 @@ export function validateElementRelationship(value: unknown, source: SourceType):
     const r = object(value, ['from', 'to', 'type', 'provenance', 'confidence']);
     text(r.from, 256); text(r.to, 256);
     if (r.from === r.to) fail('self relationship');
-    choice(r.type, ['parent-child', 'contains', 'labelled-by']);
+    choice(r.type, ['parent-child', 'contains', 'labelled-by', 'heading-description', 'image-content']);
     evidence(r.provenance, r.confidence, source);
 }
 function measurement(value: unknown, source: unknown, check: (v: unknown) => void): void {
@@ -94,7 +94,14 @@ function measurement(value: unknown, source: unknown, check: (v: unknown) => voi
 function properties(value: unknown, source: unknown, keys: string[]): void {
     const props = object(value, keys);
     for (const key of Object.keys(props)) measurement(props[key], source, v => {
-        if (key === 'fontFamily' || key === 'display') text(v, 256);
+        if (key === 'color') {
+            const color = object(v, ['r', 'g', 'b', 'a']);
+            for (const channel of ['r', 'g', 'b']) number(color[channel], 0, 255);
+            number(color.a, 0, 1);
+        }
+        else if (key === 'textAlign') choice(v, ['left', 'right', 'center', 'start', 'end', 'justify']);
+        else if (key === 'flexDirection') choice(v, ['row', 'row-reverse', 'column', 'column-reverse']);
+        else if (['fontFamily', 'display', 'alignItems', 'justifyContent'].includes(key)) text(v, 256);
         else if (key === 'fontWeight') number(v, 1, 1000);
         else if (key.startsWith('margin') || key.endsWith('Spacing')) number(v);
         else number(v, 0);
