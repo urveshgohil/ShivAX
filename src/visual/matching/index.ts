@@ -16,7 +16,7 @@ function role(node: UINode): string {
 }
 function level(node: UINode): number {
     const r = role(node);
-    return ['main', 'header', 'footer', 'nav', 'region'].includes(r) ? 0 : r === 'section' ? 1 : ['group', '', 'generic'].includes(r) ? 2 : 3;
+    return ['document', 'main', 'header', 'footer', 'nav', 'region'].includes(r) ? 0 : r === 'section' ? 1 : ['group', '', 'generic'].includes(r) ? 2 : 3;
 }
 function similarity(a: string, b: string): number {
     if (a === b) return 1;
@@ -136,7 +136,7 @@ export function matchUISnapshots(reference: UISnapshot, target: UISnapshot, opti
     const meaningful = (s: Scene) => [...s.nodes.values()].filter(n => !s.wrappers.has(n.id)).sort((x, y) => x.id < y.id ? -1 : x.id > y.id ? 1 : 0);
     const aa = meaningful(a), bb = meaningful(b);
     const buckets = new Map<string, UINode[]>();
-    for (const n of bb) { const key = `${level(n)}:${role(n)}`; const list = buckets.get(key) ?? []; list.push(n); buckets.set(key, list); }
+    for (const n of bb) { const key = JSON.stringify([b.parent.get(n.id) ?? null, level(n), role(n)]); const list = buckets.get(key) ?? []; list.push(n); buckets.set(key, list); }
 
     // Mappings are fixed within one search pass. Reuse hierarchy/sibling evidence
     // instead of walking the same DOM subtree for every candidate pair.
@@ -186,6 +186,14 @@ export function matchUISnapshots(reference: UISnapshot, target: UISnapshot, opti
         const sameParent = (p === undefined && q === undefined) ||
             (p !== undefined && q !== undefined && accepted.has(p) && accepted.get(p) === q);
         const tx = normalizeText(x.text), ty = normalizeText(y.text);
+        // Data-driven categories may move between cards. Different category names
+        // do not establish comparable color/style identities through parent position.
+        if (role(x) === 'category-badge' && (!tx || tx !== ty)) return;
+        // Captured documents have one explicit scene root even when frameworks
+        // change every wrapper and the root's aggregated text/child-role counts.
+        // This establishes the document boundary, never descendant identity.
+        const documentRoot = role(x) === 'document' && p === undefined && q === undefined &&
+            a.regionCounts.get('document') === 1 && b.regionCounts.get('document') === 1;
         const textKey = JSON.stringify([role(x), tx]);
         const exactTargets = a.texts.has(textKey) ? b.texts.get(textKey) ?? [] : [];
         const uniqueText = Boolean(tx) && tx === ty && a.texts.get(textKey)?.length === 1 && exactTargets.length === 1;
@@ -210,17 +218,17 @@ export function matchUISnapshots(reference: UISnapshot, target: UISnapshot, opti
         const add = (signal: MatchEvidence['signal'], similarity: number, detail: string, reliability = 1) =>
             evidence.push({ signal, similarity, reliability, weight: weights[signal], detail });
         if (role(x)) add('role', 1, `same semantic role: ${role(x)}`);
-        const content = tx && ty ? similarity(tx, ty) : 0;
-        if (tx && ty) add('content', content, 'normalized visible-text token overlap');
+        const content = !documentRoot && tx && ty ? similarity(tx, ty) : 0;
+        if (!documentRoot && tx && ty) add('content', content, 'normalized visible-text token overlap');
         const ax = a.anchors.get(x.id)!, ay = b.anchors.get(y.id)!;
         // Only container descendants are component-group identity evidence.
-        const grouping = level(x) < 3 && ax.size && ay.size ? setSimilarity(ax, ay) : 0;
-        if (level(x) < 3 && ax.size && ay.size) add('grouping', grouping, 'shared descendant content anchors (up to 16)', Math.min(a.anchorQuality.get(x.id)!, b.anchorQuality.get(y.id)!));
+        const grouping = !documentRoot && level(x) < 3 && ax.size && ay.size ? setSimilarity(ax, ay) : 0;
+        if (!documentRoot && level(x) < 3 && ax.size && ay.size) add('grouping', grouping, 'shared descendant content anchors (up to 16)', Math.min(a.anchorQuality.get(x.id)!, b.anchorQuality.get(y.id)!));
         const sameStructure = Boolean(a.structure.get(x.id)) && a.structure.get(x.id) === b.structure.get(y.id);
-        const rootStructure = level(x) === 0 && p === undefined && q === undefined && sameStructure &&
-            a.regionCounts.get(role(x)) === 1 && b.regionCounts.get(role(y)) === 1;
-        const structureQuality = Math.min(a.structureQuality.get(x.id) ?? 0, b.structureQuality.get(y.id) ?? 0);
-        if (rootStructure) add('structure', 1, 'unique semantic page region with identical child-role counts', structureQuality);
+        const rootStructure = documentRoot || (level(x) === 0 && p === undefined && q === undefined && sameStructure &&
+            a.regionCounts.get(role(x)) === 1 && b.regionCounts.get(role(y)) === 1);
+        const structureQuality = documentRoot ? 1 : Math.min(a.structureQuality.get(x.id) ?? 0, b.structureQuality.get(y.id) ?? 0);
+        if (rootStructure) add('structure', 1, documentRoot ? 'unique explicit document scene roots' : 'unique semantic page region with identical child-role counts', structureQuality);
         if (p !== undefined || q !== undefined) {
             add('parent', sameParent ? 1 : 0, sameParent ? 'effective parent already matched (neutral wrappers skipped)' :
                 'exact text recovered across parents inside an accepted page region', Math.min(a.parentQuality.get(x.id)!, b.parentQuality.get(y.id)!));
@@ -288,7 +296,11 @@ export function matchUISnapshots(reference: UISnapshot, target: UISnapshot, opti
             const exact = text ? b.texts.get(JSON.stringify([role(x), text])) : undefined;
             // candidate() already excludes different text when an exact counterpart
             // exists. Index the same eligible targets without evaluating every peer.
-            const candidates = exact?.length ? exact.map(id => b.nodes.get(id)!) : buckets.get(`${currentLevel}:${role(x)}`) ?? [];
+            // Non-exact recovery is eligible only inside an accepted parent.
+            // Index that same candidate set instead of scanning every page peer.
+            const parent = a.parent.get(x.id), targetParent = parent === undefined ? undefined : accepted.get(parent);
+            const candidates = exact?.length ? exact.map(id => b.nodes.get(id)!) :
+                parent !== undefined && targetParent === undefined ? [] : buckets.get(JSON.stringify([targetParent ?? null, currentLevel, role(x)])) ?? [];
             for (const y of candidates) {
                 if (reverse.has(y.id)) continue;
                 const c = candidate(x, y, phase); if (!c) continue;
@@ -331,13 +343,13 @@ export function matchUISnapshots(reference: UISnapshot, target: UISnapshot, opti
         for (const x of aa.filter(n => !accepted.has(n.id) && level(n) === stage)) {
             const row = rows.get(x.id) ?? [], p = a.parent.get(x.id);
             const blocked = p !== undefined && !accepted.has(p) && !row.some(c => c.score > 0);
-            if (row.length || (p !== undefined && !accepted.has(p))) uncertain.push({ referenceId: x.id,
+            if (row.length || role(x) === 'category-badge' || (p !== undefined && !accepted.has(p))) uncertain.push({ referenceId: x.id,
                 reason: blocked ? 'unmatched-parent' : row[0]?.score >= minScore ? 'ambiguous' : 'insufficient-evidence', candidates: row.slice(0, 3) });
         }
         for (const y of bb.filter(n => !reverse.has(n.id) && level(n) === stage)) {
             const column = columns.get(y.id) ?? [], p = b.parent.get(y.id);
             const blocked = p !== undefined && !reverse.has(p) && !column.some(c => c.score > 0);
-            if (column.length || (p !== undefined && !reverse.has(p))) uncertainTarget.push({ targetId: y.id,
+            if (column.length || role(y) === 'category-badge' || (p !== undefined && !reverse.has(p))) uncertainTarget.push({ targetId: y.id,
                 reason: blocked ? 'unmatched-parent' : column[0]?.score >= minScore ? 'ambiguous' : 'insufficient-evidence', candidates: column.slice(0, 3) });
         }
     }

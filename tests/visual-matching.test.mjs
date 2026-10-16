@@ -37,6 +37,28 @@ test('indistinguishable repeated cards remain uncertain, not forced by position 
     assert.equal(result.uncertainTarget.find(u => u.targetId === 'ta').reason, 'ambiguous');
 });
 
+test('document anchoring does not force repeated titles or unrelated descendants', () => {
+    const entries = [['root', 'document', 'Page'], ['a', 'group', '', 'root'], ['title-a', 'heading', 'Same title', 'a'],
+        ['b', 'group', '', 'root'], ['title-b', 'heading', 'Same title', 'b']];
+    const result = matchUISnapshots(scene('r-', entries), scene('t-', entries));
+    assert.deepEqual(result.matches.map(m => [m.referenceId, m.targetId]), [['r-root', 't-root']]);
+    const other = scene('t-', [['root', 'document', 'Other page'], ['title', 'button', 'Delete account', 'root']]);
+    const unrelated = matchUISnapshots(scene('r-', [['root', 'document', 'Page'], ['title', 'button', 'Save settings', 'root']]), other);
+    assert.ok(unrelated.matches.some(m => m.referenceId === 'r-root'));
+    assert.ok(!unrelated.matches.some(m => m.referenceId === 'r-title'));
+});
+
+test('document recovery across framework wrappers stays inside the default work budget', () => {
+    const entries = [['root', 'document', 'Page'], ['layout', 'generic', 'Aggregated document text', 'root']];
+    for (let i = 0; i < 160; i++) entries.push([`title-${i}`, 'heading', `Unique title ${i}`, 'layout']);
+    const baseline = scene('r-', entries);
+    const target = scene('t-', [['root', 'document', 'Different page copy'], ['main', 'main', 'Changed aggregate text', 'root'],
+        ...entries.slice(2).map(([id, role, text]) => [id, role, text, 'main'])]);
+    const result = matchUISnapshots(baseline, target);
+    assert.equal(result.matches.filter(m => m.level === 'element').length, 160);
+    assert.ok(result.work < 250_000);
+});
+
 test('negative pairs reject unrelated text, role conflicts and missing context', () => {
     for (const [a, b] of [[['a', 'heading', 'Alpha'], ['b', 'heading', 'Omega']],
         [['a', 'button', 'Continue'], ['b', 'image', 'Continue']],

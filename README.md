@@ -9,6 +9,11 @@ ambiguity; it does not report visual/style differences.
 [Deterministic UI comparison](docs/visual-comparison.md) adds `analyzeUI()` for
 measured style/layout differences, content policies and structured review issues.
 
+[Optional local SLM reasoning](docs/optional-slm.md) adds `SLMProvider`,
+`SLMClient`, `OllamaProvider` and `analyzeUIWithSLM()` for evidence-backed review.
+It is disabled by default; existing neural-network and Visual Intelligence APIs
+remain synchronous and deterministic.
+
 Run `pnpm example:digits` for the framework-free browser playground: live digit
 inference, normalized previews, training charts, confusion matrices, and local
 model save/load/export/import. See [the playground guide](docs/digit-phase4.md).

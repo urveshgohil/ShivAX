@@ -26,3 +26,26 @@ export function paired() {
     return { baseline, target, node: (id) => target.nodes.find(n => n.id === `target-${id}`) };
 }
 export function unknown() { return { status: 'unknown', provenance: { sourceType: 'url', kind: 'unknown', method: 'not supplied' }, confidence: { score: null } }; }
+
+// Synthetic browser-capture shape: aggregate body text, different framework wrappers,
+// the same semantic title, and a direct measured color difference.
+export function documentPair() {
+    const baseline = fixture(), target = fixture();
+    const bounds = () => measurement({ x: 20, y: 20, width: 400, height: 48 });
+    baseline.nodes = [
+        { id: 'old-body', role: 'document', text: 'Legacy page copy', bounds: bounds() },
+        { id: 'old-layout', role: 'generic', text: 'Shared title', bounds: bounds() },
+        { id: 'old-title', role: 'heading', text: 'Shared title', bounds: bounds(), typography: { color: measurement({ r: 25, g: 133, b: 104, a: 1 }) } },
+    ];
+    target.nodes = [
+        { id: 'new-body', role: 'document', text: 'Revised page copy', bounds: bounds() },
+        { id: 'new-main', role: 'main', text: 'Shared title', bounds: bounds() },
+        { id: 'new-layout', role: 'generic', text: 'Shared title', bounds: bounds() },
+        { id: 'new-title', role: 'heading', text: 'Shared title', bounds: bounds(), typography: { color: measurement({ r: 16, g: 24, b: 40, a: 1 }) } },
+    ];
+    for (const snapshot of [baseline, target]) snapshot.relationships = snapshot.nodes.slice(1).map((node, index) => ({
+        from: snapshot.nodes[index].id, to: node.id, type: 'parent-child',
+        provenance: measurement(1).provenance, confidence: { score: 1 },
+    }));
+    return { baseline, target };
+}

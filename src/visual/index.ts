@@ -8,3 +8,4 @@ export { MAX_UI_NODES, validateUISnapshot, validateBoundingRectangle,
 export { distance, overlap, alignment, relativePosition, verticalGap, horizontalGap, contains } from './geometry.js';
 export * from './matching/index.js';
 export * from './analysis/index.js';
+export * from './slm.js';

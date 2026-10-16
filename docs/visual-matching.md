@@ -25,12 +25,16 @@ data. This guard does not replace authorization in the Visynq application.
 1. Use supplied `parent-child` edges to construct a forest. Ignore textless
    generic/roleless wrappers with children, and single-child `container`
    wrappers. Keep semantic groups even when a wrapper is their sole child.
-2. Match main/header/footer/nav/region nodes, then sections, then groups, then
+2. Match document/main/header/footer/nav/region nodes, then sections, then groups, then
    other semantic elements. Resolve content, labels and region anchors to a fixed
    point before contextual fallback. Control/image labels now contribute to
    region anchors, so a control-only page can establish its main region.
    Unique root regions can also use equal nonempty child-role counts when copy
    changes. Reordered sections can match by their content anchors.
+   A unique explicit `document` root on each side establishes the scene boundary
+   even when framework wrappers, child-role counts and aggregated body copy differ.
+   Its inherited body text is not an identity signal. Descendants still require
+   their own semantic/context evidence; repeated titles remain uncertain.
 3. Generate candidates with compatible normalized semantic roles and hierarchy
    levels. Common equivalents include heading/h1–h6, image/img, paragraph/p,
    group/article/card/container, header/banner, footer/contentinfo and
@@ -42,6 +46,10 @@ data. This guard does not replace authorization in the Visynq application.
    identity without pretending the unmatched group itself has a counterpart.
    Reserve an available exact-text counterpart before changed-content fallback;
    Cancel moved into a group must not be consumed by Archive at its old position.
+   A supplied `category-badge` role requires the same normalized category text.
+   A changed category stays unresolved instead of being forced by card position
+   or reported as a definite missing/extra badge. A matching category can still
+   report measured color changes after it moves between cards.
 5. Require reciprocal best candidates, a minimum evidence score, and a margin
    over both competing references and competing targets. Accept pairs together,
    never assign an element twice. Ties are not broken into artificial matches.
@@ -67,7 +75,7 @@ return `confidence: {score, method: 'weighted-evidence-v1', margin}` and level.
 | Role | .25 | Same normalized semantic role |
 | Content | .35 | NFKC/case/whitespace-normalized visible-text token Jaccard similarity; exact text = 1 |
 | Grouping | .20 | Jaccard similarity of up to 16 lexically selected descendant text/label anchors |
-| Structure | .20 | Equal nonempty child-role counts of a unique root region of the same semantic role |
+| Structure | .20 | Unique explicit document scene roots, or equal nonempty child-role counts of another unique root region |
 | Parent | .25 | Already matched effective parent |
 | Siblings | .10 | Accepted sibling correspondences in the same group, or agreeing local siblings across raw wrapper subtrees |
 | Relative geometry | .05 | `max(0, 1 - normalizedTopLeftDistance)` within parents or viewports |

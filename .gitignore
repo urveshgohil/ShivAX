@@ -30,8 +30,8 @@ package-lock.json
 pnpm-lock.yaml
 
 *.tgz
-.env
-.env.*
+!.env
+!.env.*
 !.env.example
 *.pem
 *.key

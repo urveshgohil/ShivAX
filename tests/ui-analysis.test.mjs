@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import test from 'node:test';
 import { analyzeUI, normalizeUISnapshot, validateUISnapshot, validateUIAnalysisOptions } from 'shivax';
-import { paired, measurement, unknown } from './fixtures/ui-analysis.mjs';
+import { paired, measurement, unknown, documentPair } from './fixtures/ui-analysis.mjs';
 
 test('identical snapshots produce no issues and analysis is deterministic/nonmutating', () => {
     const { baseline, target } = paired(); const before = structuredClone([baseline, target]);
@@ -11,6 +11,34 @@ test('identical snapshots produce no issues and analysis is deterministic/nonmut
     assert.deepEqual(analyzeUI(baseline, target), result);
     assert.deepEqual([baseline, target], before);
     assert.equal(typeof createRequire(import.meta.url)('shivax').analyzeUI, 'function');
+});
+
+test('captured documents with different wrappers preserve same-title measured color differences', () => {
+    const { baseline, target } = documentPair();
+    const result = analyzeUI(baseline, target);
+    const root = result.matching.matches.find(match => match.referenceId === 'old-body');
+    assert.equal(root.targetId, 'new-body'); assert.equal(root.level, 'region');
+    assert.ok(root.evidence.some(item => item.detail === 'unique explicit document scene roots'));
+    assert.equal(result.matching.matches.find(match => match.referenceId === 'old-title').targetId, 'new-title');
+    const color = result.issues.find(issue => issue.property === 'typography.color');
+    assert.deepEqual(color.expected, { r: 25, g: 133, b: 104, a: 1 });
+    assert.deepEqual(color.actual, { r: 16, g: 24, b: 40, a: 1 });
+    assert.deepEqual(color.supportingMeasurements[0].measurement, baseline.nodes[2].typography.color);
+    assert.ok(!result.issues.some(issue => issue.category === 'structure' && issue.baselineNodeId === 'old-title'));
+});
+
+test('category badge colors require the same category label; changed data stays unresolved', () => {
+    const { baseline, target } = documentPair();
+    const a = baseline.nodes[2], b = target.nodes[3];
+    a.role = b.role = 'category-badge';
+    a.text = `Category ${17 * 23}`; b.text = `Category ${41 * 7}`;
+    const changed = analyzeUI(baseline, target);
+    assert.ok(!changed.matching.matches.some(match => match.referenceId === a.id));
+    assert.ok(changed.matching.uncertain.some(item => item.referenceId === a.id));
+    assert.ok(!changed.issues.some(issue => issue.baselineNodeId === a.id && ['color', 'structure'].includes(issue.category)));
+    b.text = a.text;
+    const same = analyzeUI(baseline, target);
+    assert.ok(same.issues.some(issue => issue.baselineNodeId === a.id && issue.category === 'color'));
 });
 
 test('known typography, canonical color and text alignment differences are measured exactly', () => {
