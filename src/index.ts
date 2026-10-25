@@ -13,5 +13,6 @@ export type { ClassMetrics, ClassificationMetrics, RegressionMetrics } from './m
 export { BagOfWords } from './text/BagOfWords.js';
 export * from './visual/index.js';
 export * from './slm/index.js';
+export * from './agents/index.js';
 
 export const VERSION = '0.1.0';
