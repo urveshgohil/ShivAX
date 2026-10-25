@@ -4,10 +4,14 @@
 **One Intelligence. Many Specialized Minds.**
 
 Phase 00 audit baseline, 2026-10-25 (Asia/Calcutta), checkout `e47f462`,
-with the additive [Phase 01 bot foundation](bot-foundation.md).
+with the additive [Phase 01 bot foundation](bot-foundation.md) and
+[Phase 02 RUDRA orchestrator](rudra-orchestrator.md) (2026-10-26).
 Sections describing the current implementation are source-backed observations.
-The target RUDRA/specialist architecture remains a proposal; the registry,
-contracts, events and one-bot executor are implemented in Phase 01.
+The logical structure clarified on 2026-10-26 describes responsibility boundaries,
+not a required repository reorganization. Its mapping to current files is in section 6.
+The registry, contracts, events and one-bot executor are implemented in Phase 01;
+bounded RUDRA workflows are implemented in Phase 02. Production specialists and
+protected resource integrations remain proposals.
 See [implementation phases](SHIVAX_PHASES.md) and the
 [initial audit evidence](shivax-phase00-audit.md).
 
@@ -20,8 +24,10 @@ See [implementation phases](SHIVAX_PHASES.md) and the
    and an optional injectable SLM integration. These are useful specialist
    capabilities, but do not constitute RUDRA or a multi-bot runtime.
 3. Phase 01 adds a bot registry, shared contracts, task context, typed events and
-   explicit one-bot execution. RUDRA, named specialists, general tools,
-   authentication, authorization and durable agent memory remain unimplemented.
+   explicit one-bot execution. Phase 02 adds provider-independent RUDRA routing,
+   validated ordered plans, approval hooks, bounded retries and execution traces.
+   Named production specialists, general tools, authentication, authorization
+   and durable agent memory remain unimplemented.
 4. The safest extension is additive: small bot adapters call existing APIs;
    RUDRA routes bounded tasks to explicitly registered implementations.
 5. Release hygiene and documentation need attention: environment-file ignore
@@ -48,6 +54,7 @@ and Git history were not audited line by line.
 | `src/visual/` | Scene contracts, validation/normalization, geometry, hierarchical matching, measured comparison and SLM advice |
 | `src/slm/` | Provider contract, scoped client, sanitized errors and loopback Ollama adapter |
 | `src/agents/` | Phase 01 contracts, context/input/result validation, registry, events and explicit one-bot executor |
+| `src/agents/rudra/` | Phase 02 deterministic routing, pluggable planner, sequential dependencies, host approval, budgets, cancellation and traces |
 | `src/data/DataFrame.ts`, `src/models/LinearRegression.ts` | Empty placeholders, neither implemented nor root-exported |
 | `examples/` | XOR, regression, text, typed core, scene and comparison examples; digit playground |
 | `examples/digits/` | Drawing/preprocessing, training/inference worker, dashboard, live inference and explicit IndexedDB model storage |
@@ -55,7 +62,7 @@ and Git history were not audited line by line.
 | `scripts/serve-examples.mjs` | Loopback static demo server with explicit route allowlist and ports 4173–4182 |
 | `scripts/prepare-mnist.mjs` | Local bounded IDX/gzip validation, balanced subset conversion and exclusive creation of new JSON output |
 | `scripts/compare-digits.mjs` | Explicit local-file, reproducible 500-sample dataset comparison; distinct in-domain test sets |
-| `tests/` | 14 Node test files plus fixtures, covering core, digits, package, visual, SLM and bot-foundation contracts |
+| `tests/` | 15 Node test files plus fixtures, covering core, digits, package, visual, SLM, bot foundation and RUDRA contracts |
 | `docs/`, `README.md`, `examples/README.md`, `SECURITY.md` | Feature guides, prior phase evidence and operating instructions; some historical claims are stale |
 | `Shivax_Visual_Comparison_Phased_Prompts.md` | Historical visual/scanner plan; its claim that SLM/visual analysis is absent is superseded by current source |
 | `custom-js-ai-plan.docx` | Historical aspirational feature plan, inspected as text; not proof that its proposed chat/camera/advanced models exist or current-phase authorization |
@@ -88,8 +95,8 @@ PNG pixels through the visual API. Input source labels describe supplied data.
 
 Only `shivax` (`exports["."]`) is a supported package entry. ESM resolves to
 `dist/index.esm.js`, CommonJS to `dist/index.cjs`, and declarations to
-`dist/index.d.ts`. There are **46 runtime exports and 87 additional type-only
-exports**. Classes below also have declaration types; the 66 count excludes
+`dist/index.d.ts`. There are **49 runtime exports and 102 additional type-only
+exports**. Classes below also have declaration types; the 102 count excludes
 those runtime symbols. Internal `export` statements do not automatically make a
 helper part of the root API.
 
@@ -108,6 +115,7 @@ helper part of the root API.
 | Matching/comparison | `matchUISnapshots`, `analyzeUI`, `validateUIAnalysisOptions` |
 | Model integration | `SLMClient`, `SLMError`, `OllamaProvider`, `analyzeUIWithSLM` |
 | Bot foundation | `BotRegistry`, `BotExecutor`, `BotEventEmitter`, `BotError`, `createTaskContext`, `DEFAULT_EXECUTION_LIMITS`, `validateBotInput`, `validateBotResult` |
+| RUDRA | `RudraOrchestrator`, `CapabilityPlanner`, `RudraError` |
 
 ### Type-only exports: complete inventory
 
@@ -124,6 +132,7 @@ helper part of the root API.
 | Ollama transport | `OllamaProviderOptions`, `SLMFetch`, `SLMFetchOptions`, `SLMFetchResponse` |
 | Visual SLM advice | `SLMUITask`, `SLMUIOptions`, `SLMAdviceProvenance`, `SLMIssueAdvice`, `SLMUIResult` |
 | Bot foundation | `Bot`, `BotContext`, `BotInput`, `BotResult`, `Capability`, `BotTask`, `TaskStatus`, `ToolDescriptor`, `SecurityContext`, `BotValue`, `BotSignal`, `CallerIdentity`, `ExecutionLimits`, `TaskContextOptions`, `TaskContext`, `BotErrorCode`, `BotErrorDetails`, `BotEventIdentity`, `BotEventMap`, `BotEventType`, `BotEventListener` |
+| RUDRA | `RudraTaskStatus`, `WorkflowInput`, `WorkflowStep`, `WorkflowPlan`, `PlanningContext`, `Planner`, `RudraOptions`, `RudraErrorCode`, `RudraErrorDetails`, `StepOutput`, `ApprovalRequest`, `ApprovalHandler`, `ExecutionTrace`, `RudraHooks`, `RudraResult` |
 
 ### Class and function behavior
 
@@ -154,6 +163,10 @@ helper part of the root API.
 | `createTaskContext(task, options)` | Frozen request/host snapshots; host supplies identity, scope, tool permissions, signal and limits separately |
 | `BotExecutor.execute(bot, context)` | Caller-selected bot only; input/output validation, fixed errors, cancellation/deadline and per-object busy guard; no routing or RUDRA |
 | `BotError`, bot validators and defaults | Fixed error codes/messages, structural input/result assertions and bounded default execution settings |
+| `RudraOrchestrator.run(context, options?)` | Deterministic capability/ID routing, validated sequential workflows, host approval, bounded retries/deadline, aggregated outputs and immutable traces; one active workflow per instance |
+| `RudraOrchestrator.dispose()` | Stops admission and requests cancellation; unfinished callbacks retain capacity until settlement |
+| `CapabilityPlanner.plan(context)` | Single step for the requested capability; no provider or inference |
+| `RudraError` | Fixed orchestration errors, separate from existing bot/SLM contracts |
 
 `Optimizer`, `ResolvedOptimizer`, `activate`, `activationDerivative`, `finite`,
 `integer`, provider budget helpers and tolerance resolution are internal to the
@@ -208,7 +221,7 @@ confidence or general intelligence.
 
 | Planned component | Reuse now | Additive integration proposal / limits |
 | --- | --- | --- |
-| RUDRA — orchestrator | Provider injection, structured results, cancellation/error patterns | Registry and bounded task dispatcher; no rewritten NN, open-ended autonomous loop or fabricated routing intelligence |
+| RUDRA — orchestrator | Phase 01 registry, executor, context and validation | Implemented Phase 02: deterministic routing and bounded ordered workflows; optional model planner adapters remain future work |
 | Sanjaya — Vision | `src/visual/` scene validation, geometry, matching, `analyzeUI` | Adapter for supplied scenes; image understanding requires a separately configured backend and evaluation |
 | Brihaspati — Reasoning | `SLMProvider`, `SLMClient`, existing evidence validation | Task-specific schemas and semantic validators; absent backend returns unavailable; model output grants no capabilities |
 | Vishwakarma — Code | Result-validation patterns; no existing code model | Injected code backend producing reviewable text/patch data; application never evaluates generated code automatically |
@@ -272,56 +285,86 @@ work, and prevents late results from reviving disposed state. A Promise timeout
 only stops waiting; workers/processes or the host service must stop CPU/I/O work.
 Unsettled work must retain its concurrency slot until stopped or isolated.
 
-### Proposed folder structure (new directories only as needed)
+### Intended logical structure
+
+The following is the project's logical organization supplied by the user. It
+does not require these physical directories, moving working code, introducing
+empty modules, or restarting completed phases. Phase 00's integration decision
+is to preserve the current source layout and connect these responsibilities
+through the existing contracts and additive adapters.
 
 ```text
-src/
-  index.ts                         # retain all existing exports; add deliberately
-  core/ nn/ metrics/ text/ types/   # existing modules stay in place
-  visual/ slm/                     # existing engines/providers stay in place
-  data/ models/                    # existing placeholders; no new claims
-  agents/                          # Phase 01 foundation, independent of specific bots
-    types.ts                       # BotTask, descriptor, result/context contracts
-    validation.ts                  # runtime schema and budget validation
-    registry.ts                    # explicitly injected specialist registry
-    context.ts                     # request/host separation and frozen snapshots
-    execute.ts                     # one explicitly selected bot; no orchestration
-    index.ts                       # public foundation exports
-    rudra.ts                       # FUTURE bounded routing/execution/lifecycle
-    errors.ts
-    events.ts
-  bots/                            # NEW thin adapters, introduced one at a time
-    sanjaya.ts
-    brihaspati.ts
-    vishwakarma.ts
-    chitragupta.ts
-    hanuman.ts
-    yudhishthira.ts
-    ekalavya.ts
-    jaya.ts
-    vijaya.ts
-  adapters/                        # NEW portable service contracts, no host I/O
-    identity.ts
-    authorization.ts
-    inspection.ts
-    memory.ts
-    learning.ts                    # host worker/candidate activation boundary
-    code.ts                        # backend produces data; execution is separate
-tests/
-  agents/fixtures/                  # add fixtures only when implemented
-  agents.test.mjs                   # top-level files match existing test glob
-  bots-*.test.mjs
-examples/
-  agents.ts                        # explicit composition, once implemented
-  digits/                          # preserve existing example
-docs/
-  SHIVAX_ARCHITECTURE.md
-  SHIVAX_PHASES.md
+SHIVAX/
+  src/
+    core/
+      rudra/
+      registry/
+      orchestration/
+      events/
+      contracts/
+    bots/
+      sanjaya/
+      brihaspati/
+      vishwakarma/
+      chitragupta/
+      hanuman/
+      yudhishthira/
+      ekalavya/
+    security/
+      jaya/
+      vijaya/
+    intelligence/
+      neural/
+      models/
+      providers/
+      routing/
+    memory/
+    tools/
+    integrations/
+    index.ts
+  examples/
+  tests/
+  docs/
+  package.json
 ```
 
-The agents foundation is implemented in Phase 01. RUDRA, bots, adapters and the
-agents example remain proposals. Do not relocate current files to match a new
-diagram. Initially keep additive root exports; secondary
+### Mapping onto the existing repository
+
+| Logical responsibility | Current implementation / additive integration |
+| --- | --- |
+| `core/contracts` | `src/agents/types.ts`, `context.ts`, `validation.ts`, `errors.ts`; keep legacy numeric types in `src/types/`. The existing ML `Task` stays distinct from `BotTask`. |
+| `core/registry` | Existing `src/agents/registry.ts`; reuse `BotRegistry` rather than create another registry under `src/core/`. |
+| `core/events` | Existing `src/agents/events.ts`; reuse the typed event emitter. |
+| `core/orchestration` | `src/agents/execute.ts` remains the one-bot executor. `src/agents/rudra/` adds bounded sequential workflows using that executor. |
+| `core/rudra` | Implemented additively in `src/agents/rudra/`; no `src/core/` migration. See the Phase 02 guide for planner validation, host limits and lifecycle. |
+| Seven `bots/*` roles | Future thin specialist adapters around existing capabilities and injected services. Choose files or subfolders when each requested specialist has actual code; do not generate empty bots. |
+| `security/jaya`, `security/vijaya` | Future trusted identity/policy adapters, logically separate from the seven capability bots. Current `SecurityContext` carries host assertions only. Physical security modules are added when Phase 03 is requested. |
+| `intelligence/neural` | Existing `src/nn/`, backed by `src/core/Tensor.ts`, `src/core/math.ts` and `src/metrics/`. Keep the working engine and imports in place. |
+| `intelligence/models` | Existing `NeuralNet` configuration/parameters/serialization in `src/nn/`. `src/models/LinearRegression.ts` is still an empty placeholder, not an implemented standalone model. |
+| `intelligence/providers` | Existing `src/slm/` provider/client and optional Ollama adapter. Preserve this integration seam and optional runtime behavior. |
+| `intelligence/routing` | Future explicit selection of an appropriate intelligence backend. Distinct from RUDRA selecting specialist tasks; no general backend router exists today. |
+| `memory` | Future scoped store contract used by Chitragupta. The digit demo's explicit model storage stays in `examples/digits/` and is not promoted to agent memory. |
+| `tools` | Current `ToolDescriptor` and permission metadata in `src/agents/types.ts`; executable tools remain future, narrowly constrained host services. |
+| `integrations` | Future portable contracts/composition for `inspectra-automation` and Visynq. Actual browser automation remains in Inspectra and React in Visynq; no mandatory platform runtime enters SHIVAX. |
+| Root entry / examples / tests / docs | Retain `src/index.ts`, dual ESM/CJS/declarations, existing examples/digit assets and current test discovery. New test entry files must still match `tests/*.test.mjs`. |
+
+The current physical `src/core/` contains numeric utilities. The logical name
+`core` above means the bot framework's responsibilities; it does not replace or
+rename that existing directory. Similarly, `intelligence/*` groups existing
+capabilities conceptually without moving `src/nn/`, `src/visual/`, `src/slm/`,
+`src/metrics/` or `src/text/`.
+
+Jaya and Vijaya represent mandatory trusted security checks at protected host
+boundaries. A future planner must not be able to omit those checks by skipping
+a registered bot. Specialist adapters depend on portable contracts and existing
+intelligence services; the ML engine remains independently usable. Distinguish
+the memory service from its Chitragupta adapter and inspection integration from
+its Hanuman adapter, avoiding duplicate implementations for the same role.
+
+No move is a prerequisite for a later phase. If a future task explicitly calls
+for physical relocation, treat it as a separate compatibility migration with
+tests, not as implicit authorization from this diagram. Prefer additive
+implementation near existing code and retain root exports. Secondary
 subpaths require coordinated exports, build, declaration and package-allowlist
 changes with consumer tests. Avoid adding platform ambient types to portable
 root declarations. Default imports must not construct services or download models.

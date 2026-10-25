@@ -4,6 +4,7 @@ export { BotEventEmitter } from './events.js';
 export { BotError } from './errors.js';
 export { createTaskContext } from './context.js';
 export { DEFAULT_EXECUTION_LIMITS, validateBotInput, validateBotResult } from './validation.js';
+export * from './rudra/index.js';
 export type {
     Bot,
     BotContext,

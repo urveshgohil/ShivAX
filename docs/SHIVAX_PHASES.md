@@ -5,7 +5,7 @@
 
 Date: 2026-10-25 (Asia/Calcutta).
 Companion: [architecture and complete public API inventory](SHIVAX_ARCHITECTURE.md).
-This is the implementation order. **Phases 00 and 01 are complete; later phases
+This is the implementation order. **Phases 00, 01 and 02 are complete; later phases
 remain proposals.** Phase numbers below describe this new multi-bot
 roadmap, not the older neural-network, digit or visual-comparison phase numbers.
 
@@ -17,6 +17,10 @@ roadmap, not the older neural-network, digit or visual-comparison phase numbers.
 - Preserve the current ML engine, defaults, public APIs, digit assets, dataset,
   serialization format and browser demo. Prefer additive adapters and dependency
   injection. Do not move working files simply to match a proposed folder tree.
+- Follow the user's logical responsibility structure and its
+  [repository mapping](SHIVAX_ARCHITECTURE.md#mapping-onto-the-existing-repository).
+  It is not a required physical reorganization: retain the existing `src/agents/`
+  foundation and ML folders. Add new modules only within the requested phase.
 - Keep TypeScript, current build tools, ESM/CJS outputs, Node >=22 and portable
   declarations. Keep browser and heavy model runtimes optional.
 - Validate runtime input/output; use real implemented capabilities. Missing or
@@ -39,7 +43,7 @@ relevant verification; missing live infrastructure must be reported explicitly.
 ```text
 00 Audit and proposal (complete)
  -> 01 Bot foundation, registry, events and selected-bot execution (complete)
- -> 02 Bounded RUDRA execution
+ -> 02 Bounded RUDRA execution (complete)
  -> 03 Jaya / Vijaya and protected service boundaries
  -> 04 Sanjaya / Yudhishthira using deterministic existing capabilities
  -> 05 Brihaspati using optional existing SLM providers
@@ -53,7 +57,7 @@ relevant verification; missing live infrastructure must be reported explicitly.
 The sequence favors an inspectable executor and access boundaries before
 resource-bearing integrations. Each specialist can remain absent until its
 real backend/adapter is implemented. Phase 01 adds direct execution of an
-explicitly supplied bot; Phase 02 remains the RUDRA routing/lifecycle phase.
+explicitly supplied bot; Phase 02 adds RUDRA routing and workflow lifecycle.
 Protected services wait for Phase 03. Ordinary legacy direct
 ML calls remain available and unchanged throughout.
 
@@ -68,9 +72,9 @@ Deliverables:
 | Requirement | Evidence |
 | --- | --- |
 | Current architecture report | `SHIVAX_ARCHITECTURE.md`, sections 1–2 and 4 |
-| Existing public API inventory | Section 3 retains the original 38 runtime / 66 type-only exports and documents the Phase 01 additions; classes and methods included |
+| Existing public API inventory | Section 3 retains the original 38 runtime / 66 type-only exports and documents Phase 01/02 additions; classes and methods included |
 | Reusable module inventory | Section 5: all nine specialists and RUDRA mapped to existing code and missing responsibilities |
-| Proposed target folders | Section 6; existing directories retained, new modules explicitly marked as proposals |
+| Logical structure and repository mapping | Section 6; maps the user's intended roles onto current files and future additive modules, without requiring relocation |
 | Risk and dependency analysis | Section 7; current zero runtime dependencies and proposed host adapter boundaries |
 | Recommended implementation order | This document, Phases 01–10 and dependency gates |
 | Detailed initial audit | `shivax-phase00-audit.md`, including dataset hash and validation evidence |
@@ -185,21 +189,40 @@ dataset preservation and package dry run passed. The same original ML/demo
 source, package exports and build configuration are preserved. Exact commands,
 changed files and limitations are in the review report. No later phase started.
 
-## Phase 02 — RUDRA bounded dispatch and lifecycle
+## Phase 02 — RUDRA cognitive orchestrator
 
-Prerequisite: Phase 01 contracts and registry.
+Status: complete under the user's Phase 02 request (2026-10-26). Prerequisite:
+Phase 01 contracts and registry. The request authorizes deterministic routing,
+a provider-independent Planner interface, dependent sequential workflows,
+approval lifecycle, bounded retries and traces in this phase.
 
-Implement caller-selected sequential dispatch to explicitly registered pure
-capabilities. Inject registry and narrow execution dependencies. Validate before
-dispatch and after return. Enforce finite steps, size, deadline and concurrency
-budgets. Define real lifecycle events, sanitized failures, cancellation,
-disposal and rejection of stale/late completions. Preserve underlying operation
-ownership; a timeout must not free capacity for still-running work.
+`src/agents/rudra/` adds `RudraOrchestrator`, `CapabilityPlanner` and `RudraError`.
+It reuses existing context/result validation and selected-bot execution.
+Routing snapshots the registry and sorts matching bot IDs; plans cannot choose
+arbitrary implementations or change the trusted host's capability/tool policy.
+All plan schemas, dependencies and routes are validated before dispatch. A
+host-owned approval hook gates every attempt when supplied. Defaults allow only
+the requested capability, 16 execution attempts and zero retries.
 
-Acceptance: routing reaches the selected real handler; unknown/invalid tasks
-never invoke one. Tests cover success, thrown/rejected/invalid output, timeout,
-pre/during cancellation, busy handling, disposal and late results. No hidden
-retry loop, unrestricted tool registry, autonomous planning or protected I/O.
+The total deadline includes planning, approval and execution. Retries consume
+the same step budget. Pending callbacks retain instance capacity after timeout
+or cancellation; late completion cannot revive results. Outputs are accumulated
+in plan order with a total data budget, and immutable traces record actual
+decisions and failures. `dispose()` stops admission and signals cancellation.
+
+The [Phase 02 implementation guide](rudra-orchestrator.md) lists the full API,
+changed files, tests, verification results and limitations. The arithmetic mock
+demo is `node examples/rudra.mjs` after building; it makes no provider or I/O
+service calls. Existing ML exports, source, digit data/demo and build tools are
+preserved. No authentication service, real specialist, unrestricted tool,
+autonomous replanning or model adapter is introduced. Stop after Phase 02.
+
+Acceptance results (Node v24.19.0): **204 tests passed** (32 new plus 172 existing),
+zero failures/cancellations/skips. TypeScript/Rollup build, no-emit type checks,
+ESLint, demo, legacy export inventory and package dry run passed. Packaging has
+45 entries including six RUDRA declarations and no mock/test files. Existing
+ML/demo source and dataset hash are unchanged. No browser runtime or minimum
+Node 22 matrix was run; in-process callbacks require cooperative cancellation.
 
 ## Phase 03 — Jaya authentication and Vijaya authorization
 
@@ -209,6 +232,9 @@ external inference, activation or execution services are exposed through RUDRA.
 Define trusted host identity and resource-policy adapters. Jaya verifies the
 host session and yields a principal; Vijaya evaluates explicit action/resource
 permissions for that verified principal. Scope IDs are not credentials.
+Jaya/Vijaya belong to the logical security layer, with enforcement at trusted
+host boundaries rather than optional planner-selected bot steps. Choose their
+physical modules additively; no foundation or ML folder migration is required.
 Revalidate access at each protected service boundary, including delegated
 operations. Supply only the authorized service interface to the specialist.
 Any anonymous/local mode is explicit and confined to its configured pure tasks.
@@ -335,6 +361,6 @@ requires a separate request and is not part of this roadmap's implementation.
 
 ## Stop condition
 
-Phases 00 and 01 are complete when their deliverables and relevant checks pass
-and limitations are reported. Phase 02 and later remain proposals awaiting an
-explicit request. Phase 01 completion does not start RUDRA implementation.
+Phases 00, 01 and 02 are complete when their deliverables and relevant checks
+pass and limitations are reported. Phase 03 and later remain proposals awaiting
+an explicit request. RUDRA completion does not start security or specialist work.

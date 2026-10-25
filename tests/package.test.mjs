@@ -48,7 +48,8 @@ test('core and bot consumers type-check public exports with ES2020 alone and no 
 import {
     NeuralNet, SLMClient, BotRegistry, BotExecutor, BotEventEmitter, createTaskContext,
     type Task, type BotTask, type Bot, type BotInput, type BotSignal, type BotResult,
-    type ToolDescriptor, type BotErrorCode,
+    type ToolDescriptor, type BotErrorCode, RudraOrchestrator, CapabilityPlanner,
+    type Planner, type WorkflowPlan, type RudraResult, type RudraTaskStatus,
 } from ${JSON.stringify(entry)};
 import type { ${LEGACY_TYPE_EXPORTS.map(name => `${name} as Legacy_${name}`).join(', ')} } from ${JSON.stringify(entry)};
 const legacyTask: Task = 'binary';
@@ -79,6 +80,18 @@ const incompatibleTask: Task = task;
 context.security.caller.id = 'other';
 new BotRegistry(events).register(bot);
 const result: Promise<BotResult<string>> = new BotExecutor(events).execute(bot, context);
+const workflow: WorkflowPlan = { steps: [{ id: 'echo', capability: 'echo', input: { source: 'task' } }] };
+const planner: Planner = { plan: request => { const signal: BotSignal = request.signal; return workflow; } };
+const rudra = new RudraOrchestrator(new BotRegistry().register(bot), {
+    planner, approve: async request => request.input.capability === 'echo',
+    onTrace: entry => { const status: RudraTaskStatus | undefined = entry.status; },
+});
+const workflowResult: Promise<RudraResult> = rudra.run(context, { maxSteps: 2, maxRetries: 0 });
+const defaultPlanner: Planner = new CapabilityPlanner();
+// @ts-expect-error Workflow input references are explicitly discriminated.
+const badWorkflow: WorkflowPlan = { steps: [{ id: 'bad', capability: 'echo', input: { source: 'step' } }] };
+// @ts-expect-error A model plan cannot change host permissions.
+const escalated: WorkflowPlan = { steps: [], security: context.security };
 `);
         writeFileSync(join(directory, 'tsconfig.json'), JSON.stringify({ compilerOptions: {
             noEmit: true, strict: true, skipLibCheck: false, lib: ['ES2020'], types: [], module: 'ESNext', moduleResolution: 'bundler',
