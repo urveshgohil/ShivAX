@@ -6,6 +6,11 @@ sequential workflows. It composes the Phase 01 `BotRegistry`, `BotExecutor` and
 no model provider, runtime dependency, tool executor, filesystem or network I/O.
 The logical architecture maps additively to `src/agents/rudra/`.
 
+Phase 03 now adds [Jaya/Vijaya security](jaya-vijaya-security.md) through
+`RudraHooks.security`. That guard authenticates contexts and authorizes both
+capability dispatch and protected tool calls. Pure legacy workflows retain the
+Phase 02 behavior described here; tool-using bots require the security guard.
+
 ## Public API and basic usage
 
 New runtime exports are `RudraOrchestrator`, `CapabilityPlanner`, and `RudraError`.
@@ -122,7 +127,7 @@ Jaya/Vijaya authentication or resource authorization.
 | Input/plan size | `maxInputBytes` bounds the task envelope, full proposed plan, and every resolved bot-input envelope independently; default 65,536 bytes. |
 | Output size | `maxOutputBytes` bounds each bot result envelope and the entire accumulated output array; default 65,536 bytes. Exceeding the aggregate cap returns `output-limit` and retains only prior bounded outputs. |
 | Data traversal | Foundation limits: depth 32, 10,000 values, finite JSON data, maximum configurable byte budget 1,048,576. |
-| Traces | At most 504 fixed-schema entries per run; IDs inherit the 256-character bound. Traces have a separate structural bound and are not charged to the output-data byte budget. |
+| Traces | Pure Phase 02 runs have at most 504 fixed-schema entries; Phase 03 adds security approval transitions bounded by the attempt and per-attempt tool call limits. IDs inherit the 256-character bound. Traces have a separate structural bound and are not charged to the output-data byte budget. |
 
 Retries are explicit and traceable. Enable them only for pure or idempotent
 implementations: a thrown error does not prove that an external effect did not
@@ -156,7 +161,7 @@ and rejected promises are isolated and observers are never awaited.
 RUDRA error codes are `invalid-options`, `invalid-plan`, `planner-error`,
 `missing-capability`, `capability-denied`, `approval-denied`, `approval-error`,
 `max-steps`, `output-limit`, `bot-failed`, `timeout`, `cancelled`, `busy`, and
-`disposed`. Bot outcome traces retain canonical Phase 01 errors such as
+`disposed`; Phase 03 adds `security-denied`. Bot outcome traces retain canonical Phase 01 errors such as
 `invalid-input`, `invalid-output`, and `tool-not-allowed`. RUDRA terminal errors
 include step/bot context in the terminal trace when known. Messages are fixed;
 planner/host/provider exception text is never forwarded.
@@ -228,5 +233,5 @@ Browser runtime and minimum Node 22 testing are separate from portable
 declarations and Node 24 regressions; no live model or new MNIST accuracy
 benchmark is claimed. **Phase 02 is complete.**
 
-Phase 03 authentication/authorization and later specialist integrations remain
-outside this phase and require a separate request.
+Phase 03 is implemented separately in the security guide linked above. Later
+specialist integrations remain outside this phase and require a separate request.

@@ -50,6 +50,8 @@ import {
     type Task, type BotTask, type Bot, type BotInput, type BotSignal, type BotResult,
     type ToolDescriptor, type BotErrorCode, RudraOrchestrator, CapabilityPlanner,
     type Planner, type WorkflowPlan, type RudraResult, type RudraTaskStatus,
+    Jaya, Vijaya, PermissionPolicyRegistry, ProtectedToolRegistry, SecurityAuditLog,
+    type IdentityProvider, type AuthenticatedIdentity, type ProtectedTool, type SecurityDecision,
 } from ${JSON.stringify(entry)};
 import type { ${LEGACY_TYPE_EXPORTS.map(name => `${name} as Legacy_${name}`).join(', ')} } from ${JSON.stringify(entry)};
 const legacyTask: Task = 'binary';
@@ -92,6 +94,30 @@ const defaultPlanner: Planner = new CapabilityPlanner();
 const badWorkflow: WorkflowPlan = { steps: [{ id: 'bad', capability: 'echo', input: { source: 'step' } }] };
 // @ts-expect-error A model plan cannot change host permissions.
 const escalated: WorkflowPlan = { steps: [], security: context.security };
+declare const verifiedIdentity: AuthenticatedIdentity;
+const identityProvider: IdentityProvider = {
+    authenticate: async signal => verifiedIdentity,
+    isSessionValid: async (identity, signal) => identity.session.principalId === identity.principal.id,
+};
+const audit = new SecurityAuditLog();
+const jaya = new Jaya(identityProvider, { audit });
+const policies = new PermissionPolicyRegistry().register({
+    kind: 'capability', id: 'echo', permissions: ['echo'], effect: 'read-only', validateInput: () => true,
+});
+const protectedTool: ProtectedTool<string, string> = {
+    id: 'read', validateInput: (input): input is string => typeof input === 'string',
+    validateOutput: (output): output is string => typeof output === 'string',
+    execute: async (input, context) => input,
+};
+const tools = new ProtectedToolRegistry().register(protectedTool);
+const security = new Vijaya(jaya, policies, { tools, audit, approve: async request => request.effect === 'read-only' });
+const secured = new RudraOrchestrator(new BotRegistry().register(bot), { security });
+const authenticatedRun = jaya.createContext(task, { signal }).then(context => secured.run(context));
+const decisions: readonly SecurityDecision[] = audit.list();
+// @ts-expect-error Authentication identity is immutable and separate from task data.
+verifiedIdentity.principal.permissions.push('admin');
+// @ts-expect-error Security policy classifications are explicit.
+policies.register({ kind: 'tool', id: 'read', permissions: ['read'], effect: 'trusted', validateInput: () => true });
 `);
         writeFileSync(join(directory, 'tsconfig.json'), JSON.stringify({ compilerOptions: {
             noEmit: true, strict: true, skipLibCheck: false, lib: ['ES2020'], types: [], module: 'ESNext', moduleResolution: 'bundler',

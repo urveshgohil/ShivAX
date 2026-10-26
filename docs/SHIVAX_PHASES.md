@@ -5,7 +5,7 @@
 
 Date: 2026-10-25 (Asia/Calcutta).
 Companion: [architecture and complete public API inventory](SHIVAX_ARCHITECTURE.md).
-This is the implementation order. **Phases 00, 01 and 02 are complete; later phases
+This is the implementation order. **Phases 00–03 are complete; later phases
 remain proposals.** Phase numbers below describe this new multi-bot
 roadmap, not the older neural-network, digit or visual-comparison phase numbers.
 
@@ -44,7 +44,7 @@ relevant verification; missing live infrastructure must be reported explicitly.
 00 Audit and proposal (complete)
  -> 01 Bot foundation, registry, events and selected-bot execution (complete)
  -> 02 Bounded RUDRA execution (complete)
- -> 03 Jaya / Vijaya and protected service boundaries
+ -> 03 Jaya / Vijaya and protected service boundaries (complete)
  -> 04 Sanjaya / Yudhishthira using deterministic existing capabilities
  -> 05 Brihaspati using optional existing SLM providers
  -> 06 Chitragupta scoped memory
@@ -58,8 +58,8 @@ The sequence favors an inspectable executor and access boundaries before
 resource-bearing integrations. Each specialist can remain absent until its
 real backend/adapter is implemented. Phase 01 adds direct execution of an
 explicitly supplied bot; Phase 02 adds RUDRA routing and workflow lifecycle.
-Protected services wait for Phase 03. Ordinary legacy direct
-ML calls remain available and unchanged throughout.
+Phase 03 supplies the security boundary for explicitly injected protected
+services. Ordinary legacy direct ML calls remain available and unchanged throughout.
 
 ## Phase 00 — Existing repository audit
 
@@ -72,7 +72,7 @@ Deliverables:
 | Requirement | Evidence |
 | --- | --- |
 | Current architecture report | `SHIVAX_ARCHITECTURE.md`, sections 1–2 and 4 |
-| Existing public API inventory | Section 3 retains the original 38 runtime / 66 type-only exports and documents Phase 01/02 additions; classes and methods included |
+| Existing public API inventory | Section 3 retains the original 38 runtime / 66 type-only exports and documents Phase 01–03 additions; classes and methods included |
 | Reusable module inventory | Section 5: all nine specialists and RUDRA mapped to existing code and missing responsibilities |
 | Logical structure and repository mapping | Section 6; maps the user's intended roles onto current files and future additive modules, without requiring relocation |
 | Risk and dependency analysis | Section 7; current zero runtime dependencies and proposed host adapter boundaries |
@@ -168,7 +168,8 @@ These checks use local tools rather than the pnpm wrapper whose global-store
 permissions failed during the audit. The package-manager environment has not
 been changed or claimed repaired.
 
-Identity and permissions remain host assertions; Jaya/Vijaya are not implemented.
+At the Phase 01 checkpoint, identity and permissions are host assertions;
+Jaya/Vijaya are added separately in Phase 03 below.
 Injected code is trusted, and cancellation cannot preempt blocking JavaScript.
 The per-object busy guard belongs to one executor, not a process-wide scheduler.
 Repository hygiene findings from Phase 00 remain deferred: the explicit Phase 01
@@ -226,23 +227,34 @@ Node 22 matrix was run; in-process callbacks require cooperative cancellation.
 
 ## Phase 03 — Jaya authentication and Vijaya authorization
 
-Prerequisite: Phase 02 executor. Required before protected storage, inspection,
-external inference, activation or execution services are exposed through RUDRA.
+Status: complete under the user's Phase 03 request (2026-10-26). Jaya and Vijaya
+are mandatory guards for protected services, not planner-selected bot steps.
+They are added in `src/security/` and connected through `RudraHooks.security`.
+Jaya mints immutable contexts from trusted host adapters and validates provenance,
+principal/session correspondence, expiry and revocation. Copied or client-supplied
+IDs do not establish identity.
 
-Define trusted host identity and resource-policy adapters. Jaya verifies the
-host session and yields a principal; Vijaya evaluates explicit action/resource
-permissions for that verified principal. Scope IDs are not credentials.
-Jaya/Vijaya belong to the logical security layer, with enforcement at trusted
-host boundaries rather than optional planner-selected bot steps. Choose their
-physical modules additively; no foundation or ML folder migration is required.
-Revalidate access at each protected service boundary, including delegated
-operations. Supply only the authorized service interface to the specialist.
-Any anonymous/local mode is explicit and confined to its configured pure tasks.
+Vijaya adds exact-permission policies, deny-by-default capability/tool checks,
+read-only/state-changing classification and mandatory explicit approval for
+protected actions. It rechecks session, policy, input, scope and approval at tool
+execution. Bots receive only a revocable, bounded tool client; they cannot change
+permissions. A bounded audit ring records allow/deny evidence without credentials,
+payloads or raw exception bodies. Policies and host handlers are never supplied
+to model planners. Real authentication remains configured by the trusted host.
 
-Acceptance: missing/expired identity, scope mismatch, revoked/denied permission
-and cross-resource access fail before the service call. Tests prove zero calls
-after denial and no permission widening through task content or bot output.
-No custom password database, token cryptography or model-based auth decisions.
+The [security guide](jaya-vijaya-security.md) contains the API, changed files,
+integration example, acceptance evidence and limitations. Tests use mock identity
+providers and narrow in-memory tools. All unauthorized tool test cases reject
+before invoking a handler. No real identity service, unrestricted tool, password
+database, cryptography, filesystem/network service or durable log storage is added.
+
+Acceptance: **240 tests passed** (36 new security tests and all 204 prior tests),
+zero failures/cancellations/skips on Node v24.19.0. TypeScript/Rollup build,
+ES2020 consumer types, lint, Phase 02 demo and package dry run passed. All original
+exports remain; package selection contains 53 entries, eight new security
+declarations and no test/mock files. ML source, examples, build configuration and
+dataset hash remain unchanged. Rollup emits non-fatal warnings for generated
+ES2020 private-field helpers; details are in the guide. Stop before Phase 04.
 
 ## Phase 04 — Sanjaya vision and Yudhishthira review adapters
 
@@ -361,6 +373,6 @@ requires a separate request and is not part of this roadmap's implementation.
 
 ## Stop condition
 
-Phases 00, 01 and 02 are complete when their deliverables and relevant checks
-pass and limitations are reported. Phase 03 and later remain proposals awaiting
-an explicit request. RUDRA completion does not start security or specialist work.
+Phases 00–03 are complete when their deliverables and relevant checks pass and
+limitations are reported. Phase 04 and later remain proposals awaiting an
+explicit request. Security completion does not start specialist integrations.

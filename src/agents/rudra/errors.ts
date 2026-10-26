@@ -14,6 +14,7 @@ const messages: Record<RudraErrorCode, string> = {
     timeout: 'Workflow deadline exceeded.',
     cancelled: 'Workflow cancelled.',
     busy: 'RUDRA still owns an active operation.',
+    'security-denied': 'The security layer denied this operation.',
     disposed: 'RUDRA is disposed.',
 };
 export class RudraError extends Error {

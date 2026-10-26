@@ -1,4 +1,5 @@
 import type { SLMSignal } from '../slm/provider.js';
+import type { BotToolClient } from '../security/types.js';
 
 /** Plain, finite JSON data. Executable objects and platform resources are not task data. */
 export type BotValue =
@@ -59,6 +60,8 @@ export interface TaskContext {
 }
 export interface BotContext {
     readonly task: TaskContext;
+    /** Available only for a Vijaya-secured invocation. It cannot alter identity or policy. */
+    readonly tools?: BotToolClient;
 }
 export type BotErrorCode =
     | 'invalid-bot'

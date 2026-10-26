@@ -5,13 +5,15 @@
 
 Phase 00 audit baseline, 2026-10-25 (Asia/Calcutta), checkout `e47f462`,
 with the additive [Phase 01 bot foundation](bot-foundation.md) and
-[Phase 02 RUDRA orchestrator](rudra-orchestrator.md) (2026-10-26).
+[Phase 02 RUDRA orchestrator](rudra-orchestrator.md), followed by
+[Phase 03 Jaya/Vijaya security](jaya-vijaya-security.md) (2026-10-26).
 Sections describing the current implementation are source-backed observations.
 The logical structure clarified on 2026-10-26 describes responsibility boundaries,
 not a required repository reorganization. Its mapping to current files is in section 6.
 The registry, contracts, events and one-bot executor are implemented in Phase 01;
-bounded RUDRA workflows are implemented in Phase 02. Production specialists and
-protected resource integrations remain proposals.
+bounded RUDRA workflows are implemented in Phase 02. Phase 03 adds trusted host
+identity validation and policy-enforced tool boundaries. Production specialists,
+real identity-provider configuration and resource integrations remain future work.
 See [implementation phases](SHIVAX_PHASES.md) and the
 [initial audit evidence](shivax-phase00-audit.md).
 
@@ -26,8 +28,9 @@ See [implementation phases](SHIVAX_PHASES.md) and the
 3. Phase 01 adds a bot registry, shared contracts, task context, typed events and
    explicit one-bot execution. Phase 02 adds provider-independent RUDRA routing,
    validated ordered plans, approval hooks, bounded retries and execution traces.
-   Named production specialists, general tools, authentication, authorization
-   and durable agent memory remain unimplemented.
+   Phase 03 adds Jaya context provenance/session verification and Vijaya policy
+   checks, explicit approval and protected tool leases. Production specialist
+   adapters, general tools and durable agent memory remain unimplemented.
 4. The safest extension is additive: small bot adapters call existing APIs;
    RUDRA routes bounded tasks to explicitly registered implementations.
 5. Release hygiene and documentation need attention: environment-file ignore
@@ -55,6 +58,7 @@ and Git history were not audited line by line.
 | `src/slm/` | Provider contract, scoped client, sanitized errors and loopback Ollama adapter |
 | `src/agents/` | Phase 01 contracts, context/input/result validation, registry, events and explicit one-bot executor |
 | `src/agents/rudra/` | Phase 02 deterministic routing, pluggable planner, sequential dependencies, host approval, budgets, cancellation and traces |
+| `src/security/` | Phase 03 Jaya, Vijaya, permission/tool registries, bounded audit records and revocable tool clients; real identity/services remain host-configured |
 | `src/data/DataFrame.ts`, `src/models/LinearRegression.ts` | Empty placeholders, neither implemented nor root-exported |
 | `examples/` | XOR, regression, text, typed core, scene and comparison examples; digit playground |
 | `examples/digits/` | Drawing/preprocessing, training/inference worker, dashboard, live inference and explicit IndexedDB model storage |
@@ -62,7 +66,7 @@ and Git history were not audited line by line.
 | `scripts/serve-examples.mjs` | Loopback static demo server with explicit route allowlist and ports 4173–4182 |
 | `scripts/prepare-mnist.mjs` | Local bounded IDX/gzip validation, balanced subset conversion and exclusive creation of new JSON output |
 | `scripts/compare-digits.mjs` | Explicit local-file, reproducible 500-sample dataset comparison; distinct in-domain test sets |
-| `tests/` | 15 Node test files plus fixtures, covering core, digits, package, visual, SLM, bot foundation and RUDRA contracts |
+| `tests/` | 16 Node test files plus fixtures, covering core, digits, package, visual, SLM, bot foundation, RUDRA and security contracts |
 | `docs/`, `README.md`, `examples/README.md`, `SECURITY.md` | Feature guides, prior phase evidence and operating instructions; some historical claims are stale |
 | `Shivax_Visual_Comparison_Phased_Prompts.md` | Historical visual/scanner plan; its claim that SLM/visual analysis is absent is superseded by current source |
 | `custom-js-ai-plan.docx` | Historical aspirational feature plan, inspected as text; not proof that its proposed chat/camera/advanced models exist or current-phase authorization |
@@ -95,8 +99,8 @@ PNG pixels through the visual API. Input source labels describe supplied data.
 
 Only `shivax` (`exports["."]`) is a supported package entry. ESM resolves to
 `dist/index.esm.js`, CommonJS to `dist/index.cjs`, and declarations to
-`dist/index.d.ts`. There are **49 runtime exports and 102 additional type-only
-exports**. Classes below also have declaration types; the 102 count excludes
+`dist/index.d.ts`. There are **55 runtime exports and 119 additional type-only
+exports**. Classes below also have declaration types; the 119 count excludes
 those runtime symbols. Internal `export` statements do not automatically make a
 helper part of the root API.
 
@@ -116,6 +120,7 @@ helper part of the root API.
 | Model integration | `SLMClient`, `SLMError`, `OllamaProvider`, `analyzeUIWithSLM` |
 | Bot foundation | `BotRegistry`, `BotExecutor`, `BotEventEmitter`, `BotError`, `createTaskContext`, `DEFAULT_EXECUTION_LIMITS`, `validateBotInput`, `validateBotResult` |
 | RUDRA | `RudraOrchestrator`, `CapabilityPlanner`, `RudraError` |
+| Security | `Jaya`, `Vijaya`, `PermissionPolicyRegistry`, `ProtectedToolRegistry`, `SecurityAuditLog`, `SecurityError` |
 
 ### Type-only exports: complete inventory
 
@@ -133,6 +138,7 @@ helper part of the root API.
 | Visual SLM advice | `SLMUITask`, `SLMUIOptions`, `SLMAdviceProvenance`, `SLMIssueAdvice`, `SLMUIResult` |
 | Bot foundation | `Bot`, `BotContext`, `BotInput`, `BotResult`, `Capability`, `BotTask`, `TaskStatus`, `ToolDescriptor`, `SecurityContext`, `BotValue`, `BotSignal`, `CallerIdentity`, `ExecutionLimits`, `TaskContextOptions`, `TaskContext`, `BotErrorCode`, `BotErrorDetails`, `BotEventIdentity`, `BotEventMap`, `BotEventType`, `BotEventListener` |
 | RUDRA | `RudraTaskStatus`, `WorkflowInput`, `WorkflowStep`, `WorkflowPlan`, `PlanningContext`, `Planner`, `RudraOptions`, `RudraErrorCode`, `RudraErrorDetails`, `StepOutput`, `ApprovalRequest`, `ApprovalHandler`, `ExecutionTrace`, `RudraHooks`, `RudraResult` |
+| Security | `AuthenticatedPrincipal`, `AuthenticatedSession`, `AuthenticatedIdentity`, `IdentityProvider`, `AuthenticatedContextOptions`, `SecurityActionKind`, `ActionEffect`, `PermissionPolicy`, `ToolExecutionContext`, `ProtectedTool`, `BotToolClient`, `SecurityApprovalRequest`, `SecurityApprovalHandler`, `SecurityErrorCode`, `SecurityDecision`, `VijayaOptions`, `SecurityExecutionHooks` |
 
 ### Class and function behavior
 
@@ -167,6 +173,12 @@ helper part of the root API.
 | `RudraOrchestrator.dispose()` | Stops admission and requests cancellation; unfinished callbacks retain capacity until settlement |
 | `CapabilityPlanner.plan(context)` | Single step for the requested capability; no provider or inference |
 | `RudraError` | Fixed orchestration errors, separate from existing bot/SLM contracts |
+| `Jaya.createContext`, `verify`, `assertActive` | Host adapter authentication, exact-context provenance, identity/session validation, expiry and revocation checks; client IDs alone cannot grant authority |
+| `Vijaya.validateTask`, `runBot` | Root admission and per-attempt capability authorization, approval and tool leases; integrated through `RudraHooks.security` |
+| `PermissionPolicyRegistry` | Register/get/list/unregister frozen policy snapshots; default deny, exact permission strings, resource predicates and mandatory approval for state changes |
+| `ProtectedToolRegistry` | Register/get/unregister narrow host tool implementations with input/output predicates; no built-in resource handlers |
+| `SecurityAuditLog.list` | Frozen snapshots of a bounded allow/deny ring; excludes credentials, input/output and raw identity/session/task IDs |
+| `BotContext.tools` | Optional secured invocation client exposing only `execute(id,input)`; invalidated at bot completion |
 
 `Optimizer`, `ResolvedOptimizer`, `activate`, `activationDerivative`, `finite`,
 `integer`, provider budget helpers and tolerance resolution are internal to the
@@ -229,8 +241,8 @@ confidence or general intelligence.
 | Hanuman — Inspection | `UISnapshot` contract and supplied measurement validators | Narrow inspection service supplied by `inspectra-automation` host; browser launch/navigation stays outside SHIVAX |
 | Yudhishthira — Review | Structured issues, supporting measurements and `reviewRequired` advice | Explicit deterministic checks and optional validated review backend; reports findings/limits rather than blanket approval |
 | Ekalavya — Learning | `NeuralNet`, metrics, serialization; digit training recipe as reference | Bounded supervised tasks using isolated candidates and worker execution; preserve split policy and require explicit model activation |
-| Jaya — Authentication | No identity engine to reuse | Wrap trusted host identity/session verifier; returns verified principal or authentication failure; no model-based identity decisions |
-| Vijaya — Authorization | Existing scope checks as extra validation only | Explicit deny-by-default capability/resource policy over verified identity; enforce before each protected adapter call |
+| Jaya — Authentication | Existing bounded context/JSON validation | Implemented Phase 03: trusted host identity adapter, immutable principal/session contracts and context provenance; real provider remains host-configured |
+| Vijaya — Authorization | Existing bot execution and RUDRA lifecycle | Implemented Phase 03: deny-by-default policies, approval, resource predicates and tool-time rechecks; narrow host services remain injected |
 
 Do not copy example code into a second ML engine. Where an example helper needs
 to become a public library capability, define that extraction as a separate
@@ -242,7 +254,7 @@ Do not register empty specialist implementations as working bots.
 ```text
 Visynq Workstation React UI (requests; cannot grant host permissions)
   -> authenticated RPC/IPC boundary in trusted Node/server or desktop host
-  -> host task validation and verified identity (future Jaya)
+  -> host task validation and verified identity (Jaya)
   -> RUDRA: explicit registered capability routing and execution budget
   -> authorization (Vijaya) before protected resource/service access
   -> selected specialist(s), each with narrow injected services
@@ -257,6 +269,11 @@ explicit local policy. Scope equality remains an additional check and cannot
 replace authorization. The trusted host decides what access a bot receives.
 Phase 01 only snapshots host assertions and checks required tool-ID metadata;
 it implements no authenticated transport, resource policy or executable tools.
+Phase 03 adds authenticated context provenance through Jaya and application-level
+policy enforcement through Vijaya. Configure the guard at every protected RUDRA
+entry; legacy pure workflows remain available without an identity adapter but
+receive no tool client. Resource-specific services and real authentication
+transports are host-owned, not inferred from request or model data.
 
 Proposed contracts should distinguish `BotTask` from the existing exported ML
 `Task` type. Define a schema version, bounded task ID/kind/input, scope, trusted
@@ -338,7 +355,7 @@ SHIVAX/
 | `core/orchestration` | `src/agents/execute.ts` remains the one-bot executor. `src/agents/rudra/` adds bounded sequential workflows using that executor. |
 | `core/rudra` | Implemented additively in `src/agents/rudra/`; no `src/core/` migration. See the Phase 02 guide for planner validation, host limits and lifecycle. |
 | Seven `bots/*` roles | Future thin specialist adapters around existing capabilities and injected services. Choose files or subfolders when each requested specialist has actual code; do not generate empty bots. |
-| `security/jaya`, `security/vijaya` | Future trusted identity/policy adapters, logically separate from the seven capability bots. Current `SecurityContext` carries host assertions only. Physical security modules are added when Phase 03 is requested. |
+| `security/jaya`, `security/vijaya` | Implemented in `src/security/jaya.ts` and `vijaya.ts`, with shared registry/audit/tool modules. Logical guards remain separate from capability bots. Legacy `SecurityContext` is still an assertion structure; only Jaya-minted root contexts carry provenance recognized by the guard. |
 | `intelligence/neural` | Existing `src/nn/`, backed by `src/core/Tensor.ts`, `src/core/math.ts` and `src/metrics/`. Keep the working engine and imports in place. |
 | `intelligence/models` | Existing `NeuralNet` configuration/parameters/serialization in `src/nn/`. `src/models/LinearRegression.ts` is still an empty placeholder, not an implemented standalone model. |
 | `intelligence/providers` | Existing `src/slm/` provider/client and optional Ollama adapter. Preserve this integration seam and optional runtime behavior. |
@@ -416,6 +433,8 @@ ESM runtime; no runtime export was omitted.
 No fresh browser matrix, live model inference, external repository integration,
 MNIST accuracy benchmark or full third-party security audit was performed.
 The proposal preserves the ML engine and existing Node/browser boundary.
-Phase 00 changed documentation only. Phase 01 adds the portable foundation and
-its tests; later phases remain unimplemented. See [the API guide](bot-foundation.md)
-and [Phase 01 verification](SHIVAX_PHASES.md#phase-01--multi-bot-foundation).
+Phase 00 changed documentation only. Phases 01–03 add the portable foundation,
+RUDRA workflows and Jaya/Vijaya guards without relocating or replacing ML code.
+See the [foundation guide](bot-foundation.md), [RUDRA guide](rudra-orchestrator.md)
+and [security guide](jaya-vijaya-security.md) for each phase's acceptance evidence.
+Phase 04 and later remain unimplemented.

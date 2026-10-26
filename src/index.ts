@@ -14,5 +14,6 @@ export { BagOfWords } from './text/BagOfWords.js';
 export * from './visual/index.js';
 export * from './slm/index.js';
 export * from './agents/index.js';
+export * from './security/index.js';
 
 export const VERSION = '0.1.0';

@@ -1,7 +1,8 @@
 import { createTaskContext, snapshotContext } from '../context.js';
 import { BotExecutor } from '../execute.js';
 import { BotRegistry } from '../registry.js';
-import { errorDetails } from '../errors.js';
+import { BotError, errorDetails } from '../errors.js';
+import { SecurityError } from '../../security/errors.js';
 import { snapshotValue } from '../validation.js';
 import type { BotValue, Capability, TaskContext } from '../types.js';
 import { details, RudraError } from './errors.js';
@@ -23,6 +24,7 @@ export class RudraOrchestrator {
     private readonly planner: Planner;
     private readonly approve: RudraHooks['approve'];
     private readonly onTrace: RudraHooks['onTrace'];
+    private readonly security: RudraHooks['security'];
     private occupied = false;
     private disposed = false;
     private controller?: AbortController;
@@ -34,6 +36,7 @@ export class RudraOrchestrator {
         this.planner = hooks.planner ?? new CapabilityPlanner();
         this.approve = hooks.approve;
         this.onTrace = hooks.onTrace;
+        this.security = hooks.security;
         if (
             typeof this.planner.plan !== 'function' ||
             (this.approve !== undefined && typeof this.approve !== 'function') ||
@@ -50,7 +53,13 @@ export class RudraOrchestrator {
 
     async run(context: TaskContext, options: RudraOptions = {}): Promise<RudraResult> {
         // Invalid trusted-host contracts reject before lifecycle events or any callback.
-        const task = snapshotContext(context);
+        let task: TaskContext;
+        try {
+            task = snapshotContext(context);
+        } catch (error) {
+            this.security?.rejectContext();
+            throw error;
+        }
         const settings = validateOptions(options, task.input.capability);
         const now =
             typeof globalThis.performance?.now === 'function'
@@ -103,7 +112,7 @@ export class RudraOrchestrator {
         let pending = 0,
             ended = false;
         const release = () => {
-            if (ended && pending === 0) {
+            if (ended && pending === 0 && this.controller === controller) {
                 this.occupied = false;
                 this.controller = undefined;
             }
@@ -150,6 +159,9 @@ export class RudraOrchestrator {
             if (task.signal.aborted) cancel();
             check();
             state('running');
+            check();
+            if (this.security)
+                await bounded(track(() => this.security!.validateTask(context, controller.signal)));
             check();
             // Capture descriptors once; registry changes during planning cannot redirect this run.
             const bots = this.registry
@@ -288,15 +300,38 @@ export class RudraOrchestrator {
                             ),
                         }),
                     });
+                    const trackedBot: typeof bot = {
+                        ...bot,
+                        execute: (input, botContext) =>
+                            track(() => {
+                                // Legacy pure workflows remain usable; protected bots require the guard.
+                                if (!this.security && bot.requiredTools?.length)
+                                    throw new BotError('tool-not-allowed');
+                                return bot.execute(input, botContext);
+                            }),
+                    };
+                    let retryAllowed = !this.security;
                     const result = await bounded(
-                        this.executor.execute(
-                            {
-                                ...bot,
-                                execute: (input, context) =>
-                                    track(() => bot.execute(input, context)),
-                            },
-                            child
-                        )
+                        this.security
+                            ? track(() =>
+                                  this.security!.runBot(
+                                      context,
+                                      trackedBot,
+                                      child,
+                                      (secured) => this.executor.execute(secured, child),
+                                      {
+                                          onApproval: (waiting) => {
+                                              if (!controller.signal.aborted)
+                                                  state(waiting ? 'waiting_approval' : 'running');
+                                          },
+                                          trackTool: track,
+                                          onEffect: (effect) => {
+                                              retryAllowed = effect === 'read-only';
+                                          },
+                                      }
+                                  )
+                              )
+                            : this.executor.execute(trackedBot, child)
                     );
                     emit({
                         type: 'outcome',
@@ -322,7 +357,11 @@ export class RudraOrchestrator {
                     }
                     if (result.status === 'cancelled') throw new RudraError('cancelled');
                     if (result.status === 'timed-out') throw new RudraError('timeout');
-                    if (result.error.code === 'bot-error' && attempt <= settings.maxRetries) {
+                    if (
+                        result.error.code === 'bot-error' &&
+                        attempt <= settings.maxRetries &&
+                        retryAllowed
+                    ) {
                         emit({
                             type: 'retry',
                             stepId: step.id,
@@ -345,7 +384,13 @@ export class RudraOrchestrator {
             });
         } catch (error) {
             const cause = controller.signal.aborted ? controller.signal.reason : error;
-            return failed(cause instanceof RudraError ? cause : new RudraError('bot-failed'));
+            return failed(
+                cause instanceof RudraError
+                    ? cause
+                    : new RudraError(
+                          cause instanceof SecurityError ? 'security-denied' : 'bot-failed'
+                      )
+            );
         } finally {
             clearTimeout(timer);
             controller.signal.removeEventListener('abort', rejectAbort);

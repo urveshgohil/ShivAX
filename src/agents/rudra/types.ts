@@ -1,4 +1,5 @@
 import type { BotInput, BotSignal, BotValue, Capability } from '../types.js';
+import type { Vijaya } from '../../security/vijaya.js';
 
 /** Separate from the Phase 01 TaskStatus and the legacy neural-network Task. */
 export type RudraTaskStatus =
@@ -49,6 +50,7 @@ export type RudraErrorCode =
     | 'timeout'
     | 'cancelled'
     | 'busy'
+    | 'security-denied'
     | 'disposed';
 export interface RudraErrorDetails {
     readonly code: RudraErrorCode;
@@ -86,6 +88,8 @@ export interface ExecutionTrace {
     readonly error?: { readonly code: string; readonly message: string };
 }
 export interface RudraHooks {
+    /** Mandatory for protected tool-using bots. Pure legacy workflows may omit it. */
+    readonly security?: Vijaya;
     readonly planner?: Planner;
     readonly approve?: ApprovalHandler;
     /** Observers cannot approve work or change its outcome; thrown/rejected errors are isolated. */
