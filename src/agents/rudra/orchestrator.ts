@@ -3,7 +3,7 @@ import { BotExecutor } from '../execute.js';
 import { BotRegistry } from '../registry.js';
 import { BotError, errorDetails } from '../errors.js';
 import { SecurityError } from '../../security/errors.js';
-import { snapshotValue } from '../validation.js';
+import { snapshotValue, toolsForCapability } from '../validation.js';
 import type { BotValue, Capability, TaskContext } from '../types.js';
 import { details, RudraError } from './errors.js';
 import { CapabilityPlanner } from './planner.js';
@@ -305,7 +305,10 @@ export class RudraOrchestrator {
                         execute: (input, botContext) =>
                             track(() => {
                                 // Legacy pure workflows remain usable; protected bots require the guard.
-                                if (!this.security && bot.requiredTools?.length)
+                                if (
+                                    !this.security &&
+                                    toolsForCapability(bot, input.capability).length
+                                )
                                     throw new BotError('tool-not-allowed');
                                 return bot.execute(input, botContext);
                             }),
@@ -325,6 +328,7 @@ export class RudraOrchestrator {
                                                   state(waiting ? 'waiting_approval' : 'running');
                                           },
                                           trackTool: track,
+                                          checkExecution: check,
                                           onEffect: (effect) => {
                                               retryAllowed = effect === 'read-only';
                                           },

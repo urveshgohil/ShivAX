@@ -7,6 +7,8 @@ import type {
     BotResult,
     BotValue,
     ExecutionLimits,
+    Capability,
+    ToolDescriptor,
 } from './types.js';
 
 export const DEFAULT_EXECUTION_LIMITS: Readonly<ExecutionLimits> = Object.freeze({
@@ -196,10 +198,20 @@ export function snapshotBot<I extends BotValue, O extends BotValue>(bot: Bot<I, 
         typeof bot.execute !== 'function'
     )
         fail('invalid-bot');
-    const descriptors = (value: unknown, allowEmpty: boolean) => {
+    const descriptors = (
+        value: unknown,
+        allowEmpty: boolean,
+        capabilities = false
+    ): readonly Capability[] => {
         const seen = new Set<string>();
         const entries = array(value, 128, 'invalid-bot').map((item) => {
-            const descriptor = record(item, ['id', 'description'], 'invalid-bot');
+            const descriptor = record(
+                item,
+                capabilities
+                    ? ['id', 'description', 'inputSchema', 'requiredTools']
+                    : ['id', 'description'],
+                'invalid-bot'
+            );
             identifier(descriptor.id, 'invalid-bot');
             if (
                 typeof descriptor.description !== 'string' ||
@@ -208,17 +220,42 @@ export function snapshotBot<I extends BotValue, O extends BotValue>(bot: Bot<I, 
             )
                 fail('invalid-bot');
             seen.add(descriptor.id);
-            return Object.freeze({ id: descriptor.id, description: descriptor.description });
+            return Object.freeze({
+                id: descriptor.id,
+                description: descriptor.description,
+                ...(descriptor.inputSchema === undefined
+                    ? {}
+                    : {
+                          inputSchema: snapshotValue(descriptor.inputSchema, 65_536, 'invalid-bot'),
+                      }),
+                ...(descriptor.requiredTools === undefined
+                    ? {}
+                    : { requiredTools: descriptors(descriptor.requiredTools, true) }),
+            });
         });
         if (!allowEmpty && !entries.length) fail('invalid-bot');
         return Object.freeze(entries);
     };
     return Object.freeze({
         id: bot.id,
-        capabilities: descriptors(bot.capabilities, false),
+        capabilities: descriptors(bot.capabilities, false, true),
         requiredTools: descriptors(bot.requiredTools === undefined ? [] : bot.requiredTools, true),
         validateInput: bot.validateInput.bind(bot),
         validateOutput: bot.validateOutput.bind(bot),
         execute: bot.execute.bind(bot),
     });
+}
+
+/** Bot-wide requirements remain supported; capability tools add only the selected action's needs. */
+export function toolsForCapability(
+    bot: Pick<Bot, 'capabilities' | 'requiredTools'>,
+    capability: string
+): readonly ToolDescriptor[] {
+    const tools = new Map<string, ToolDescriptor>();
+    for (const tool of [
+        ...(bot.requiredTools ?? []),
+        ...(bot.capabilities.find((item) => item.id === capability)?.requiredTools ?? []),
+    ])
+        tools.set(tool.id, tool);
+    return [...tools.values()];
 }

@@ -1,7 +1,7 @@
 import { snapshotContext } from './context.js';
 import { BotError, errorDetails, isErrorCode } from './errors.js';
 import { BotEventEmitter } from './events.js';
-import { checkPredicate, snapshotBot, snapshotResult } from './validation.js';
+import { checkPredicate, snapshotBot, snapshotResult, toolsForCapability } from './validation.js';
 import type { Bot, BotErrorCode, BotInput, BotResult, BotValue, TaskContext } from './types.js';
 
 /** Executes one explicitly supplied bot. No registry selection, queue, workflow or retries. */
@@ -68,7 +68,7 @@ export class BotExecutor {
             )
                 throw new BotError('unsupported-capability');
             if (
-                implementation.requiredTools?.some(
+                toolsForCapability(implementation, task.input.capability).some(
                     (tool) => !task.security.toolPermissions.includes(tool.id)
                 )
             )

@@ -49,6 +49,24 @@ const reason = (f, code) => assert.ok(f.audit.list().some(record => record.decis
 function deferred() { let resolve; const promise = new Promise(r => { resolve = r; }); return { promise, resolve }; }
 const flush = () => new Promise(resolve => setImmediate(resolve));
 
+test('protected handlers cannot start after a synchronous approval exceeds the workflow deadline', async () => {
+    const f = fixture({ effect: 'state-changing', toolEffect: 'state-changing', approve(request) {
+        if (request.kind === 'tool') { const end = performance.now() + 50; while (performance.now() < end) {} }
+        return true;
+    } });
+    const result = await f.rudra.run(await f.context(request(), { limits: { timeoutMs: 20 } }));
+    assert.equal(result.error.code, 'timeout'); assert.equal(f.calls(), 0);
+});
+
+test('audit writer strips extra credential objects and validates its scalar schema', () => {
+    const audit = new SecurityAuditLog();
+    const entry = { kind: 'tool', actionId: 'read', decision: 'deny', reason: 'permission-denied', credentials: { token: 'dummy-secret' } };
+    audit.record(audit.begin(), entry); entry.credentials.token = 'mutated';
+    assert.deepEqual(Object.keys(audit.list()[0]).sort(), ['actionId', 'decision', 'kind', 'operation', 'reason', 'sequence']);
+    assert.equal(JSON.stringify(audit.list()).includes('secret'), false);
+    assert.throws(() => audit.record(2, { ...entry, reason: 'secret' }), /Invalid audit entry/);
+});
+
 test('Jaya accepts only verified host identities and Vijaya authorizes a narrow tool end to end', async () => {
     const f = fixture(); const context = await f.context(); const result = await f.rudra.run(context);
     assert.equal(result.status, 'completed'); assert.deepEqual(result.outputs[0].data, { value: 'fixture-value' });

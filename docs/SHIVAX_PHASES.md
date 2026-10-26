@@ -5,7 +5,7 @@
 
 Date: 2026-10-25 (Asia/Calcutta).
 Companion: [architecture and complete public API inventory](SHIVAX_ARCHITECTURE.md).
-This is the implementation order. **Phases 00–03 are complete; later phases
+This is the implementation order. **Phases 00–04 are complete; later phases
 remain proposals.** Phase numbers below describe this new multi-bot
 roadmap, not the older neural-network, digit or visual-comparison phase numbers.
 
@@ -45,12 +45,12 @@ relevant verification; missing live infrastructure must be reported explicitly.
  -> 01 Bot foundation, registry, events and selected-bot execution (complete)
  -> 02 Bounded RUDRA execution (complete)
  -> 03 Jaya / Vijaya and protected service boundaries (complete)
- -> 04 Sanjaya / Yudhishthira using deterministic existing capabilities
- -> 05 Brihaspati using optional existing SLM providers
- -> 06 Chitragupta scoped memory
+ -> 04 Seven-specialist system and deterministic adapters (complete; expanded user scope)
+ -> 05 Concrete optional reasoning/model adapters
+ -> 06 Durable memory / retention policies beyond the session interfaces
  -> 07 Hanuman / inspectra-automation adapter
  -> 08 Ekalavya controlled learning
- -> 09 Vishwakarma code artifacts
+ -> 09 Concrete code backends / further artifact capabilities
  -> 10 Visynq Workstation composition and compatibility acceptance
 ```
 
@@ -256,22 +256,47 @@ declarations and no test/mock files. ML source, examples, build configuration an
 dataset hash remain unchanged. Rollup emits non-fatal warnings for generated
 ES2020 private-field helpers; details are in the guide. Stop before Phase 04.
 
-## Phase 04 — Sanjaya vision and Yudhishthira review adapters
+## Phase 04 — Seven-specialist bot system
 
-Prerequisites: Phases 01–03.
+Status: complete under the user's expanded Phase 04 request (2026-10-26).
+The explicit request supersedes the earlier vision/review-only scope: all seven
+bots implement `Bot`, declare 16 input schemas/capabilities and compose with
+RUDRA in `createSpecialistSystem`. Existing modules remain in place.
 
-Wrap scene validation, matching and `analyzeUI` for Sanjaya tasks. Preserve
-existing result values, unknown measurements, ambiguity and provenance. Add
-Yudhishthira review tasks that apply explicit checks to supplied issues/evidence
-and report unresolved cases. Make deterministic behavior visible in provenance.
+Sanjaya preserves supplied observations and supports an injected image adapter.
+Brihaspati validates explicit/provider-generated plans and provider decisions. Vishwakarma
+reports source metadata and returns unapplied patches. Chitragupta accesses
+session memory through protected tools. Hanuman normalizes/compares supplied UI
+snapshots using the existing engine. Yudhishthira runs actual deterministic
+checks and optional advisory review. Ekalavya stores feedback/training records
+and summarizes supplied scores, without updating model weights.
 
-Acceptance: adapter outputs agree with direct APIs; inputs/results are not
-silently mutated; uncertainty and real differences survive. Test wrapper
-changes, duplicates, missing measurements, cross-scope input and work limits
-using existing fixtures where practical. No general image model, screenshot
-capture or automatic acceptance/correction is claimed.
+Memory/feedback interfaces have bounded in-memory implementations. Namespace
+keys derive from verified principal, issuer, scope and session. Writes require
+Jaya/Vijaya permission and approval checks. Capability-specific tool declarations
+avoid requiring write IDs for a read operation. Missing model backends and
+unsupported operations return explicit errors; no simulated inference is used.
+
+The Phase 03 review's two findings are also corrected as prerequisites: protected
+tools recheck the absolute workflow deadline after blocking callbacks, and the
+public audit writer accepts only validated scalar fields into stored records.
+
+Acceptance: **268 tests passed**, zero failures/cancellations/skips: 26 specialist
+tests, two review regressions and all 240 previous tests. TypeScript/Rollup build,
+ES2020-only consumers, lint, the specialist demo and package dry run passed.
+Packaging has 68 entries including all 15 specialist declaration files and no
+mock/test files. All original exports and the ML/digit source/data are preserved.
+
+The [specialist guide](specialist-bots.md) lists the complete API, changed files,
+commands/results, security boundaries and limitations. No actual model runtime,
+durable backend, Inspectra capture, automatic training, patch application or
+production changes are introduced. Stop before later phases.
 
 ## Phase 05 — Brihaspati optional reasoning
+
+Phase 04 already provides `ReasoningProvider` and validated decision/plan bot
+contracts. This future phase concerns concrete model/client adapters and their
+quality/availability checks, rather than reimplementing those contracts.
 
 Prerequisites: Phases 01–04; trusted provider configured by host when enabled.
 
@@ -289,6 +314,10 @@ is unavailable, disclose that its reasoning quality is unverified. No automatic
 downloads, mandatory Ollama, embeddings service or unrestricted planner.
 
 ## Phase 06 — Chitragupta scoped memory
+
+Phase 04 already provides the session storage interface, bounded in-memory
+implementation and protected read/write adapters. This future phase concerns
+durable storage, retention/expiry and additional scoped query requirements.
 
 Prerequisites: Phases 01–03; optional reasoning integration uses Phase 05.
 
@@ -339,6 +368,11 @@ dataset downloads or unmeasured accuracy claims.
 
 ## Phase 09 — Vishwakarma code artifacts
 
+Phase 04 already provides source summaries, exact replacement artifacts and
+validated optional code-provider patch proposals. Further backend adapters or
+artifact operations require their own concrete scope; file application remains
+separate and is never implied by a generation request.
+
 Prerequisites: Phases 02–03, 05 for a shared optional model service, and 04 review
 contracts; add a distinct backend contract only if code tasks require it.
 
@@ -373,6 +407,7 @@ requires a separate request and is not part of this roadmap's implementation.
 
 ## Stop condition
 
-Phases 00–03 are complete when their deliverables and relevant checks pass and
-limitations are reported. Phase 04 and later remain proposals awaiting an
-explicit request. Security completion does not start specialist integrations.
+Phases 00–04 are complete when their deliverables and relevant checks pass and
+limitations are reported. Later phases remain proposals awaiting an explicit
+request. Specialist interface completion does not start runtime/provider,
+persistence, browser, training or product integrations automatically.

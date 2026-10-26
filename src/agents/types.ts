@@ -8,6 +8,8 @@ export type BotSignal = SLMSignal;
 export interface Capability {
     readonly id: string;
     readonly description: string;
+    readonly inputSchema?: BotValue;
+    readonly requiredTools?: readonly ToolDescriptor[];
 }
 /** Informational only: this phase does not execute tools. */
 export interface ToolDescriptor {
@@ -74,6 +76,8 @@ export type BotErrorCode =
     | 'tool-not-allowed'
     | 'busy'
     | 'bot-error'
+    | 'unavailable'
+    | 'provider-error'
     | 'cancelled'
     | 'timeout';
 export interface BotErrorDetails {

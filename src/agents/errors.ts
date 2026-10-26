@@ -11,6 +11,8 @@ const messages: Record<BotErrorCode, string> = {
     'tool-not-allowed': 'Required tool permission was not supplied by the host.',
     busy: 'Bot already has an active execution in this executor.',
     'bot-error': 'Bot execution failed.',
+    unavailable: 'The required adapter or service is not configured.',
+    'provider-error': 'The configured specialist provider failed.',
     cancelled: 'Bot execution cancelled.',
     timeout: 'Bot execution deadline exceeded.',
 };

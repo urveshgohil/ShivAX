@@ -52,6 +52,9 @@ import {
     type Planner, type WorkflowPlan, type RudraResult, type RudraTaskStatus,
     Jaya, Vijaya, PermissionPolicyRegistry, ProtectedToolRegistry, SecurityAuditLog,
     type IdentityProvider, type AuthenticatedIdentity, type ProtectedTool, type SecurityDecision,
+    createSpecialistBots, createSpecialistSystem, SessionMemoryStore, SessionFeedbackStore,
+    SanjayaBot, BrihaspatiBot, VishwakarmaBot, ChitraguptaBot, HanumanBot, YudhishthiraBot, EkalavyaBot,
+    type MemoryStorage, type FeedbackStorage, type VisionModelAdapter, type ReasoningProvider, type CodeProvider, type ReviewProvider,
 } from ${JSON.stringify(entry)};
 import type { ${LEGACY_TYPE_EXPORTS.map(name => `${name} as Legacy_${name}`).join(', ')} } from ${JSON.stringify(entry)};
 const legacyTask: Task = 'binary';
@@ -118,6 +121,16 @@ const decisions: readonly SecurityDecision[] = audit.list();
 verifiedIdentity.principal.permissions.push('admin');
 // @ts-expect-error Security policy classifications are explicit.
 policies.register({ kind: 'tool', id: 'read', permissions: ['read'], effect: 'trusted', validateInput: () => true });
+const vision: VisionModelAdapter = { id: 'typed-vision', analyze: async (input, context) => ({ summary: 'adapter result', observations: [] }) };
+const reasoning: ReasoningProvider = { id: 'typed-reasoning', decide: async (input, context) => ({ selectedOptionId: 'one', rationale: 'fixture', evidenceIds: [] }) };
+const codeProvider: CodeProvider = { id: 'typed-code', suggest: async (input, context) => ({ explanation: 'fixture', patches: [] }) };
+const review: ReviewProvider = { id: 'typed-review', review: async (input, context) => ({ assessment: 'uncertain', findings: [] }) };
+const memory: MemoryStorage = new SessionMemoryStore();
+const feedback: FeedbackStorage = new SessionFeedbackStore();
+const specialists: readonly Bot[] = createSpecialistBots({ vision, reasoning, code: codeProvider, review });
+const specialistSystem = createSpecialistSystem({ memory, feedback, vision, security: { jaya, policies } });
+const allSpecialists: Bot[] = [new SanjayaBot(), new BrihaspatiBot(), new VishwakarmaBot(), new ChitraguptaBot(), new HanumanBot(), new YudhishthiraBot(), new EkalavyaBot()];
+const scopedCapability = { id: 'read', description: 'read only', inputSchema: { type: 'object' }, requiredTools: [tool] };
 `);
         writeFileSync(join(directory, 'tsconfig.json'), JSON.stringify({ compilerOptions: {
             noEmit: true, strict: true, skipLibCheck: false, lib: ['ES2020'], types: [], module: 'ESNext', moduleResolution: 'bundler',

@@ -24,6 +24,9 @@ const messages: Record<SecurityErrorCode, string> = {
     'tool-busy': 'A tool operation is already in progress.',
     'tool-limit': 'The tool call limit was exceeded.',
 };
+export function isSecurityErrorCode(value: unknown): value is SecurityErrorCode {
+    return typeof value === 'string' && Object.prototype.hasOwnProperty.call(messages, value);
+}
 export class SecurityError extends Error {
     constructor(public readonly code: SecurityErrorCode) {
         if (!Object.prototype.hasOwnProperty.call(messages, code))

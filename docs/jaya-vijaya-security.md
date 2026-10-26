@@ -12,6 +12,14 @@ introduced. Tests use a clearly named mock identity adapter and in-memory tools.
 
 ## Trust boundary and Jaya
 
+Follow-up: the [Phase 04 specialist work](specialist-bots.md) closes both review
+findings from this phase. Protected tool leases receive RUDRA's absolute deadline
+check, including a final check before dispatch after synchronous callbacks.
+The public audit writer now validates scalar fields and discards extra payload
+properties. Two focused regressions pass alongside all original security tests.
+Phase 04 also adds optional capability-specific tool declarations; guards combine
+bot-wide requirements with only the selected capability's declared tool IDs.
+
 ```text
 Trusted server/desktop session adapter
   -> Jaya.createContext(task, hostOptions)

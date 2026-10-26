@@ -13,6 +13,7 @@ export interface ToolLeaseOptions {
     readonly signal: BotSignal;
     readonly allowed: readonly string[];
     readonly maxCalls: number;
+    checkExecution?(): void;
     getTool(id: string): ProtectedTool | undefined;
     authorize<T>(
         id: string,
@@ -63,9 +64,11 @@ export class ToolLease {
         });
     }
     #check(): void {
+        this.#options.checkExecution?.();
         if (!this.#open || this.#controller.signal.aborted || this.#options.signal.aborted)
             throw new SecurityError('cancelled');
         this.#options.checkParent();
+        this.#options.checkExecution?.();
     }
     async #execute(id: string, raw: BotValue): Promise<BotValue> {
         const options = this.#options;
@@ -105,6 +108,7 @@ export class ToolLease {
                 input,
                 this.#controller.signal,
                 async (_policy, identity) => {
+                    this.#check();
                     let rawOutput: BotValue;
                     try {
                         rawOutput = await tool.execute(

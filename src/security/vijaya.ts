@@ -1,5 +1,5 @@
 import { BotError } from '../agents/errors.js';
-import { checkPredicate, snapshotValue } from '../agents/validation.js';
+import { checkPredicate, snapshotValue, toolsForCapability } from '../agents/validation.js';
 import type { Bot, BotResult, BotSignal, BotValue, TaskContext } from '../agents/types.js';
 import { SecurityAuditLog } from './audit.js';
 import { SecurityError, securityError } from './errors.js';
@@ -24,6 +24,8 @@ export interface SecurityExecutionHooks {
     onApproval(waiting: boolean): void;
     trackTool(callback: () => Promise<BotValue>): Promise<BotValue>;
     onEffect?(effect: PermissionPolicy['effect']): void;
+    /** Host deadline check, including synchronous work that delays abort timers. */
+    checkExecution?(): void;
 }
 
 /** Enforces host policy in code. It is a mandatory guard, never a planner-selectable bot. */
@@ -210,9 +212,12 @@ export class Vijaya {
                             root,
                             signal: context.task.signal,
                             allowed: Object.freeze(
-                                (bot.requiredTools ?? []).map((tool) => tool.id)
+                                toolsForCapability(bot, child.input.capability).map(
+                                    (tool) => tool.id
+                                )
                             ),
                             maxCalls: this.#maxToolCalls,
+                            checkExecution: hooks.checkExecution,
                             getTool: (id) => this.#tools.get(id),
                             track: hooks.trackTool,
                             checkParent: () => {
@@ -259,7 +264,7 @@ export class Vijaya {
             },
             () => {
                 if (
-                    bot.requiredTools?.some(
+                    toolsForCapability(bot, child.input.capability).some(
                         (tool) => !root.security.toolPermissions.includes(tool.id)
                     )
                 )
