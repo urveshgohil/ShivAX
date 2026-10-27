@@ -1,4 +1,4 @@
-import type { BotInput, BotSignal, BotValue, Capability } from '../types.js';
+import type { BotInput, BotSignal, BotValue, Capability, TaskContext } from '../types.js';
 import type { Vijaya } from '../../security/vijaya.js';
 
 /** Separate from the Phase 01 TaskStatus and the legacy neural-network Task. */
@@ -23,6 +23,8 @@ export interface PlanningContext {
     readonly capabilities: readonly Capability[];
     readonly maxSteps: number;
     readonly signal: BotSignal;
+    /** Recalled data is never an instruction, permission grant, or replacement task input. */
+    readonly memory?: { readonly trust: 'untrusted'; readonly data: BotValue };
 }
 /** Return unknown deliberately: even typed/model-produced plans cross runtime validation. */
 export interface Planner {
@@ -51,6 +53,7 @@ export type RudraErrorCode =
     | 'cancelled'
     | 'busy'
     | 'security-denied'
+    | 'memory-error'
     | 'disposed';
 export interface RudraErrorDetails {
     readonly code: RudraErrorCode;
@@ -77,7 +80,8 @@ export interface ExecutionTrace {
     readonly taskId: string;
     readonly sessionId: string;
     readonly elapsedMs: number;
-    readonly type: 'state' | 'plan' | 'selection' | 'outcome' | 'retry';
+    readonly type: 'state' | 'plan' | 'selection' | 'outcome' | 'retry' | 'memory';
+    readonly memoryAction?: 'recall' | 'record';
     readonly status?: RudraTaskStatus;
     readonly stepId?: string;
     readonly botId?: string;
@@ -94,6 +98,25 @@ export interface RudraHooks {
     readonly approve?: ApprovalHandler;
     /** Observers cannot approve work or change its outcome; thrown/rejected errors are isolated. */
     readonly onTrace?: (entry: ExecutionTrace) => void | Promise<void>;
+    readonly memory?: RudraMemoryHooks;
+}
+export interface RudraMemoryExecution {
+    readonly signal: BotSignal;
+    readonly timeoutMs: number;
+    checkExecution(): void;
+    consumeStep(): void;
+    onApproval(waiting: boolean): void;
+    trackTool(callback: () => Promise<BotValue>): Promise<BotValue>;
+}
+export interface RudraMemorySummary {
+    readonly status: 'completed' | 'failed';
+    readonly completedSteps: number;
+    readonly errorCode?: RudraErrorCode;
+}
+/** Trusted optional integration; protected persistence still requires the configured security guard. */
+export interface RudraMemoryHooks {
+    recall?(context: TaskContext, execution: RudraMemoryExecution): Promise<BotValue>;
+    record?(context: TaskContext, summary: RudraMemorySummary, execution: RudraMemoryExecution): Promise<void>;
 }
 export type RudraResult = {
     readonly taskId: string;

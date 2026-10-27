@@ -11,6 +11,7 @@ const messages: Record<RudraErrorCode, string> = {
     'max-steps': 'Workflow execution step limit exceeded.',
     'output-limit': 'Workflow output budget exceeded.',
     'bot-failed': 'Selected bot failed.',
+    'memory-error': 'The configured memory operation failed.',
     timeout: 'Workflow deadline exceeded.',
     cancelled: 'Workflow cancelled.',
     busy: 'RUDRA still owns an active operation.',

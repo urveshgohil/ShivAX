@@ -5,8 +5,9 @@
 
 Date: 2026-10-25 (Asia/Calcutta).
 Companion: [architecture and complete public API inventory](SHIVAX_ARCHITECTURE.md).
-This is the implementation order. **Phases 00–04 are complete; later phases
-remain proposals.** Phase numbers below describe this new multi-bot
+This is the implementation order. **Phases 00–06 have implementations; Phase 05
+has two unresolved review findings, and Phase 06 acceptance is recorded below.
+Later phases remain proposals.** Phase numbers below describe this new multi-bot
 roadmap, not the older neural-network, digit or visual-comparison phase numbers.
 
 ## Rules and gates for every future phase
@@ -292,45 +293,58 @@ commands/results, security boundaries and limitations. No actual model runtime,
 durable backend, Inspectra capture, automatic training, patch application or
 production changes are introduced. Stop before later phases.
 
-## Phase 05 — Brihaspati optional reasoning
+## Phase 05 — Hybrid model intelligence
 
-Phase 04 already provides `ReasoningProvider` and validated decision/plan bot
-contracts. This future phase concerns concrete model/client adapters and their
-quality/availability checks, rather than reimplementing those contracts.
+Status: complete under the user's expanded Phase 05 request (2026-10-26).
+This replaces the earlier reasoning-only proposal with the requested general
+provider interface and five-capability model router. See the full
+[hybrid intelligence guide](hybrid-intelligence.md) for contracts, policies,
+limits, changed files and limitations.
 
-Prerequisites: Phases 01–04; trusted provider configured by host when enabled.
+Added `src/intelligence/`: model contracts, immutable provider registration and
+capability discovery, scope-bound routing, structured output validation, explicit
+compatible fallback and remote opt-in, fixed errors, usage and lifetime call,
+token and cost reservations. The neural adapter calls existing `predict`; rules
+execute explicit deterministic host functions. Ollama reuses the existing local
+transport with additive actual usage reporting; remote SDK loading and
+credentials remain host configured and lazy. A DI function connects providers
+to the existing specialist methods without changing RUDRA or Jaya/Vijaya.
 
-Reuse `SLMProvider`/`SLMClient` rather than introduce a second model runtime.
-Define bounded reasoning task schemas and semantic evidence validation. Preserve
-existing UI advice behavior and external-provider opt-in. Return unavailable or
-explicit fallback provenance when disabled/missing; do not invent an answer.
-Providers receive only the minimum authorized context and retain no implicit
-shared history.
-
-Acceptance: disabled requests make zero inference calls; invalid/hallucinated
-output, scope errors, timeout and cancellation preserve valid baseline evidence.
-Fixture tests verify contracts and failure behavior. If a live configured model
-is unavailable, disclose that its reasoning quality is unverified. No automatic
-downloads, mandatory Ollama, embeddings service or unrestricted planner.
+Acceptance: **292 tests passed**, including all 268 previous tests and 24 new
+provider/router tests; clean TypeScript/Rollup build, portable ES2020 declaration
+consumer, type check, existing lint, offline demo and package dry run pass.
+Cancellation retains pending work ownership; synchronous loader/metadata delays
+cannot start inference past the deadline. No live model/API or real reasoning
+quality is claimed. Existing ML internals, training dataset, browser demo and
+legacy exports are preserved. Stop before Phase 06.
 
 ## Phase 06 — Chitragupta scoped memory
 
-Phase 04 already provides the session storage interface, bounded in-memory
-implementation and protected read/write adapters. This future phase concerns
-durable storage, retention/expiry and additional scoped query requirements.
+Status: complete under the user's Phase 06 request (2026-10-26).
+See [memory engine guide](memory-engine.md) for the complete API, file inventory,
+security boundaries, adapter configuration and limitations.
 
-Prerequisites: Phases 01–03; optional reasoning integration uses Phase 05.
+Added `MemoryStore`/`MemoryEngine` with save/retrieve/update/delete/search/list,
+export and expiry purge; five categories, bounded metadata/retention, exact
+user/issuer/session/workspace namespaces, deterministic relevance and optional
+injected embeddings. In-memory, explicit Node file and lazy IndexedDB adapters
+support portable persistence. Chitragupta adds eight protected record actions;
+the seven-bot system now exposes 24 capabilities, retaining legacy read/write.
 
-Introduce an injected memory-store contract and an explicit instance-local
-in-memory implementation. Require scope/resource keys, bounded values/queries,
-expiry/retention policy, explicit read/write/delete and cancellation. Treat
-retrieved content as untrusted task data, never executable instructions or
-permission grants. Durable storage is a separately supplied host adapter;
-do not repurpose the digit model's origin-wide IndexedDB record.
+RUDRA optionally recalls untrusted relevant records before planning and captures
+status-only terminal metadata through Chitragupta/Vijaya. Reads and writes share
+step/deadline budgets and authorization. Default admission rejects common
+credentials/personal data; no automatic transcript capture. Preferences/outcomes
+require separate trusted host consent/verification. Existing digit persistence
+and ML internals remain unchanged.
 
-Acceptance: tenant and instance isolation, policy denial, size bounds, expiry,
-deletion, unavailable stores, disposal and errors are tested. No global memory,
-implicit transcript collection, automatic vector database or indefinite retention.
+Acceptance: **323 tests pass**, including 31 new memory tests and all 292 previous
+tests. Build, type/lint checks, portable declarations, offline demo and package
+dry run pass. Real Node files are exercised; IndexedDB uses a protocol fixture,
+not a live browser matrix. Durable encryption, multi-process file locking,
+comprehensive DLP and live embeddings remain host responsibilities. Phase 05's
+two budget-review defects remain outstanding and were not changed here.
+Stop before Phase 07.
 
 ## Phase 07 — Hanuman and Inspectra inspection bridge
 

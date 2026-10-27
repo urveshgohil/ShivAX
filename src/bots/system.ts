@@ -15,9 +15,16 @@ import { EkalavyaBot } from './ekalavya.js';
 import { registerSpecialistServices } from './services.js';
 import type { SpecialistProviders } from './types.js';
 import type { FeedbackStorage, MemoryStorage } from './storage.js';
+import type { MemoryStore } from '../memory/types.js';
+import { registerMemoryServices, type MemoryServiceOptions } from '../memory/services.js';
+import { MemoryTaskLifecycle, type MemoryTaskLifecycleOptions } from '../memory/lifecycle.js';
+import { MemoryError } from '../memory/errors.js';
 
 export interface SpecialistSystemOptions extends SpecialistProviders {
     readonly memory?: MemoryStorage;
+    readonly memoryStore?: MemoryStore;
+    readonly memoryServices?: MemoryServiceOptions;
+    readonly memoryLifecycle?: MemoryTaskLifecycleOptions;
     readonly feedback?: FeedbackStorage;
     readonly tools?: ProtectedToolRegistry;
     readonly hooks?: Omit<RudraHooks, 'security'>;
@@ -49,6 +56,7 @@ export function createSpecialistSystem(options: SpecialistSystemOptions = {}) {
     const registry = new BotRegistry(),
         tools = options.tools ?? new ProtectedToolRegistry();
     registerSpecialistServices(tools, options);
+    if (options.memoryStore) registerMemoryServices(tools, options.memoryStore, options.memoryServices);
     const bots = registerSpecialistBots(registry, options);
     const security = options.security
         ? new Vijaya(options.security.jaya, options.security.policies, {
@@ -56,6 +64,8 @@ export function createSpecialistSystem(options: SpecialistSystemOptions = {}) {
               tools,
           })
         : undefined;
-    const rudra = new RudraOrchestrator(registry, { ...options.hooks, security });
-    return Object.freeze({ bots, registry, tools, security, rudra });
+    if (options.memoryLifecycle && !security) throw new MemoryError('invalid-input');
+    const lifecycle = options.memoryLifecycle ? new MemoryTaskLifecycle(security!, options.memoryLifecycle) : options.hooks?.memory;
+    const rudra = new RudraOrchestrator(registry, { ...options.hooks, security, memory: lifecycle });
+    return Object.freeze({ bots, registry, tools, security, rudra, lifecycle });
 }

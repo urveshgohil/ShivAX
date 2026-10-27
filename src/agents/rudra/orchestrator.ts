@@ -16,6 +16,7 @@ import type {
     RudraResult,
     RudraTaskStatus,
     StepOutput,
+    RudraMemoryExecution,
 } from './types.js';
 
 /** One workflow at a time per instance. Injected implementations are trusted code, not a sandbox. */
@@ -25,6 +26,7 @@ export class RudraOrchestrator {
     private readonly approve: RudraHooks['approve'];
     private readonly onTrace: RudraHooks['onTrace'];
     private readonly security: RudraHooks['security'];
+    private readonly memory: RudraHooks['memory'];
     private occupied = false;
     private disposed = false;
     private controller?: AbortController;
@@ -37,10 +39,20 @@ export class RudraOrchestrator {
         this.approve = hooks.approve;
         this.onTrace = hooks.onTrace;
         this.security = hooks.security;
+        if (hooks.memory && ((!this.security) ||
+            (hooks.memory.recall !== undefined && typeof hooks.memory.recall !== 'function') ||
+            (hooks.memory.record !== undefined && typeof hooks.memory.record !== 'function'))) throw new RudraError('invalid-options');
+        this.memory = hooks.memory ? Object.freeze({
+            recall: hooks.memory.recall?.bind(hooks.memory),
+            record: hooks.memory.record?.bind(hooks.memory),
+        }) : undefined;
         if (
             typeof this.planner.plan !== 'function' ||
             (this.approve !== undefined && typeof this.approve !== 'function') ||
-            (this.onTrace !== undefined && typeof this.onTrace !== 'function')
+            (this.onTrace !== undefined && typeof this.onTrace !== 'function') ||
+            (this.memory !== undefined && (!this.security ||
+                (this.memory.recall !== undefined && typeof this.memory.recall !== 'function') ||
+                (this.memory.record !== undefined && typeof this.memory.record !== 'function')))
         )
             throw new RudraError('invalid-options');
     }
@@ -152,6 +164,21 @@ export class RudraOrchestrator {
             task.limits.timeoutMs
         );
         let subscribed = false;
+        let admitted = false, recordAttempted = false, attempts = 0;
+        const memoryExecution = (): RudraMemoryExecution => Object.freeze({
+            signal: controller.signal,
+            timeoutMs: Math.max(1, Math.floor(task.limits.timeoutMs - (now() - startedAt))),
+            checkExecution: check, trackTool: track,
+            consumeStep: () => { check(); if (attempts >= settings.maxSteps) throw new RudraError('max-steps'); attempts++; },
+            onApproval: (waiting: boolean) => { if (!controller.signal.aborted) state(waiting ? 'waiting_approval' : 'running'); },
+        });
+        const recordMemory = async (status: 'completed' | 'failed', errorCode?: import('./types.js').RudraErrorCode) => {
+            if (!this.memory?.record) return;
+            recordAttempted = true;
+            await bounded(track(() => this.memory!.record!(context,
+                Object.freeze({ status, completedSteps: outputs.length, ...(errorCode ? { errorCode } : {}) }), memoryExecution())));
+            emit({ type: 'memory', memoryAction: 'record', outcome: 'completed' });
+        };
         try {
             state('queued');
             subscribed = true;
@@ -162,7 +189,19 @@ export class RudraOrchestrator {
             check();
             if (this.security)
                 await bounded(track(() => this.security!.validateTask(context, controller.signal)));
+            admitted = true;
             check();
+            let memory: import('./types.js').PlanningContext['memory'];
+            if (this.memory?.recall) {
+                try {
+                    const recalled = await bounded(track(() => this.memory!.recall!(context, memoryExecution())));
+                    const data = snapshotValue(recalled, task.limits.maxInputBytes, 'invalid-input');
+                    memory = Object.freeze({ trust: 'untrusted', data });
+                    snapshotValue({ input: task.input, memory }, task.limits.maxInputBytes, 'invalid-input');
+                    check();
+                    emit({ type: 'memory', memoryAction: 'recall', outcome: 'completed' });
+                } catch (error) { check(); if (error instanceof RudraError) throw error; throw new RudraError('memory-error'); }
+            }
             // Capture descriptors once; registry changes during planning cannot redirect this run.
             const bots = this.registry
                 .list()
@@ -186,6 +225,7 @@ export class RudraOrchestrator {
                             capabilities: Object.freeze([...capabilities.values()]),
                             maxSteps: settings.maxSteps,
                             signal: controller.signal,
+                            ...(memory ? { memory } : {}),
                         })
                     )
                 ).catch(() => {
@@ -209,7 +249,6 @@ export class RudraOrchestrator {
             location = {};
             emit({ type: 'plan', decision: 'validated-plan' });
             const values = new Map<string, BotValue>();
-            let attempts = 0;
             for (const [index, step] of plan.steps.entries()) {
                 const bot = routes[index];
                 const data =
@@ -379,6 +418,8 @@ export class RudraOrchestrator {
                 }
             }
             check();
+            try { await recordMemory('completed'); } catch (error) { check(); if (error instanceof RudraError) throw error; throw new RudraError('memory-error'); }
+            check();
             state('completed');
             return Object.freeze({
                 taskId: task.taskId,
@@ -388,13 +429,16 @@ export class RudraOrchestrator {
             });
         } catch (error) {
             const cause = controller.signal.aborted ? controller.signal.reason : error;
-            return failed(
-                cause instanceof RudraError
+            const failure = cause instanceof RudraError
                     ? cause
                     : new RudraError(
                           cause instanceof SecurityError ? 'security-denied' : 'bot-failed'
-                      )
-            );
+                      );
+            if (admitted && !recordAttempted && !controller.signal.aborted && this.memory?.record) {
+                try { await recordMemory('failed', failure.code); }
+                catch { emit({ type: 'memory', memoryAction: 'record', outcome: 'failed', error: details('memory-error') }); }
+            }
+            return failed(controller.signal.aborted ? controller.signal.reason as RudraError : failure);
         } finally {
             clearTimeout(timer);
             controller.signal.removeEventListener('abort', rejectAbort);

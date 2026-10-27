@@ -88,9 +88,15 @@ export class OllamaProvider implements SLMProvider {
         if (!contexts.length || contexts.some(value => typeof value !== 'number' || value < this.limits.contextTokens)) throw new SLMError('context-limit');
     }
     async generate(request: SLMRequest): Promise<string> {
+        return (await this.generateWithUsage(request)).text;
+    }
+    /** Additive API for the hybrid router; existing generate callers still receive text only. */
+    async generateWithUsage(request: SLMRequest, checkExecution?: () => void): Promise<{ text: string; inputTokens: number; outputTokens: number }> {
+        checkExecution?.();
         checkBudget(request, this.limits);
         // Recheck metadata on each call so a reused client cannot silently switch to a remote alias.
         await this.initialize(request.signal);
+        checkExecution?.();
         const value = await this.post('chat', { model: this.model, stream: false, format: request.schema, keep_alive: 0,
             truncate: false, shift: false,
             messages: [{ role: 'system', content: request.system }, { role: 'user', content: request.prompt }],
@@ -104,7 +110,7 @@ export class OllamaProvider implements SLMProvider {
         if ((value.eval_count as number) > request.maxOutputTokens) throw new SLMError('output-limit');
         if (!record(value.message) || typeof value.message.content !== 'string') throw new SLMError('invalid-output');
         if (byteLength(value.message.content) > request.maxOutputTokens * 16) throw new SLMError('output-limit');
-        return value.message.content;
+        return { text: value.message.content, inputTokens: value.prompt_eval_count as number, outputTokens: value.eval_count as number };
     }
     async dispose(signal: SLMSignal): Promise<void> {
         signal.throwIfAborted();

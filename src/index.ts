@@ -16,5 +16,7 @@ export * from './slm/index.js';
 export * from './agents/index.js';
 export * from './security/index.js';
 export * from './bots/index.js';
+export * from './intelligence/index.js';
+export * from './memory/index.js';
 
 export const VERSION = '0.1.0';

@@ -17,4 +17,7 @@ export type {
     ExecutionTrace,
     RudraHooks,
     RudraResult,
+    RudraMemoryHooks,
+    RudraMemoryExecution,
+    RudraMemorySummary,
 } from './types.js';

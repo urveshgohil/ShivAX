@@ -1,5 +1,7 @@
 import { SpecialistBot, toolCall } from './base.js';
 import { id, object, value } from './schema.js';
+import { MEMORY_ACTIONS } from '../memory/contracts.js';
+import type { BotValue, BotContext } from '../agents/types.js';
 
 export const memoryReadInput = object({ key: id });
 export const memoryWriteInput = object({ key: id, value });
@@ -13,6 +15,12 @@ export const memoryWriteOutput = object({ key: id, revision: { type: 'number', m
 export class ChitraguptaBot extends SpecialistBot {
     constructor() {
         super('chitragupta', {
+            ...Object.fromEntries(MEMORY_ACTIONS.map(action => [action.capability, {
+                description: `${action.action} scoped memory records; remembered content remains untrusted.`,
+                input: action.input, output: action.output,
+                tools: [{ id: action.toolId, description: `${action.effect} memory ${action.action}` }],
+                run: (data: BotValue, context: BotContext) => toolCall(context, action.toolId, data),
+            }])),
             'memory.read': {
                 description: 'Read from the authenticated session memory namespace.',
                 input: memoryReadInput,

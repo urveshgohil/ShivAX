@@ -55,10 +55,26 @@ import {
     createSpecialistBots, createSpecialistSystem, SessionMemoryStore, SessionFeedbackStore,
     SanjayaBot, BrihaspatiBot, VishwakarmaBot, ChitraguptaBot, HanumanBot, YudhishthiraBot, EkalavyaBot,
     type MemoryStorage, type FeedbackStorage, type VisionModelAdapter, type ReasoningProvider, type CodeProvider, type ReviewProvider,
+    ModelProviderRegistry, ModelRouter, NeuralModelProvider, RulesModelProvider, RemoteModelAdapter, OllamaModelAdapter, createModelOperation,
+    type ModelProvider, type ModelRequest, type ModelResponse, type ModelResult,
+    MemoryEngine, MemoryTaskLifecycle, InMemoryMemoryAdapter, NodeFileMemoryAdapter, IndexedDBMemoryAdapter,
+    type MemoryStore, type MemoryRecord, type MemoryPersistence, type MemoryFileSystem,
 } from ${JSON.stringify(entry)};
 import type { ${LEGACY_TYPE_EXPORTS.map(name => `${name} as Legacy_${name}`).join(', ')} } from ${JSON.stringify(entry)};
 const legacyTask: Task = 'binary';
 const net = new NeuralNet({ layers: [2, 1], task: legacyTask });
+const models = new ModelProviderRegistry().register(new NeuralModelProvider('numeric', net));
+const modelsRouter = new ModelRouter(models, { scope: { kind: 'personal', id: 'typed' } });
+const hybridReasoning: ReasoningProvider = { id: 'hybrid', decide: createModelOperation(modelsRouter, 'text-reasoning', { schema: { type: 'object' } }) };
+const hybridVision: VisionModelAdapter = { id: 'vision', analyze: createModelOperation(modelsRouter, 'visual-interpretation', { schema: { type: 'object' } }) };
+const rules: ModelProvider = new RulesModelProvider('rules', [{ id: 'number', validate: value => typeof value === 'number', run: value => ({ valid: value !== null }) }]);
+const remote: ModelProvider = new RemoteModelAdapter({ id: 'remote', capabilities: ['text-reasoning'], pricing: { inputTokenUSD: 0, outputTokenUSD: 0, callUSD: 0 },
+    load: async () => ({ infer: (request: ModelRequest): ModelResponse => ({ data: request.input, usage: { inputTokens: null, outputTokens: null, costUSD: null } }) }) });
+const local: ModelProvider = new OllamaModelAdapter({ model: 'host-configured-model' });
+const recordMemory: MemoryStore = new MemoryEngine({ persistence: new InMemoryMemoryAdapter() });
+const browserMemory: MemoryStore = new MemoryEngine({ persistence: new IndexedDBMemoryAdapter({ database: 'typed-memory' }) });
+declare const injectedFs: MemoryFileSystem;
+const fileMemory: MemoryStore = new MemoryEngine({ persistence: new NodeFileMemoryAdapter({ path: '/host/memory.json', fs: injectedFs }) });
 let optionalClient: SLMClient | undefined;
 declare const signal: BotSignal;
 const task: BotTask = { id: 'typed-task', input: { capability: 'echo', data: 'text' } };
