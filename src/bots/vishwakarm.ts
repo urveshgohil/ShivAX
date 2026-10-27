@@ -24,10 +24,10 @@ function filesValid(files: readonly SourceFile[]): boolean {
         )
     );
 }
-export class VishwakarmaBot extends SpecialistBot {
+export class VishwakarmBot extends SpecialistBot {
     constructor(model?: CodeProvider) {
         const provider = adapter(model, 'suggest');
-        super('vishwakarma', {
+        super('vishwakarm', {
             'code.summarize': {
                 description:
                     'Report supplied source paths, languages, line counts and character counts.',

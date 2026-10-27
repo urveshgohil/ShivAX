@@ -44,7 +44,10 @@ browser; SHIVAX does not execute page text as agent instructions.
 
 The adapter calls `captureUIPage` with the verified session's scope, bounded
 `maxNodes` (default 32, hard limit 64), `timeout` (default 15000ms), and optional
-host screenshot path. Abort closes the lease; final cleanup also closes it.
+host screenshot path. Abort initiates lease cleanup once; final cleanup awaits
+that same promise, even if the host's repeated `close()` calls would return early.
+Capture remains pending until cleanup settles. Hosts must return a promise that
+settles only when cleanup finishes; cleanup errors are reported without raw details.
 Do not reuse a lease whose close function can affect another session.
 
 Normalization retains Inspectra's snapshot measurements and nearest captured

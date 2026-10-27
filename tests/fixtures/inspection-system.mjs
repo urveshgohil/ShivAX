@@ -1,6 +1,6 @@
 import {
     createSpecialistSystem,
-    Jaya,
+    Jay,
     PermissionPolicyRegistry,
     InspectionPlanner,
     INSPECTION_WORKFLOW_CAPABILITIES,
@@ -23,7 +23,7 @@ export function inspectionSystem(provider, options = {}) {
             scope: inspectionScope,
         },
     };
-    const jaya = new Jaya(createMockIdentityProvider(identity), { now: () => 1000 }),
+    const jay = new Jay(createMockIdentityProvider(identity), { now: () => 1000 }),
         policies = new PermissionPolicyRegistry();
     for (const id of INSPECTION_WORKFLOW_CAPABILITIES)
         policies.register({
@@ -52,13 +52,13 @@ export function inspectionSystem(provider, options = {}) {
             },
         },
         hooks: { planner: new InspectionPlanner() },
-        security: { jaya, policies, options: { approve: options.approve ?? (() => true) } },
+        security: { jay, policies, options: { approve: options.approve ?? (() => true) } },
     });
     return {
         ...system,
         async run(input = inspectionRequest(), host = {}) {
             const capability = input.image ? 'vision.inspection-reference' : 'inspection.scan';
-            const context = await jaya.createContext(
+            const context = await jay.createContext(
                 { id: 'inspection-task', input: { capability, data: input } },
                 {
                     signal: host.signal ?? new AbortController().signal,

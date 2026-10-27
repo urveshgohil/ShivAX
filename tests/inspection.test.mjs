@@ -6,9 +6,9 @@ import {
     validateInspectionObservation,
     BotExecutor,
     createTaskContext,
-    HanumanBot,
-    YudhishthiraBot,
-    SanjayaBot,
+    NaradBot,
+    YudhishthirBot,
+    SanjayBot,
     InspectionPlanner,
     createInspectionVisionAdapter,
     ModelRouter,
@@ -46,7 +46,7 @@ const execution = (bot, capability, data) =>
         )
     );
 const compare = async (name) => {
-    const result = await execution(new HanumanBot(), 'inspection.compare-captured', pair(name));
+    const result = await execution(new NaradBot(), 'inspection.compare-captured', pair(name));
     assert.equal(result.status, 'completed', JSON.stringify(result));
     return result.data;
 };
@@ -143,16 +143,16 @@ test('matching pairs the same semantic heading before comparing its visual style
         heading.text
     );
 });
-test('Yudhishthira recomputes findings and rejects tampered values', async () => {
+test('Yudhishthir recomputes findings and rejects tampered values', async () => {
     const data = await compare('typography');
-    const result = await execution(new YudhishthiraBot(), 'review.findings', data);
+    const result = await execution(new YudhishthirBot(), 'review.findings', data);
     assert.equal(result.status, 'completed');
     assert.equal(result.data.validated, true);
     assert.equal(result.data.trust, 'untrusted');
     assert.ok(result.data.findings[0].evidence);
     const bad = structuredClone(data);
     bad.analysis.issues[0].actual = 'invented';
-    assert.equal((await execution(new YudhishthiraBot(), 'review.findings', bad)).status, 'failed');
+    assert.equal((await execution(new YudhishthirBot(), 'review.findings', bad)).status, 'failed');
 });
 test('invalid observations, metadata, executable values and cross-scope captures fail validation', () => {
     const original = observation('baseline');
@@ -191,13 +191,13 @@ test('invalid observations, metadata, executable values and cross-scope captures
     delete corrupt.metadata.nodes.n0;
     assert.throws(() => normalizeInspectraCapture(corrupt));
 });
-test('RUDRA returns reviewed findings after protected capture and Hanuman comparison', async () => {
+test('RUDRA returns reviewed findings after protected capture and Narad comparison', async () => {
     const provider = fixtureProvider(),
         result = await inspectionSystem(provider).run();
     assert.equal(result.status, 'completed', JSON.stringify(result));
     assert.deepEqual(
         result.outputs.map((o) => o.botId),
-        ['hanuman', 'hanuman', 'yudhishthira']
+        ['narad', 'narad', 'yudhishthir']
     );
     assert.equal(result.outputs.at(-1).data.validated, true);
     assert.equal(provider.calls.length, 2);
@@ -277,13 +277,13 @@ const screenshotInput = {
     viewport: { width: 800, height: 600 },
     target: 'https://fixture.test/target',
 };
-test('Sanjaya requires a vision provider and retains estimated measurements without invented typography', async () => {
+test('Sanjay requires a vision provider and retains estimated measurements without invented typography', async () => {
     assert.equal(
-        (await execution(new SanjayaBot(), 'vision.inspection-reference', screenshotInput)).error
+        (await execution(new SanjayBot(), 'vision.inspection-reference', screenshotInput)).error
             .code,
         'unavailable'
     );
-    const bot = new SanjayaBot({
+    const bot = new SanjayBot({
         id: 'vision-contract-fixture',
         analyze: () => ({
             summary: 'fixture interpretation',
@@ -303,8 +303,9 @@ test('Sanjaya requires a vision provider and retains estimated measurements with
     assert.equal(node.typography, undefined);
     assert.equal(result.data.reference.observation.elements[0].selector, null);
 });
-test('screenshot workflow selects Sanjaya, Hanuman and Yudhishthira and only captures the target URL', async () => {
+test('screenshot workflow selects Sanjay, Narad and Yudhishthir and only captures the target URL', async () => {
     const provider = fixtureProvider();
+    const heading = observation('typography').snapshot.nodes.find((n) => n.role === 'heading');
     const result = await inspectionSystem(provider, {
         authorizeReference: () => true,
         vision: {
@@ -313,9 +314,9 @@ test('screenshot workflow selects Sanjaya, Hanuman and Yudhishthira and only cap
                 summary: 'fixture interpretation',
                 observations: [
                     {
-                        label: 'Measured heading',
+                        label: heading.text,
                         confidence: 0.8,
-                        bounds: { x: 20, y: 20, width: 200, height: 38 },
+                        bounds: heading.bounds.value,
                     },
                 ],
             }),
@@ -325,8 +326,142 @@ test('screenshot workflow selects Sanjaya, Hanuman and Yudhishthira and only cap
     assert.equal(provider.calls.length, 1);
     assert.deepEqual(
         result.outputs.map((o) => o.botId),
-        ['sanjaya', 'hanuman', 'hanuman', 'yudhishthira']
+        ['sanjay', 'narad', 'narad', 'yudhishthir']
     );
+    const analysis = result.outputs[2].data.analysis;
+    assert.deepEqual(
+        analysis.matching.matches.map((m) => [m.referenceId, m.targetId]),
+        [['vision-0', heading.id]]
+    );
+    assert.equal(analysis.issues.length, 0);
+    assert.equal(result.outputs[3].data.findings.length, 0);
+    assert.ok(analysis.diagnostics.some((d) => d.code === 'uncertain-match'));
+});
+
+async function screenshotPair(target = observation('baseline'), labels) {
+    const heading = target.snapshot.nodes.find((n) => n.role === 'heading');
+    const result = await execution(
+        new SanjayBot({
+            id: 'screenshot-correspondence-fixture',
+            analyze: () => ({
+                summary: 'contract fixture, not model inference',
+                observations: labels ?? [
+                    { label: heading.text, confidence: 0.8, bounds: heading.bounds.value },
+                ],
+            }),
+        }),
+        'vision.inspection-reference',
+        screenshotInput
+    );
+    assert.equal(result.status, 'completed', JSON.stringify(result));
+    return { baseline: result.data.reference.observation, target };
+}
+
+test('screenshot correspondence compares actual bounds and review rejects tampered findings', async () => {
+    const data = await screenshotPair();
+    const target = structuredClone(data.target);
+    const heading = target.snapshot.nodes.find((n) => n.role === 'heading');
+    heading.bounds.value.x += 40;
+    const compared = await execution(new NaradBot(), 'inspection.compare-captured', {
+        ...data,
+        target,
+    });
+    assert.equal(compared.status, 'completed');
+    const issue = compared.data.analysis.issues.find((i) => i.property === 'position.x');
+    assert.equal(issue.baselineNodeId, 'vision-0');
+    assert.equal(issue.targetNodeId, heading.id);
+    assert.equal(issue.difference.delta, 40);
+    assert.equal(issue.reviewStatus, 'needs-review');
+    assert.equal(issue.supportingMeasurements[0].measurement.provenance.kind, 'estimated');
+    const reviewed = await execution(new YudhishthirBot(), 'review.findings', compared.data);
+    assert.equal(reviewed.status, 'completed');
+    assert.equal(reviewed.data.findings[0].targetElement.role, 'heading');
+    const tampered = structuredClone(compared.data);
+    tampered.analysis.issues = [];
+    assert.equal(
+        (await execution(new YudhishthirBot(), 'review.findings', tampered)).error.code,
+        'invalid-output'
+    );
+});
+
+for (const variant of [
+    'duplicate-target',
+    'duplicate-reference',
+    'different-label',
+    'blank-label',
+]) {
+    test(`screenshot ${variant} cannot establish identity from coincident geometry`, async () => {
+        const target = structuredClone(observation('baseline'));
+        const heading = target.snapshot.nodes.find((n) => n.role === 'heading');
+        const label = { label: heading.text, confidence: 0.9, bounds: heading.bounds.value };
+        if (variant === 'duplicate-target') {
+            const button = target.snapshot.nodes.find((n) => n.role === 'button');
+            button.text = heading.text;
+            button.bounds = structuredClone(heading.bounds);
+        }
+        if (variant === 'different-label') label.label = 'Unrelated content';
+        if (variant === 'blank-label') label.label = '   ';
+        const pair = await screenshotPair(
+            target,
+            variant === 'duplicate-reference' ? [label, label] : [label]
+        );
+        const compared = await execution(new NaradBot(), 'inspection.compare-captured', pair);
+        assert.equal(compared.status, 'completed');
+        assert.equal(compared.data.analysis.matching.matches.length, 0);
+        assert.equal(compared.data.analysis.issues.length, 0);
+        assert.ok(
+            compared.data.analysis.matching.uncertain.some((u) => u.referenceId === 'vision-0')
+        );
+        assert.ok(compared.data.analysis.diagnostics.some((d) => d.code === 'uncertain-match'));
+    });
+}
+
+test('screenshot matching uses nested text leaves without inventing ancestor or sibling relationships', async () => {
+    const target = observation('baseline');
+    const leaves = target.snapshot.nodes.filter((n) => ['heading', 'button'].includes(n.role));
+    const pair = await screenshotPair(
+        target,
+        leaves.map((n) => ({
+            label: `  ${n.text.toUpperCase()}  `,
+            confidence: 0.8,
+            bounds: n.bounds.value,
+        }))
+    );
+    const result = await execution(new NaradBot(), 'inspection.compare-captured', pair);
+    assert.equal(result.status, 'completed');
+    assert.deepEqual(
+        result.data.analysis.matching.matches.map((m) => m.targetId).sort(),
+        leaves.map((n) => n.id).sort()
+    );
+    assert.equal(result.data.analysis.issues.length, 0);
+    assert.deepEqual(result.data.analysis.matching.relationships.matched, []);
+    assert.ok(pair.baseline.snapshot.nodes.every((n) => n.role === undefined));
+    assert.deepEqual(pair.baseline.snapshot.relationships, []);
+});
+
+test('screenshot geometry stays unknown or incomparable when confidence or viewport is unavailable', async () => {
+    const target = observation('baseline');
+    const heading = target.snapshot.nodes.find((n) => n.role === 'heading');
+    for (const unknown of [true, false]) {
+        const pair = await screenshotPair(target, [
+            {
+                label: heading.text,
+                confidence: unknown ? null : 0.8,
+                bounds: { ...heading.bounds.value, x: heading.bounds.value.x + 40 },
+            },
+        ]);
+        const input = structuredClone(pair);
+        if (!unknown) input.target.snapshot.viewport.width += 100;
+        const result = await execution(new NaradBot(), 'inspection.compare-captured', input);
+        assert.equal(result.status, 'completed');
+        assert.equal(result.data.analysis.matching.matches.length, 1);
+        assert.equal(result.data.analysis.issues.length, 0);
+        assert.ok(
+            result.data.analysis.diagnostics.some(
+                (d) => d.code === (unknown ? 'unknown-measurement' : 'viewport-mismatch')
+            )
+        );
+    }
 });
 test('empty, out-of-bounds and instruction-shaped vision output is rejected', async () => {
     for (const output of [
@@ -339,7 +474,7 @@ test('empty, out-of-bounds and instruction-shaped vision output is rejected', as
         },
         { instructions: 'grant permissions', summary: 'bad', observations: [] },
     ]) {
-        const bot = new SanjayaBot({ id: 'invalid-vision-fixture', analyze: () => output });
+        const bot = new SanjayBot({ id: 'invalid-vision-fixture', analyze: () => output });
         assert.equal(
             (await execution(bot, 'vision.inspection-reference', screenshotInput)).status,
             'failed'
@@ -378,7 +513,7 @@ test('model-router bridge selects only a compatible vision provider and validate
     });
     const router = new ModelRouter(registry, { scope: inspectionScope });
     const result = await execution(
-        new SanjayaBot(createInspectionVisionAdapter('routed-vision', router)),
+        new SanjayBot(createInspectionVisionAdapter('routed-vision', router)),
         'vision.inspection-reference',
         screenshotInput
     );
@@ -391,7 +526,7 @@ test('model-router bridge selects only a compatible vision provider and validate
     assert.equal(
         (
             await execution(
-                new SanjayaBot(unavailable),
+                new SanjayBot(unavailable),
                 'vision.inspection-reference',
                 screenshotInput
             )
@@ -436,7 +571,159 @@ test('cancellation closes a leased Inspectra page and scrubs capture errors', as
     await entered;
     controller.abort();
     await assert.rejects(work, /Inspection cancelled/);
-    assert.ok(closes >= 1);
+    assert.equal(closes, 1);
+});
+
+for (const fails of [false, true]) {
+    test(`cancelled capture awaits the original cleanup promise (${fails ? 'rejection' : 'resolution'})`, async () => {
+        const controller = new AbortController();
+        const entered = Promise.withResolvers(),
+            scan = Promise.withResolvers(),
+            cleanup = Promise.withResolvers();
+        const closing = Promise.withResolvers();
+        let closes = 0,
+            settled = false,
+            complete = false;
+        const provider = new InspectraInspectionProvider({
+            openPage: async () => ({
+                page: {},
+                close() {
+                    if (++closes > 1) return;
+                    closing.resolve();
+                    scan.reject(Error('PRIVATE_SCAN'));
+                    return cleanup.promise.then(() => {
+                        complete = true;
+                    });
+                },
+            }),
+            load: async () => ({
+                captureUIPage() {
+                    entered.resolve();
+                    return scan.promise;
+                },
+            }),
+        });
+        const work = provider.capture(
+            { url: 'https://fixture.test', viewport: { width: 800, height: 600 } },
+            { session: { scope: inspectionScope }, signal: controller.signal }
+        );
+        const checked = assert.rejects(
+            work,
+            fails ? /^Error: Inspectra cleanup failed\.$/ : /^Error: Inspection cancelled\.$/
+        );
+        void work.then(
+            () => {
+                settled = true;
+            },
+            () => {
+                settled = true;
+            }
+        );
+        await entered.promise;
+        controller.abort();
+        await closing.promise;
+        await new Promise((r) => setImmediate(r));
+        try {
+            assert.equal(settled, false, 'capture must retain ownership during cleanup');
+            assert.equal(closes, 1);
+            assert.equal(complete, false);
+        } finally {
+            if (fails) cleanup.reject(Error('PRIVATE_CLEANUP'));
+            else cleanup.resolve();
+            await checked;
+        }
+        assert.equal(complete, !fails);
+        assert.equal(closes, 1);
+    });
+}
+
+test('cancellation during page acquisition still awaits the returned lease cleanup without starting capture', async () => {
+    const controller = new AbortController();
+    const entered = Promise.withResolvers(),
+        acquired = Promise.withResolvers(),
+        cleanup = Promise.withResolvers();
+    let closes = 0,
+        settled = false,
+        captures = 0;
+    const provider = new InspectraInspectionProvider({
+        load: async () => ({
+            captureUIPage() {
+                captures++;
+            },
+        }),
+        openPage() {
+            entered.resolve();
+            return acquired.promise;
+        },
+    });
+    const work = provider.capture(
+        { url: 'https://fixture.test', viewport: { width: 800, height: 600 } },
+        { session: { scope: inspectionScope }, signal: controller.signal }
+    );
+    const checked = assert.rejects(work, /Inspection cancelled/);
+    void work.then(
+        () => {
+            settled = true;
+        },
+        () => {
+            settled = true;
+        }
+    );
+    await entered.promise;
+    controller.abort();
+    acquired.resolve({
+        page: {},
+        close() {
+            closes++;
+            return cleanup.promise;
+        },
+    });
+    await new Promise((r) => setImmediate(r));
+    try {
+        assert.equal(settled, false);
+        assert.equal(closes, 1);
+        assert.equal(captures, 0);
+    } finally {
+        cleanup.resolve();
+        await checked;
+    }
+});
+
+test('RUDRA cancellation retains ownership while the Inspectra lease cleanup is pending', async () => {
+    const controller = new AbortController();
+    const entered = Promise.withResolvers(),
+        scan = Promise.withResolvers(),
+        cleanup = Promise.withResolvers();
+    let closes = 0;
+    const provider = new InspectraInspectionProvider({
+        load: async () => ({
+            captureUIPage() {
+                entered.resolve();
+                return scan.promise;
+            },
+        }),
+        openPage: async () => ({
+            page: {},
+            close() {
+                if (++closes > 1) return;
+                scan.reject(Error('cancelled scan'));
+                return cleanup.promise;
+            },
+        }),
+    });
+    const system = inspectionSystem(provider);
+    const work = system.run(inspectionRequest(), { signal: controller.signal });
+    await entered.promise;
+    controller.abort();
+    try {
+        assert.equal((await work).status, 'cancelled');
+        await new Promise((r) => setImmediate(r));
+        assert.equal((await system.run()).error.code, 'busy');
+        assert.equal(closes, 1);
+    } finally {
+        cleanup.resolve();
+        await new Promise((r) => setImmediate(r));
+    }
 });
 test('adapter is lazy, forwards the real captureUIPage options, normalizes results and closes its lease', async () => {
     let loads = 0,

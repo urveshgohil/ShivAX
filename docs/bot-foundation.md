@@ -71,7 +71,7 @@ rejected. Input, metadata, identity and permissions are deeply copied/frozen;
 the live signal is retained. Omitted version defaults to 1; contexts always
 carry version 1 and unsupported request versions are rejected.
 
-**This phase does not verify identities or implement Jaya/Vijaya.** Caller ID,
+**This phase does not verify identities or implement Jay/Vijay.** Caller ID,
 issuer and permissions are trusted host assertions. Never derive them from an
 unverified request body, model output or browser UI state. The Node/server or
 desktop host must authenticate and authorize access to protected resources.

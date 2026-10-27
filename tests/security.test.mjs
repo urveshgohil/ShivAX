@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-    Jaya, Vijaya, PermissionPolicyRegistry, ProtectedToolRegistry, SecurityAuditLog, SecurityError,
+    Jay, Vijay, PermissionPolicyRegistry, ProtectedToolRegistry, SecurityAuditLog, SecurityError,
     BotRegistry, RudraOrchestrator, createTaskContext,
 } from 'shivax';
 import { createMockIdentityProvider } from './fixtures/mock-identity.mjs';
@@ -17,7 +17,7 @@ function fixture(options = {}) {
     const provider = createMockIdentityProvider(options.identity ?? identity());
     const audit = new SecurityAuditLog(options.auditCapacity ?? 256);
     let time = 2000, calls = 0;
-    const jaya = new Jaya(provider, { now: () => time, audit });
+    const jay = new Jay(provider, { now: () => time, audit });
     const policies = new PermissionPolicyRegistry();
     if (options.capPolicy !== false) policies.register({ ...policy('capability', 'work', 'cap:work', options.effect), ...options.capPolicy });
     if (options.toolPolicy !== false) policies.register({ ...policy('tool', 'store.read', 'tool:read', options.toolEffect),
@@ -28,7 +28,7 @@ function fixture(options = {}) {
         validateOutput: output => output !== null && typeof output === 'object' && typeof output.value === 'string',
         execute: async (_input, ctx) => { calls++; return options.handler ? options.handler(ctx) : { value: 'fixture-value' }; },
     });
-    const vijaya = new Vijaya(jaya, policies, { tools, audit, approve: options.approve, maxToolCalls: options.maxToolCalls });
+    const vijay = new Vijay(jay, policies, { tools, audit, approve: options.approve, maxToolCalls: options.maxToolCalls });
     const bot = { id: 'worker', capabilities: [{ id: 'work', description: 'Protected fixture' }],
         requiredTools: [{ id: 'store.read', description: 'Narrow in-memory fixture' }],
         validateInput: () => true, validateOutput: () => true,
@@ -37,11 +37,11 @@ function fixture(options = {}) {
             return { taskId: context.task.taskId, botId: 'worker', status: 'completed', data: output };
         },
     };
-    const rudra = new RudraOrchestrator(new BotRegistry().register(bot), { security: vijaya, ...options.hooks });
-    const context = (task = request(), host = {}) => jaya.createContext(task, {
+    const rudra = new RudraOrchestrator(new BotRegistry().register(bot), { security: vijay, ...options.hooks });
+    const context = (task = request(), host = {}) => jay.createContext(task, {
         signal: new AbortController().signal, toolPermissions: ['store.read'], ...host,
     });
-    return { provider, audit, jaya, policies, tools, vijaya, rudra, bot, context,
+    return { provider, audit, jay, policies, tools, vijay, rudra, bot, context,
         calls: () => calls, setTime: value => { time = value; } };
 }
 function denied(result) { assert.equal(result.status, 'failed'); assert.ok(['security-denied', 'bot-failed'].includes(result.error.code)); }
@@ -67,7 +67,7 @@ test('audit writer strips extra credential objects and validates its scalar sche
     assert.throws(() => audit.record(2, { ...entry, reason: 'secret' }), /Invalid audit entry/);
 });
 
-test('Jaya accepts only verified host identities and Vijaya authorizes a narrow tool end to end', async () => {
+test('Jay accepts only verified host identities and Vijay authorizes a narrow tool end to end', async () => {
     const f = fixture(); const context = await f.context(); const result = await f.rudra.run(context);
     assert.equal(result.status, 'completed'); assert.deepEqual(result.outputs[0].data, { value: 'fixture-value' });
     assert.equal(f.calls(), 1); assert.ok(f.provider.verifications >= 4);
@@ -89,11 +89,11 @@ test('client-supplied user/session IDs and copied authentic contexts are not pro
         denied(await f.rudra.run(context));
     }
     assert.equal(f.calls(), 0); reason(f, 'unauthenticated');
-    const other = new Jaya(createMockIdentityProvider(identity()), { now: () => 2000 });
+    const other = new Jay(createMockIdentityProvider(identity()), { now: () => 2000 });
     await assert.rejects(other.verify(authentic, authentic.signal), error => error.code === 'unauthenticated');
 });
 
-test('Jaya rejects missing, malformed, mismatched and untrusted adapter identity data', async () => {
+test('Jay rejects missing, malformed, mismatched and untrusted adapter identity data', async () => {
     const valid = identity();
     const bad = [null, {}, { ...valid, token: 'secret' },
         { ...valid, principal: { ...valid.principal, id: '' } },
@@ -105,8 +105,8 @@ test('Jaya rejects missing, malformed, mismatched and untrusted adapter identity
     ];
     for (const value of bad) {
         const provider = createMockIdentityProvider(value); const audit = new SecurityAuditLog();
-        const jaya = new Jaya(provider, { now: () => 2000, audit });
-        await assert.rejects(jaya.createContext(request(), { signal: new AbortController().signal }), error => error instanceof SecurityError && !error.message.includes('secret'));
+        const jay = new Jay(provider, { now: () => 2000, audit });
+        await assert.rejects(jay.createContext(request(), { signal: new AbortController().signal }), error => error instanceof SecurityError && !error.message.includes('secret'));
         assert.equal(audit.list().at(-1).decision, 'deny');
     }
 });
@@ -205,7 +205,7 @@ test('permissions and session validity are rechecked at tool time after a bot st
 test('bot validators cannot revoke policy and still reach execution', async () => {
     const f = fixture(); let executed = false;
     const bot = { ...f.bot, validateInput() { f.policies.unregister('capability', 'work'); return true; }, execute() { executed = true; } };
-    const rudra = new RudraOrchestrator(new BotRegistry().register(bot), { security: f.vijaya });
+    const rudra = new RudraOrchestrator(new BotRegistry().register(bot), { security: f.vijay });
     denied(await rudra.run(await f.context())); assert.equal(executed, false); reason(f, 'policy-changed');
 });
 
@@ -213,7 +213,7 @@ test('tool calls require both host tool IDs and the selected bot declaration', a
     const noHost = fixture(); denied(await noHost.rudra.run(await noHost.context(request(), { toolPermissions: [] }))); assert.equal(noHost.calls(), 0);
     reason(noHost, 'tool-denied');
     const f = fixture(); const bot = { ...f.bot, requiredTools: [] };
-    const rudra = new RudraOrchestrator(new BotRegistry().register(bot), { security: f.vijaya });
+    const rudra = new RudraOrchestrator(new BotRegistry().register(bot), { security: f.vijay });
     denied(await rudra.run(await f.context())); reason(f, 'tool-denied'); assert.equal(f.calls(), 0);
 });
 
@@ -273,7 +273,7 @@ test('security denials and state-changing failures cannot trigger automatic retr
     denied(result); assert.equal(result.trace.filter(entry => entry.type === 'retry').length, 0);
 });
 
-test('without Vijaya, a bot declaring tools is rejected even if a legacy context lists them', async () => {
+test('without Vijay, a bot declaring tools is rejected even if a legacy context lists them', async () => {
     const f = fixture(); const context = await f.context();
     const result = await new RudraOrchestrator(new BotRegistry().register(f.bot)).run(context);
     denied(result); assert.equal(f.calls(), 0);

@@ -1,6 +1,6 @@
-export { Jaya } from './jaya.js';
-export { Vijaya } from './vijaya.js';
-export type { VijayaOptions, SecurityExecutionHooks } from './vijaya.js';
+export { Jay } from './jay.js';
+export { Vijay } from './vijay.js';
+export type { VijayOptions, SecurityExecutionHooks } from './vijay.js';
 export { PermissionPolicyRegistry, ProtectedToolRegistry } from './registry.js';
 export { SecurityAuditLog } from './audit.js';
 export { SecurityError } from './errors.js';

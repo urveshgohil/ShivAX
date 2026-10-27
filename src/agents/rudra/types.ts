@@ -1,5 +1,5 @@
 import type { BotInput, BotSignal, BotValue, Capability, TaskContext } from '../types.js';
-import type { Vijaya } from '../../security/vijaya.js';
+import type { Vijay } from '../../security/vijay.js';
 
 /** Separate from the Phase 01 TaskStatus and the legacy neural-network Task. */
 export type RudraTaskStatus =
@@ -93,7 +93,7 @@ export interface ExecutionTrace {
 }
 export interface RudraHooks {
     /** Mandatory for protected tool-using bots. Pure legacy workflows may omit it. */
-    readonly security?: Vijaya;
+    readonly security?: Vijay;
     readonly planner?: Planner;
     readonly approve?: ApprovalHandler;
     /** Observers cannot approve work or change its outcome; thrown/rejected errors are isolated. */

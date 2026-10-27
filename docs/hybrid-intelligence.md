@@ -82,7 +82,7 @@ Remote fallback requires both opt-ins. Input fields with the same names have no
 effect. `enabled: false` prevents all provider calls and SDK loading.
 
 The scope check is isolation, not authentication. Application code must configure
-Jaya/Vijaya capability authorization when exposing specialist inference to users.
+Jay/Vijay capability authorization when exposing specialist inference to users.
 Remote opt-in is a host data-egress decision and must not be copied from model
 proposals or untrusted request data. The new layer does not weaken existing tool
 permissions or automatically register any new protected action.
@@ -143,7 +143,7 @@ Async predicates fail closed, with rejected promises observed.
 
 `createModelOperation(router, capability, contract, routingOptions)` returns an
 injected specialist method. For example, supply its result as Brihaspati's
-`decide`/`plan`, Vishwakarma's `suggest`, Sanjaya's `analyze`, or Yudhishthira's
+`decide`/`plan`, Vishwakarm's `suggest`, Sanjay's `analyze`, or Yudhishthir's
 `review`. Each operation needs the matching raw provider-output contract from
 the [specialist guide](specialist-bots.md); specialist semantic validation still
 runs afterward. Scope/task/session context and cancellation propagate.

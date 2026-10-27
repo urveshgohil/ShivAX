@@ -1,7 +1,7 @@
-# Phase 06 — Chitragupta memory engine
+# Phase 06 — Chitragupt memory engine
 
 Implemented 2026-10-26 (Asia/Calcutta). `src/memory/` adds a portable record
-service, persistence adapters, protected Chitragupta actions and optional RUDRA
+service, persistence adapters, protected Chitragupt actions and optional RUDRA
 lifecycle integration. Existing session key/value and feedback services remain
 available. Neural weights, MNIST data and digit browser persistence stay separate.
 
@@ -15,12 +15,29 @@ invalid input, privacy rejection and corrupted storage use fixed `MemoryError`
 codes. Errors never contain stored values or raw backend exception messages.
 
 Records contain version, ID, namespace, category, finite JSON value, metadata,
-tags, creation/update/expiry timestamps, revision and `trust: 'untrusted'`.
+tags, creation/update/expiry timestamps, revision, generation and `trust: 'untrusted'`.
 Optional embeddings include provider ID and finite vector. Returned records and
 exports are immutable snapshots. Drafts cannot set namespace, timestamps,
-revision, trust or embeddings. Updates preserve category and creation time;
+revision, generation, trust or embeddings. Updates preserve category and creation time;
 `expectedRevision` rejects stale writes. Metadata/tags are replaced explicitly,
 not merged with executable objects. Empty patches fail.
+
+Each new record receives an engine-generated 128-bit random `generation` stored
+as 32 hexadecimal characters. Updates preserve it and atomically compare both
+generation and revision against the record read before embedding. Deleting or
+expiring a record and recreating the same ID produces a new generation, even if
+the clock and revision are identical. A stale update fails with `conflict` and
+cannot overwrite the replacement's content, category, approval or retention.
+Generation identifies a record lifetime; it does not grant permissions.
+
+Version-1 records without generation remain readable/exportable without a storage
+write. Their first successful update adds a persistent generation; replacement
+records always receive a new one. The public field is optional for legacy records
+and custom stores. Malformed persisted generations fail closed. New writes and
+legacy updates require the platform's `crypto.getRandomValues`, accessed lazily;
+there is no Node-only import or random/time fallback. Missing platform entropy
+returns `unavailable`. Upgrade all writers sharing a store; older strict readers
+may reject the additive field. Existing adapter locking requirements still apply.
 
 | Category | Default TTL / default maximum | Admission |
 | --- | --- | --- |
@@ -104,7 +121,7 @@ duplicate IDs, invalid revisions/timestamps/vectors, unexpected fields and
 recognizable stored credentials cause the namespace read to fail closed.
 
 The public engine is a trusted host service, not an authentication API. Bots use
-protected tool handlers that derive the namespace from Vijaya's verified
+protected tool handlers that derive the namespace from Vijay's verified
 `ToolExecutionContext`, ignoring payload IDs. Input schemas reject namespace,
 consent and verification overrides. A client-provided user ID cannot establish
 identity. No policies, permissions or approvals are automatically granted.
@@ -147,9 +164,9 @@ The host chooses whether this adapter is local/remote and controls egress,
 model loading, cancellation and inference budgets. No embedding dependency or
 automatic connection to the Phase 05 model router is added.
 
-## Chitragupta and RUDRA
+## Chitragupt and RUDRA
 
-Chitragupta retains legacy `memory.read`/`memory.write` and adds:
+Chitragupt retains legacy `memory.read`/`memory.write` and adds:
 
 | Capability | Protected tool | Effect |
 | --- | --- | --- |
@@ -169,14 +186,14 @@ The host must separately register capability/tool policies with those effects,
 principal permissions, context tool IDs and explicit approval for writes.
 Exports may also be marked approval-required by host policy.
 
-`MemoryTaskLifecycle` uses the actual Chitragupta bot, BotExecutor and Vijaya for
+`MemoryTaskLifecycle` uses the actual Chitragupt bot, BotExecutor and Vijay for
 each read/write. Configure it through `memoryLifecycle` in
 `createSpecialistSystem`, or inject it as RUDRA's `memory` hook alongside security:
 
 ```ts
 const system = createSpecialistSystem({
     memoryStore: memory,
-    security: { jaya, policies, options: { approve } },
+    security: { jay, policies, options: { approve } },
     memoryLifecycle: {
         recall: task => ({ text: 'host-selected query', categories: ['knowledge'], limit: 3 }),
         record: { id: (task, summary) => `history-${task.taskId}` },
@@ -214,7 +231,7 @@ honor signals; synchronous code cannot be preempted mid-call.
 
 New source files: `src/memory/types.ts`, `errors.ts`, `validation.ts`,
 `adapters.ts`, `engine.ts`, `contracts.ts`, `services.ts`, `lifecycle.ts`, `index.ts`.
-Modified source: `src/index.ts`, `src/bots/chitragupta.ts`, `src/bots/system.ts`,
+Modified source: `src/index.ts`, `src/bots/chitragupt.ts`, `src/bots/system.ts`,
 and `src/agents/rudra/{types,index,errors,orchestrator}.ts`.
 Tests: new `tests/memory.test.mjs`, `tests/fixtures/memory-idb.mjs`; updated
 `tests/package.test.mjs` and the additive capability count in
@@ -237,3 +254,23 @@ The two previously reported Phase 05 budget-review defects are outside this
 phase and remain unresolved; memory does not rely on that router by default.
 
 **Phase 06 complete. Stop before Phase 07.**
+
+## Review fixes — 2026-10-27
+
+Resolved both reproduced defects: delete/recreate races now compare persistent
+generation plus revision, and cosine search scales vectors by their maximum
+absolute component before unit normalization. The final dot product must be
+finite before rounding is clamped to [-1, 1]. Stored embeddings are unchanged;
+zero, malformed and non-finite vectors remain rejected.
+
+Changed `src/memory/{engine,types,validation,contracts,errors}.ts` and
+`tests/memory.test.mjs`; updated this guide, the phase plan and inspection guide's
+cross-phase status. No adapter implementation or ML code was rewritten.
+
+Verification: **371 tests pass**, including **42 memory tests** and all existing
+security, ML and Phase 07 regressions. Eleven added tests cover races across
+in-memory, file and IndexedDB adapters, legacy records, expiry/recreation, tiny
+and subnormal vectors, mixed scales and protected tool output. Build, type checks,
+lint and the offline memory demo pass. IndexedDB uses a transaction protocol
+fixture, not a live browser. These two Phase 06 review fixes are complete;
+Phase 05 budget-review findings remain outside this change.

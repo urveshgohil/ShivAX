@@ -8,8 +8,8 @@ import {
     memoryReadOutput,
     memoryWriteInput,
     memoryWriteOutput,
-} from './chitragupta.js';
-import { feedbackAckSchema, feedbackRecordSchema } from './ekalavya.js';
+} from './chitragupt.js';
+import { feedbackAckSchema, feedbackRecordSchema } from './ekalavy.js';
 import { matches } from './schema.js';
 
 function namespace(identity: AuthenticatedIdentity): MemoryNamespace {

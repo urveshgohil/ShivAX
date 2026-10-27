@@ -11,9 +11,9 @@ export const feedbackRecordSchema = object(
     ['kind', 'data']
 );
 export const feedbackAckSchema = object({ recordId: id });
-export class EkalavyaBot extends SpecialistBot {
+export class EkalavyBot extends SpecialistBot {
     constructor() {
-        super('ekalavya', {
+        super('ekalavy', {
             'learning.record': {
                 description:
                     'Store a feedback/training record for explicit later use; never updates weights.',

@@ -90,7 +90,7 @@ try {
     assert.equal(pages, 2);
     assert.equal(closes, 2);
     console.log(
-        'PASS: actual Inspectra captureUIPage → Hanuman → Yudhishthira → RUDRA; 2 isolated pages, screenshots, typography 30 → 24, both leases closed.'
+        'PASS: actual Inspectra captureUIPage → Narad → Yudhishthir → RUDRA; 2 isolated pages, screenshots, typography 30 → 24, both leases closed.'
     );
 } finally {
     await browser.close();

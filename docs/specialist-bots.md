@@ -15,22 +15,22 @@ request for concrete model runtimes, durable storage, Inspectra or training.
 
 | Bot ID | Capability | Input and behavior |
 | --- | --- | --- |
-| `sanjaya` | `vision.observe` | `{ observations: [{ label, confidence, bounds? }] }`; validates and preserves supplied observations, counts them, labels provenance as `supplied-observations`. Unknown confidence stays null. |
-| `sanjaya` | `vision.analyze` | `{ image: { mimeType, base64 }, observations? }`; invokes an injected `VisionModelAdapter`. PNG/JPEG/WebP MIME labels and base64 syntax are validated; actual decoding belongs to the adapter. |
+| `sanjay` | `vision.observe` | `{ observations: [{ label, confidence, bounds? }] }`; validates and preserves supplied observations, counts them, labels provenance as `supplied-observations`. Unknown confidence stays null. |
+| `sanjay` | `vision.analyze` | `{ image: { mimeType, base64 }, observations? }`; invokes an injected `VisionModelAdapter`. PNG/JPEG/WebP MIME labels and base64 syntax are validated; actual decoding belongs to the adapter. |
 | `brihaspati` | `reasoning.plan` | An explicit `{ steps }` workflow, or `{goal,allowedCapabilities,maxSteps?}` for an injected provider's optional `plan` method. Both paths reuse RUDRA's dependency validation and return a plan with provenance. Provider proposals must respect the requested capability/step limits and never execute automatically. |
 | `brihaspati` | `reasoning.decide` | `{ question, options: [{id,label}], evidence: [{id,text}] }`; a replaceable `ReasoningProvider` returns a decision. Selected option/evidence IDs must exist in the input. |
-| `vishwakarma` | `code.summarize` | `{ files: [{path,content,language}] }`; reports actual supplied paths, languages, line/character counts. It does not claim semantic parsing or program correctness. |
-| `vishwakarma` | `code.patch` | `{ files, edits: [{path,oldText,newText}] }`; produces unapplied whole-file before/after artifacts from unique exact matches. Ambiguous replacements and unknown paths fail. |
-| `vishwakarma` | `code.suggest` | `{ files, instruction }`; optional `CodeProvider` suggests patch artifacts. Paths must be supplied files and `before` must match the supplied content. Nothing is applied. |
-| `chitragupta` | `memory.read` | `{ key }`; reads the verified session namespace through `MemoryStorage`. Returns `{found:false}` or `{found:true,value,revision}`. |
-| `chitragupta` | `memory.write` | `{ key, value }`; writes through an approved storage tool. Returns the actual storage revision. |
-| `hanuman` | `inspection.normalize` | `{ snapshot: UISnapshot }`; validates full existing scene contracts and normalizes units with the existing engine. Returns snapshot, counts and provenance. |
-| `hanuman` | `inspection.compare` | `{ baseline: UISnapshot, target: UISnapshot }`; validates scope, normalizes both snapshots to CSS pixels and calls the existing deterministic `analyzeUI` implementation. |
-| `yudhishthira` | `review.check` | `{ result, checks: [{id,path,operation,expected?}] }`; executes own-property existence, type or deep-equality checks. Reports actual pass/fail per check and overall. |
-| `yudhishthira` | `review.inspection` | Consumes Hanuman's normalization output directly; checks CSS coordinates, counts and source consistency. It checks structural consistency, not image correctness. |
-| `yudhishthira` | `review.model` | `{ result, criteria }`; optional `ReviewProvider` returns pass/fail/uncertain and findings. Output is explicitly advisory and never overrides deterministic review. |
-| `ekalavya` | `learning.record` | `{ kind: 'feedback' | 'training', data, score? }`; appends a real record through a protected `FeedbackStorage` service. It never trains a model. |
-| `ekalavya` | `learning.summarize` | `{ records }`; counts feedback/training records and computes the mean of supplied 0–1 scores, or null with no scores. Reports `weightsUpdated:false`. |
+| `vishwakarm` | `code.summarize` | `{ files: [{path,content,language}] }`; reports actual supplied paths, languages, line/character counts. It does not claim semantic parsing or program correctness. |
+| `vishwakarm` | `code.patch` | `{ files, edits: [{path,oldText,newText}] }`; produces unapplied whole-file before/after artifacts from unique exact matches. Ambiguous replacements and unknown paths fail. |
+| `vishwakarm` | `code.suggest` | `{ files, instruction }`; optional `CodeProvider` suggests patch artifacts. Paths must be supplied files and `before` must match the supplied content. Nothing is applied. |
+| `chitragupt` | `memory.read` | `{ key }`; reads the verified session namespace through `MemoryStorage`. Returns `{found:false}` or `{found:true,value,revision}`. |
+| `chitragupt` | `memory.write` | `{ key, value }`; writes through an approved storage tool. Returns the actual storage revision. |
+| `narad` | `inspection.normalize` | `{ snapshot: UISnapshot }`; validates full existing scene contracts and normalizes units with the existing engine. Returns snapshot, counts and provenance. |
+| `narad` | `inspection.compare` | `{ baseline: UISnapshot, target: UISnapshot }`; validates scope, normalizes both snapshots to CSS pixels and calls the existing deterministic `analyzeUI` implementation. |
+| `yudhishthir` | `review.check` | `{ result, checks: [{id,path,operation,expected?}] }`; executes own-property existence, type or deep-equality checks. Reports actual pass/fail per check and overall. |
+| `yudhishthir` | `review.inspection` | Consumes Narad's normalization output directly; checks CSS coordinates, counts and source consistency. It checks structural consistency, not image correctness. |
+| `yudhishthir` | `review.model` | `{ result, criteria }`; optional `ReviewProvider` returns pass/fail/uncertain and findings. Output is explicitly advisory and never overrides deterministic review. |
+| `ekalavy` | `learning.record` | `{ kind: 'feedback' | 'training', data, score? }`; appends a real record through a protected `FeedbackStorage` service. It never trains a model. |
+| `ekalavy` | `learning.summarize` | `{ records }`; counts feedback/training records and computes the mean of supplied 0–1 scores, or null with no scores. Reports `weightsUpdated:false`. |
 
 Every registered specialist capability exposes a frozen `inputSchema` in the
 registry. The small declarative JSON Schema subset covers object/array/string/
@@ -75,7 +75,7 @@ adds the complete suite, checking duplicate IDs before registering any bot.
 
 RUDRA preserves task/session IDs, host identity/scope, permissions and metadata
 across the workflow; only step input and remaining deadline change. The result
-aggregates ordered outputs from Hanuman and Yudhishthira. Run the working local
+aggregates ordered outputs from Narad and Yudhishthir. Run the working local
 example after building with `node examples/specialists.mjs`. It uses supplied
 structured data; it performs no capture, provider inference or remote operation.
 
@@ -127,15 +127,15 @@ IndexedDB state, TTL scheduler or automatic model promotion is introduced.
 const system = createSpecialistSystem({
     memory: new SessionMemoryStore(),
     feedback: new SessionFeedbackStore(),
-    security: { jaya, policies, options: { approve: trustedHostApproval, audit } },
+    security: { jay, policies, options: { approve: trustedHostApproval, audit } },
 });
 ```
 
 The host must register capability and tool policies and obtain the exact root
-context from Jaya. Service registration never grants permissions or installs
+context from Jay. Service registration never grants permissions or installs
 policies automatically. For a separately composed application, call
 `registerSpecialistServices(tools,{memory,feedback})` to register the narrow
-handlers, then use those tools in the host's Vijaya instance.
+handlers, then use those tools in the host's Vijay instance.
 
 | Capability | Required tool | Minimum effect classification |
 | --- | --- | --- |
@@ -152,7 +152,7 @@ selection helper. Tool registry schemas, session validity, authorization,
 approval and input/output validation still apply at execution time.
 
 Storage never accepts caller-supplied namespace arguments: registered handlers
-derive them from the verified identity passed by Vijaya. Plain Phase 02 contexts
+derive them from the verified identity passed by Vijay. Plain Phase 02 contexts
 and pure RUDRA instances cannot invoke storage capabilities. Model-backed
 operations are trusted injected services; configure secured RUDRA entry points
 and suitable policies for untrusted callers or protected providers. Low-level
@@ -178,8 +178,8 @@ already-running synchronous handler or roll back an effect.
 
 Added specialist modules:
 
-- `src/bots/sanjaya.ts`, `brihaspati.ts`, `vishwakarma.ts`, `chitragupta.ts`,
-  `hanuman.ts`, `yudhishthira.ts`, `ekalavya.ts` — the seven implementations.
+- `src/bots/sanjay.ts`, `brihaspati.ts`, `vishwakarm.ts`, `chitragupt.ts`,
+  `narad.ts`, `yudhishthir.ts`, `ekalavy.ts` — the seven implementations.
 - `src/bots/base.ts`, `schema.ts`, `types.ts`, `provider.ts` — shared result/schema
   handling and narrow provider contracts.
 - `src/bots/storage.ts`, `services.ts` — session storage interfaces/implementations
@@ -194,13 +194,13 @@ Updated foundation/security integration:
   capability schemas/tool metadata, explicit provider errors and tool selection.
 - `src/agents/rudra/orchestrator.ts` — selected-capability tool handling and the
   existing absolute deadline check supplied to security.
-- `src/security/vijaya.ts`, `tools.ts` — selected tool leases and final deadline checks.
+- `src/security/vijay.ts`, `tools.ts` — selected tool leases and final deadline checks.
 - `src/security/audit.ts`, `errors.ts` — validated scalar audit records.
 - `src/index.ts` — additive specialist re-export.
 - `tests/security.test.mjs`, `tests/package.test.mjs` — review regressions and
   portable typed consumers of all seven bots and storage/provider contracts.
 - `docs/SHIVAX_ARCHITECTURE.md`, `docs/SHIVAX_PHASES.md`,
-  `docs/jaya-vijaya-security.md` — current API, requested phase scope/status and
+  `docs/jay-vijay-security.md` — current API, requested phase scope/status and
   security review resolution.
 
 Existing ML, visual and SLM engines, digit demo/data, manifest and build
@@ -216,7 +216,7 @@ On 2026-10-26, Node v24.19.0:
 | Full tests | **268 passed**, 0 failed/cancelled/skipped: 26 specialist tests, two security-review regressions and all 240 prior tests |
 | TypeScript no-emit and ESLint | Passed |
 | Portable consumers | All specialist/provider/storage contracts compile with ES2020-only libraries; ESM/CJS exports match; legacy ML still works without optional browser/provider globals |
-| Specialist example | Passed; all seven bots registered and Hanuman → Yudhishthira returned a combined completed result |
+| Specialist example | Passed; all seven bots registered and Narad → Yudhishthir returned a combined completed result |
 | Package dry run | Passed: 68 entries, all 15 specialist declaration files, no mock/test files; nothing published |
 | Public API | Original 104 names retained; current 68 runtime and 133 additional type-only exports |
 | Preservation | Existing ML/visual/SLM/digit source, dataset, scripts, manifest and build configuration unchanged; dataset SHA-256 remains `d76f8820eaca279a14be7ff62af07bd4fb8dddfdd4ccba9855e6e620bfe200d9` |

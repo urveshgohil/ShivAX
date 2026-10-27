@@ -148,7 +148,7 @@ These are API constraints, not a security sandbox. Injected providers execute
 trusted application code; they can ignore cancellation or misdeclare locality.
 The SLM caller's deadline cannot kill provider work. A provider that never
 settles can retain the busy guard. Scope IDs are caller-supplied namespace
-checks, not authenticated identities or authorization decisions. No Jaya/Vijaya
+checks, not authenticated identities or authorization decisions. No Jay/Vijay
 implementation, per-tool permission policy, or process isolation exists.
 
 ## Readiness for RUDRA and the specialists
@@ -159,15 +159,15 @@ an approved scope for the next phase.
 | Planned component | Existing reusable capability | Missing framework responsibility |
 | --- | --- | --- |
 | RUDRA — orchestration | Structured inputs/results and provider injection patterns | Task contracts, bot registry, routing, lifecycle, cancellation/budget propagation and execution trace |
-| Sanjaya — Vision | Scene validation, geometry, matching and UI analysis | Specialist adapter; general image understanding or a configured vision backend |
+| Sanjay — Vision | Scene validation, geometry, matching and UI analysis | Specialist adapter; general image understanding or a configured vision backend |
 | Brihaspati — Reasoning | Optional SLM provider/client and evidence validation | Specialist task/schema contracts and reasoning backend selection |
-| Vishwakarma — Code | TypeScript library/tooling only | Code generation backend, artifact contracts and permission-limited actions |
-| Chitragupta — Memory | Demo-only explicit model persistence | Scoped memory interface, retention, retrieval and storage adapters |
-| Hanuman — Inspection | Structured visual measurements and differences | Injection of a constrained Inspectra adapter and inspection task contract |
-| Yudhishthira — Review | Evidence-backed issues and review-required SLM advice | Specialist review rules and review result/lifecycle contracts |
-| Ekalavya — Learning | Real dense-network training and evaluation | Learning task adapter, dataset policy and controlled model updates |
-| Jaya — Authentication | No authentication implementation | Trusted identity/session verification adapter |
-| Vijaya — Authorization | Scope equality checks only | Explicit capability/resource decisions and enforcement at action boundaries |
+| Vishwakarm — Code | TypeScript library/tooling only | Code generation backend, artifact contracts and permission-limited actions |
+| Chitragupt — Memory | Demo-only explicit model persistence | Scoped memory interface, retention, retrieval and storage adapters |
+| Narad — Inspection | Structured visual measurements and differences | Injection of a constrained Inspectra adapter and inspection task contract |
+| Yudhishthir — Review | Evidence-backed issues and review-required SLM advice | Specialist review rules and review result/lifecycle contracts |
+| Ekalavy — Learning | Real dense-network training and evaluation | Learning task adapter, dataset policy and controlled model updates |
+| Jay — Authentication | No authentication implementation | Trusted identity/session verification adapter |
+| Vijay — Authorization | Scope equality checks only | Explicit capability/resource decisions and enforcement at action boundaries |
 
 Planned ownership should follow the supplied project brief: `shivax` owns
 intelligence and bot contracts; `inspectra-automation` owns browser automation;

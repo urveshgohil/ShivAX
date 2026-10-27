@@ -50,10 +50,10 @@ import {
     type Task, type BotTask, type Bot, type BotInput, type BotSignal, type BotResult,
     type ToolDescriptor, type BotErrorCode, RudraOrchestrator, CapabilityPlanner,
     type Planner, type WorkflowPlan, type RudraResult, type RudraTaskStatus,
-    Jaya, Vijaya, PermissionPolicyRegistry, ProtectedToolRegistry, SecurityAuditLog,
+    Jay, Vijay, PermissionPolicyRegistry, ProtectedToolRegistry, SecurityAuditLog,
     type IdentityProvider, type AuthenticatedIdentity, type ProtectedTool, type SecurityDecision,
     createSpecialistBots, createSpecialistSystem, SessionMemoryStore, SessionFeedbackStore,
-    SanjayaBot, BrihaspatiBot, VishwakarmaBot, ChitraguptaBot, HanumanBot, YudhishthiraBot, EkalavyaBot,
+    SanjayBot, BrihaspatiBot, VishwakarmBot, ChitraguptBot, NaradBot, YudhishthirBot, EkalavyBot,
     type MemoryStorage, type FeedbackStorage, type VisionModelAdapter, type ReasoningProvider, type CodeProvider, type ReviewProvider,
     ModelProviderRegistry, ModelRouter, NeuralModelProvider, RulesModelProvider, RemoteModelAdapter, OllamaModelAdapter, createModelOperation,
     type ModelProvider, type ModelRequest, type ModelResponse, type ModelResult,
@@ -123,7 +123,7 @@ const identityProvider: IdentityProvider = {
     isSessionValid: async (identity, signal) => identity.session.principalId === identity.principal.id,
 };
 const audit = new SecurityAuditLog();
-const jaya = new Jaya(identityProvider, { audit });
+const jay = new Jay(identityProvider, { audit });
 const policies = new PermissionPolicyRegistry().register({
     kind: 'capability', id: 'echo', permissions: ['echo'], effect: 'read-only', validateInput: () => true,
 });
@@ -140,9 +140,9 @@ const inspectionPlanner: Planner = new InspectionPlanner();
 const inspectionVision: VisionModelAdapter = createInspectionVisionAdapter('typed-vision', modelsRouter);
 const inspectionRequest: InspectionRequest = { reference: { kind: 'url', url: 'https://fixture.test/reference' }, target: 'https://fixture.test/target', viewport: { width: 800, height: 600 } };
 validateInspectionObservation(captured, context.security.scope);
-const security = new Vijaya(jaya, policies, { tools, audit, approve: async request => request.effect === 'read-only' });
+const security = new Vijay(jay, policies, { tools, audit, approve: async request => request.effect === 'read-only' });
 const secured = new RudraOrchestrator(new BotRegistry().register(bot), { security });
-const authenticatedRun = jaya.createContext(task, { signal }).then(context => secured.run(context));
+const authenticatedRun = jay.createContext(task, { signal }).then(context => secured.run(context));
 const decisions: readonly SecurityDecision[] = audit.list();
 // @ts-expect-error Authentication identity is immutable and separate from task data.
 verifiedIdentity.principal.permissions.push('admin');
@@ -155,8 +155,8 @@ const review: ReviewProvider = { id: 'typed-review', review: async (input, conte
 const memory: MemoryStorage = new SessionMemoryStore();
 const feedback: FeedbackStorage = new SessionFeedbackStore();
 const specialists: readonly Bot[] = createSpecialistBots({ vision, reasoning, code: codeProvider, review });
-const specialistSystem = createSpecialistSystem({ memory, feedback, vision, security: { jaya, policies } });
-const allSpecialists: Bot[] = [new SanjayaBot(), new BrihaspatiBot(), new VishwakarmaBot(), new ChitraguptaBot(), new HanumanBot(), new YudhishthiraBot(), new EkalavyaBot()];
+const specialistSystem = createSpecialistSystem({ memory, feedback, vision, security: { jay, policies } });
+const allSpecialists: Bot[] = [new SanjayBot(), new BrihaspatiBot(), new VishwakarmBot(), new ChitraguptBot(), new NaradBot(), new YudhishthirBot(), new EkalavyBot()];
 const scopedCapability = { id: 'read', description: 'read only', inputSchema: { type: 'object' }, requiredTools: [tool] };
 `);
         writeFileSync(join(directory, 'tsconfig.json'), JSON.stringify({ compilerOptions: {

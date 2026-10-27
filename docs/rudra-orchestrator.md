@@ -6,7 +6,7 @@ sequential workflows. It composes the Phase 01 `BotRegistry`, `BotExecutor` and
 no model provider, runtime dependency, tool executor, filesystem or network I/O.
 The logical architecture maps additively to `src/agents/rudra/`.
 
-Phase 03 now adds [Jaya/Vijaya security](jaya-vijaya-security.md) through
+Phase 03 now adds [Jay/Vijay security](jay-vijay-security.md) through
 `RudraHooks.security`. That guard authenticates contexts and authorizes both
 capability dispatch and protected tool calls. Pure legacy workflows retain the
 Phase 02 behavior described here; tool-using bots require the security guard.
@@ -117,7 +117,7 @@ root task/session IDs, step/bot IDs, validated input, attempt and signal. The ho
 can resolve the promise from its own UI; RUDRA adds no UI, approval storage or
 resume tokens. Without this hook, pure operations proceed immediately. The
 planner cannot remove or grant host approval. This hook does not implement
-Jaya/Vijaya authentication or resource authorization.
+Jay/Vijay authentication or resource authorization.
 
 | Budget | Default and enforcement |
 | --- | --- |

@@ -14,7 +14,7 @@ export function checkSignal(signal: BotSignal): void {
 }
 
 /** Trust is established by a host-configured adapter, never by fields in a task. */
-export class Jaya {
+export class Jay {
     readonly #provider: IdentityProvider;
     readonly #contexts = new WeakMap<TaskContext, AuthenticatedIdentity>();
     readonly #now: () => number;

@@ -9,7 +9,7 @@ export interface InspectraPageLease {
     readonly page: unknown;
     /** Host-selected local path and separately safe opaque artifact reference. Neither comes from task input. */
     readonly screenshot?: { readonly path: string; readonly reference: string };
-    /** Must be idempotent; cancellation and final cleanup can both call it. */
+    /** Must finish cleanup before resolving; the adapter calls once and awaits it, including on cancellation. */
     close(): void | Promise<void>;
 }
 export interface InspectraAdapterOptions {

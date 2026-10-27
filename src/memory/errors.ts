@@ -4,7 +4,7 @@ const messages: Record<MemoryErrorCode, string> = {
     'corrupt-record': 'Stored memory failed validation.',
     'duplicate-record': 'Memory record already exists.',
     'not-found': 'Memory record was not found.',
-    conflict: 'Memory revision changed.',
+    conflict: 'Memory record changed.',
     capacity: 'Memory capacity exceeded.',
     'privacy-denied': 'Memory content was rejected by the privacy policy.',
     'approval-required': 'Preference memory requires explicit host approval.',

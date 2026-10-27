@@ -6,8 +6,8 @@ import type {
     RudraMemoryHooks,
     RudraMemorySummary,
 } from '../agents/rudra/types.js';
-import { ChitraguptaBot } from '../bots/chitragupta.js';
-import { Vijaya } from '../security/vijaya.js';
+import { ChitraguptBot } from '../bots/chitragupt.js';
+import { Vijay } from '../security/vijay.js';
 import type { MemoryQuery } from './types.js';
 import { MemoryError } from './errors.js';
 import { json } from './validation.js';
@@ -22,14 +22,14 @@ export interface MemoryTaskLifecycleOptions {
         readonly ttlMs?: number;
     };
 }
-/** Uses the actual Chitragupta bot and Vijaya leases for every lifecycle read/write. */
+/** Uses the actual Chitragupt bot and Vijay leases for every lifecycle read/write. */
 export class MemoryTaskLifecycle implements RudraMemoryHooks {
-    readonly #security: Vijaya;
-    readonly #bot = snapshotBot(new ChitraguptaBot());
+    readonly #security: Vijay;
+    readonly #bot = snapshotBot(new ChitraguptBot());
     readonly #executor = new BotExecutor();
     readonly #recall?: MemoryTaskLifecycleOptions['recall'];
     readonly #record?: MemoryTaskLifecycleOptions['record'];
-    constructor(security: Vijaya, options: MemoryTaskLifecycleOptions = {}) {
+    constructor(security: Vijay, options: MemoryTaskLifecycleOptions = {}) {
         this.#security = security;
         if (options.recall !== undefined && typeof options.recall !== 'function')
             throw new MemoryError('invalid-input');

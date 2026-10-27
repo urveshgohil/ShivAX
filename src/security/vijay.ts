@@ -3,7 +3,7 @@ import { checkPredicate, snapshotValue, toolsForCapability } from '../agents/val
 import type { Bot, BotResult, BotSignal, BotValue, TaskContext } from '../agents/types.js';
 import { SecurityAuditLog } from './audit.js';
 import { SecurityError, securityError } from './errors.js';
-import { Jaya } from './jaya.js';
+import { Jay } from './jay.js';
 import { PermissionPolicyRegistry, ProtectedToolRegistry } from './registry.js';
 import { ToolLease } from './tools.js';
 import type {
@@ -13,7 +13,7 @@ import type {
     SecurityApprovalHandler,
 } from './types.js';
 
-export interface VijayaOptions {
+export interface VijayOptions {
     readonly tools?: ProtectedToolRegistry;
     readonly approve?: SecurityApprovalHandler;
     readonly audit?: SecurityAuditLog;
@@ -29,15 +29,15 @@ export interface SecurityExecutionHooks {
 }
 
 /** Enforces host policy in code. It is a mandatory guard, never a planner-selectable bot. */
-export class Vijaya {
-    readonly #jaya: Jaya;
+export class Vijay {
+    readonly #jay: Jay;
     readonly #policies: PermissionPolicyRegistry;
     readonly #tools: ProtectedToolRegistry;
     readonly #approve: SecurityApprovalHandler | undefined;
     readonly #audit: SecurityAuditLog;
     readonly #maxToolCalls: number;
-    constructor(jaya: Jaya, policies: PermissionPolicyRegistry, options: VijayaOptions = {}) {
-        this.#jaya = jaya;
+    constructor(jay: Jay, policies: PermissionPolicyRegistry, options: VijayOptions = {}) {
+        this.#jay = jay;
         this.#policies = policies;
         this.#tools = options.tools ?? new ProtectedToolRegistry();
         this.#approve = options.approve;
@@ -57,7 +57,7 @@ export class Vijaya {
         input: BotValue,
         signal: BotSignal
     ): AuthenticatedIdentity {
-        const identity = this.#jaya.assertActive(root, signal);
+        const identity = this.#jay.assertActive(root, signal);
         if (this.#policies.get(policy.kind, policy.id) !== policy)
             throw new SecurityError('policy-changed');
         if (
@@ -68,7 +68,7 @@ export class Vijaya {
             throw new SecurityError('permission-denied');
         if (!checkPredicate(() => policy.validateInput(input, identity)))
             throw new SecurityError('invalid-input');
-        this.#jaya.assertActive(root, signal);
+        this.#jay.assertActive(root, signal);
         if (this.#policies.get(policy.kind, policy.id) !== policy)
             throw new SecurityError('policy-changed');
         return identity;
@@ -85,7 +85,7 @@ export class Vijaya {
     async validateTask(root: TaskContext, signal: BotSignal): Promise<void> {
         let id = '';
         try {
-            await this.#jaya.verify(root, signal);
+            await this.#jay.verify(root, signal);
             id = root.input.capability;
             const policy = this.#policies.get('capability', id);
             if (!policy) throw new SecurityError('policy-missing');
@@ -126,7 +126,7 @@ export class Vijaya {
         let policy: PermissionPolicy | undefined,
             admitted = false;
         try {
-            await this.#jaya.verify(root, signal);
+            await this.#jay.verify(root, signal);
             policy = this.#policies.get(kind, id);
             if (!policy) throw new SecurityError('policy-missing');
             let identity = this.#assert(root, policy, input, signal);
@@ -152,7 +152,7 @@ export class Vijaya {
                     onApproval(false);
                 }
                 if (approved !== true) throw new SecurityError('approval-denied');
-                await this.#jaya.verify(root, signal);
+                await this.#jay.verify(root, signal);
             }
             // No await or observer callback between final checks and invoking the protected operation.
             identity = this.#assert(root, policy, input, signal);
@@ -179,7 +179,7 @@ export class Vijaya {
         }
     }
 
-    /** Host integration point. Bots receive only a leased tool client, never Jaya/policies/registries. */
+    /** Host integration point. Bots receive only a leased tool client, never Jay/policies/registries. */
     async runBot(
         root: TaskContext,
         bot: Bot,
@@ -201,7 +201,7 @@ export class Vijaya {
                     execute: async (input, context) => {
                         // BotExecutor runs validators after admission; recheck before invoking bot code.
                         try {
-                            await this.#jaya.verify(root, context.task.signal);
+                            await this.#jay.verify(root, context.task.signal);
                             this.#assert(root, parent, data, context.task.signal);
                         } catch (error) {
                             const failure = securityError(error, 'unauthenticated');

@@ -5,8 +5,8 @@
 
 Updated: 2026-10-27 (Asia/Calcutta).
 Companion: [architecture and complete public API inventory](SHIVAX_ARCHITECTURE.md).
-This is the implementation order. **Phases 00–07 have implementations; Phases 05
-and 06 each have two unresolved review findings. Phase 07 acceptance is recorded below.
+This is the implementation order. **Phases 00–07 have implementations; Phase 05
+has two unresolved review findings. Phase 06 review fixes are complete. Phase 07 acceptance is recorded below.
 Later phases remain proposals.** Phase numbers below describe this new multi-bot
 roadmap, not the older neural-network, digit or visual-comparison phase numbers.
 
@@ -45,12 +45,12 @@ relevant verification; missing live infrastructure must be reported explicitly.
 00 Audit and proposal (complete)
  -> 01 Bot foundation, registry, events and selected-bot execution (complete)
  -> 02 Bounded RUDRA execution (complete)
- -> 03 Jaya / Vijaya and protected service boundaries (complete)
+ -> 03 Jay / Vijay and protected service boundaries (complete)
  -> 04 Seven-specialist system and deterministic adapters (complete; expanded user scope)
  -> 05 Concrete optional reasoning/model adapters
  -> 06 Durable memory / retention policies beyond the session interfaces
- -> 07 Hanuman / inspectra-automation adapter
- -> 08 Ekalavya controlled learning
+ -> 07 Narad / inspectra-automation adapter
+ -> 08 Ekalavy controlled learning
  -> 09 Concrete code backends / further artifact capabilities
  -> 10 Visynq Workstation composition and compatibility acceptance
 ```
@@ -170,7 +170,7 @@ permissions failed during the audit. The package-manager environment has not
 been changed or claimed repaired.
 
 At the Phase 01 checkpoint, identity and permissions are host assertions;
-Jaya/Vijaya are added separately in Phase 03 below.
+Jay/Vijay are added separately in Phase 03 below.
 Injected code is trusted, and cancellation cannot preempt blocking JavaScript.
 The per-object busy guard belongs to one executor, not a process-wide scheduler.
 Repository hygiene findings from Phase 00 remain deferred: the explicit Phase 01
@@ -226,16 +226,16 @@ ESLint, demo, legacy export inventory and package dry run passed. Packaging has
 ML/demo source and dataset hash are unchanged. No browser runtime or minimum
 Node 22 matrix was run; in-process callbacks require cooperative cancellation.
 
-## Phase 03 — Jaya authentication and Vijaya authorization
+## Phase 03 — Jay authentication and Vijay authorization
 
-Status: complete under the user's Phase 03 request (2026-10-26). Jaya and Vijaya
+Status: complete under the user's Phase 03 request (2026-10-26). Jay and Vijay
 are mandatory guards for protected services, not planner-selected bot steps.
 They are added in `src/security/` and connected through `RudraHooks.security`.
-Jaya mints immutable contexts from trusted host adapters and validates provenance,
+Jay mints immutable contexts from trusted host adapters and validates provenance,
 principal/session correspondence, expiry and revocation. Copied or client-supplied
 IDs do not establish identity.
 
-Vijaya adds exact-permission policies, deny-by-default capability/tool checks,
+Vijay adds exact-permission policies, deny-by-default capability/tool checks,
 read-only/state-changing classification and mandatory explicit approval for
 protected actions. It rechecks session, policy, input, scope and approval at tool
 execution. Bots receive only a revocable, bounded tool client; they cannot change
@@ -243,7 +243,7 @@ permissions. A bounded audit ring records allow/deny evidence without credential
 payloads or raw exception bodies. Policies and host handlers are never supplied
 to model planners. Real authentication remains configured by the trusted host.
 
-The [security guide](jaya-vijaya-security.md) contains the API, changed files,
+The [security guide](jay-vijay-security.md) contains the API, changed files,
 integration example, acceptance evidence and limitations. Tests use mock identity
 providers and narrow in-memory tools. All unauthorized tool test cases reject
 before invoking a handler. No real identity service, unrestricted tool, password
@@ -264,17 +264,17 @@ The explicit request supersedes the earlier vision/review-only scope: all seven
 bots implement `Bot`, declare 16 input schemas/capabilities and compose with
 RUDRA in `createSpecialistSystem`. Existing modules remain in place.
 
-Sanjaya preserves supplied observations and supports an injected image adapter.
-Brihaspati validates explicit/provider-generated plans and provider decisions. Vishwakarma
-reports source metadata and returns unapplied patches. Chitragupta accesses
-session memory through protected tools. Hanuman normalizes/compares supplied UI
-snapshots using the existing engine. Yudhishthira runs actual deterministic
-checks and optional advisory review. Ekalavya stores feedback/training records
+Sanjay preserves supplied observations and supports an injected image adapter.
+Brihaspati validates explicit/provider-generated plans and provider decisions. Vishwakarm
+reports source metadata and returns unapplied patches. Chitragupt accesses
+session memory through protected tools. Narad normalizes/compares supplied UI
+snapshots using the existing engine. Yudhishthir runs actual deterministic
+checks and optional advisory review. Ekalavy stores feedback/training records
 and summarizes supplied scores, without updating model weights.
 
 Memory/feedback interfaces have bounded in-memory implementations. Namespace
 keys derive from verified principal, issuer, scope and session. Writes require
-Jaya/Vijaya permission and approval checks. Capability-specific tool declarations
+Jay/Vijay permission and approval checks. Capability-specific tool declarations
 avoid requiring write IDs for a read operation. Missing model backends and
 unsupported operations return explicit errors; no simulated inference is used.
 
@@ -308,7 +308,7 @@ token and cost reservations. The neural adapter calls existing `predict`; rules
 execute explicit deterministic host functions. Ollama reuses the existing local
 transport with additive actual usage reporting; remote SDK loading and
 credentials remain host configured and lazy. A DI function connects providers
-to the existing specialist methods without changing RUDRA or Jaya/Vijaya.
+to the existing specialist methods without changing RUDRA or Jay/Vijay.
 
 Acceptance: **292 tests passed**, including all 268 previous tests and 24 new
 provider/router tests; clean TypeScript/Rollup build, portable ES2020 declaration
@@ -318,11 +318,13 @@ cannot start inference past the deadline. No live model/API or real reasoning
 quality is claimed. Existing ML internals, training dataset, browser demo and
 legacy exports are preserved. Stop before Phase 06.
 
-## Phase 06 — Chitragupta scoped memory
+## Phase 06 — Chitragupt scoped memory
 
-Status: implemented (2026-10-26); review sign-off pending two reproduced defects:
-delete/recreate revision reuse permits a stale update, and tiny embedding vectors
-can produce a non-finite cosine score. Neither is fixed by Phase 07.
+Status: implemented (2026-10-26); both reproduced review defects fixed (2026-10-27).
+Updates atomically compare persistent record generation and revision, preventing
+delete/recreate overwrites. Semantic search uses stable vector normalization and
+rejects non-finite scores. Legacy records remain readable and receive a generation
+on update. The complete suite passes 371 tests, including 42 memory tests.
 See [memory engine guide](memory-engine.md) for the complete API, file inventory,
 security boundaries, adapter configuration and limitations.
 
@@ -330,11 +332,11 @@ Added `MemoryStore`/`MemoryEngine` with save/retrieve/update/delete/search/list,
 export and expiry purge; five categories, bounded metadata/retention, exact
 user/issuer/session/workspace namespaces, deterministic relevance and optional
 injected embeddings. In-memory, explicit Node file and lazy IndexedDB adapters
-support portable persistence. Chitragupta adds eight protected record actions;
+support portable persistence. Chitragupt adds eight protected record actions;
 the seven-bot system now exposes 24 capabilities, retaining legacy read/write.
 
 RUDRA optionally recalls untrusted relevant records before planning and captures
-status-only terminal metadata through Chitragupta/Vijaya. Reads and writes share
+status-only terminal metadata through Chitragupt/Vijay. Reads and writes share
 step/deadline budgets and authorization. Default admission rejects common
 credentials/personal data; no automatic transcript capture. Preferences/outcomes
 require separate trusted host consent/verification. Existing digit persistence
@@ -348,7 +350,7 @@ comprehensive DLP and live embeddings remain host responsibilities. Phase 05's
 two budget-review defects remain outstanding and were not changed here.
 Stop before Phase 07.
 
-## Phase 07 — Hanuman and Inspectra inspection bridge
+## Phase 07 — Narad and Inspectra inspection bridge
 
 Status: complete under the user's Phase 07 request (2026-10-27).
 See [vision and inspection guide](inspection-integration.md) for architecture,
@@ -361,10 +363,10 @@ observation contracts plus a protected capture service. Host page leases own
 navigation/redirect/subresource policy, isolated contexts and artifact paths;
 Inspectra owns extraction and screenshots. SHIVAX adds no browser dependency.
 
-The fixed workflow routes URL references directly to Hanuman capture; screenshot
-references first use Sanjaya's configured vision adapter. Hanuman reuses the
+The fixed workflow routes URL references directly to Narad capture; screenshot
+references first use Sanjay's configured vision adapter. Narad reuses the
 existing semantic/structural matcher and deterministic visual analysis.
-Yudhishthira recomputes findings before RUDRA returns them. Supplied design/image
+Yudhishthir recomputes findings before RUDRA returns them. Supplied design/image
 references require separate host approval; Figma authentication remains future
 adapter work. Findings remain untrusted and estimated evidence remains marked.
 
@@ -378,7 +380,7 @@ public exports remain compatible. No publication or production operation.
 Real vision-model quality, pixel similarity scoring and cross-browser coverage
 are not claimed. Phases 05/06 review defects remain outstanding. Stop before 08.
 
-## Phase 08 — Ekalavya controlled supervised learning
+## Phase 08 — Ekalavy controlled supervised learning
 
 Prerequisites: Phases 02–03; use Phase 06 only if storing model records.
 
@@ -395,7 +397,7 @@ active models on rejected activation. Imported models are not advertised as
 exact resumed checkpoints. No autonomous self-training, shared-model mutation,
 dataset downloads or unmeasured accuracy claims.
 
-## Phase 09 — Vishwakarma code artifacts
+## Phase 09 — Vishwakarm code artifacts
 
 Phase 04 already provides source summaries, exact replacement artifacts and
 validated optional code-provider patch proposals. Further backend adapters or

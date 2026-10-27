@@ -88,6 +88,13 @@ export class InspectraInspectionProvider {
     }
     async capture(request, context) {
         let lease;
+        let cleanup;
+        // Abort and finally must await the same invocation, including synchronous
+        // close failures and hosts whose repeated close calls return immediately.
+        const close = () => (cleanup ??= Promise.resolve().then(() => lease.close()));
+        const onAbort = () => {
+            void close().catch(() => {});
+        };
         try {
             context.checkExecution?.();
             context.signal.throwIfAborted();
@@ -100,12 +107,7 @@ export class InspectraInspectionProvider {
             lease = await this.#openPage(request, context);
             if (!lease?.page || typeof lease.close !== 'function')
                 throw new Error('Invalid page lease.');
-            const close = () => {
-                void Promise.resolve()
-                    .then(() => lease.close())
-                    .catch(() => {});
-            };
-            context.signal.addEventListener('abort', close, { once: true });
+            context.signal.addEventListener('abort', onAbort, { once: true });
             try {
                 context.checkExecution?.();
                 context.signal.throwIfAborted();
@@ -123,7 +125,7 @@ export class InspectraInspectionProvider {
                     screenshotReference: lease.screenshot?.reference,
                 });
             } finally {
-                context.signal.removeEventListener('abort', close);
+                context.signal.removeEventListener('abort', onAbort);
             }
         } catch {
             throw new Error(
@@ -132,7 +134,7 @@ export class InspectraInspectionProvider {
         } finally {
             if (lease && typeof lease.close === 'function') {
                 try {
-                    await lease.close();
+                    await close();
                 } catch {
                     throw new Error('Inspectra cleanup failed.');
                 }

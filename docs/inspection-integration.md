@@ -43,11 +43,11 @@ including a successfully reviewed result.
 
 ```mermaid
 flowchart LR
-  A[URL reference] --> C[Hanuman: inspection.scan]
-  B[Screenshot] --> V[Sanjaya: vision.inspection-reference]
+  A[URL reference] --> C[Narad: inspection.scan]
+  B[Screenshot] --> V[Sanjay: vision.inspection-reference]
   V --> C
-  C --> D[Hanuman: inspection.compare-captured]
-  D --> E[Yudhishthira: review.findings]
+  C --> D[Narad: inspection.compare-captured]
+  D --> E[Yudhishthir: review.findings]
   E --> R[RUDRA result]
 ```
 
@@ -59,7 +59,7 @@ Ambiguous matches remain diagnostic; viewport mismatch suppresses incomparable
 geometry. This is deterministic property/geometry comparison, not pixel-image
 similarity scoring.
 
-Yudhishthira recomputes the analysis from the supplied pair and rejects any
+Yudhishthir recomputes the analysis from the supplied pair and rejects any
 altered analysis before emitting findings. Each finding includes issue type,
 reference/target element identity and selector, expected/actual values, evidence,
 severity and a suggested correction. Existing confidence, provenance and
@@ -81,9 +81,9 @@ const system = createSpecialistSystem({
   },
   vision, // optional VisionModelAdapter
   hooks: { planner: new InspectionPlanner() },
-  security: { jaya, policies, options: { approve } },
+  security: { jay, policies, options: { approve } },
 });
-const task = await jaya.createContext({ id: 'ui-check', input: {
+const task = await jay.createContext({ id: 'ui-check', input: {
   capability: 'inspection.scan',
   data: { reference: { kind: 'url', url: 'https://approved.example/reference' },
     target: 'https://approved.example/target', viewport: { width: 800, height: 600 } },
@@ -103,7 +103,7 @@ policies for the selected workflow and a tool policy for
 `shivax.inspection.capture`. Classify `inspection.scan` and its tool as
 **state-changing**, requiring explicit approval, since page navigation runs page
 code and configured capture may write artifacts. Policies deny by default and
-Vijaya rechecks them at tool execution. The additional URL admission checks all
+Vijay rechecks them at tool execution. The additional URL admission checks all
 requested URLs before either scan begins. Only HTTP(S) without embedded
 credentials or fragments is accepted. Redirect/subresource policy must also be
 enforced by the host's browser lease.
@@ -122,14 +122,31 @@ No partial result is labelled validated after a failed scan or failed review.
 
 The new `vision.inspection-reference` capability accepts
 `{image: {mimeType, base64}, target, viewport}`. The declared viewport defines the
-CSS-pixel coordinate space of the screenshot. Sanjaya calls the configured vision
+CSS-pixel coordinate space of the screenshot. Sanjay calls the configured vision
 adapter with the image and coordinate instructions and validates labels,
 confidence and in-frame bounds. Empty or malformed interpretations fail. Returned
 nodes are estimates; unknown confidence yields unknown bounds. No font family,
 CSS padding/margins, semantic role or DOM selector is invented from pixels.
 Screenshot bytes are not retained in the resulting reference or trace.
 
-`createInspectionVisionAdapter(id, router, routingOptions)` connects Sanjaya to a
+Flat screenshot observations use an explicit cross-modal comparison path shared
+by Narad and Yudhishthir. Captured DOM ancestry removes aggregate ancestor text
+from candidate selection. Unique exact visible-text labels (normalized for case,
+Unicode and whitespace) establish correspondence across the flat screenshot and
+nested DOM. Only then does the existing analyzer compare the matched bounds in
+their declared coordinate frames. Each pair is compared independently, without
+inventing DOM roles, parentage or sibling gaps. URL-to-URL and structured design
+references continue through the existing hierarchical matcher.
+
+Duplicate, blank, changed or absent labels remain unresolved diagnostics;
+coincident geometry never establishes identity. Screenshot interpretations are
+partial evidence, so unmatched DOM nodes and observations do not establish
+definite extra or missing elements. Unlabelled images, OCR paraphrases and text
+aggregates require a richer future adapter. Review validates consistency, not
+complete screenshot coverage or model accuracy. Unknown-confidence bounds retain
+unknown provenance; different viewport sizes suppress geometric comparison.
+
+`createInspectionVisionAdapter(id, router, routingOptions)` connects Sanjay to a
 host-registered `visual-interpretation` ModelProvider with a structured output
 contract. It does not install a model. The Phase 05 Ollama text adapter does not
 claim image support; use a genuinely image-capable host provider. Missing vision
@@ -145,7 +162,7 @@ phase never fetches Figma links, reads tokens or configures Figma authentication
 ## Files, verification and limitations
 
 New source: `src/inspection/{types,contracts,validation,services,operations,planner,vision,index}.ts`.
-Modified: `src/index.ts`, `src/bots/{sanjaya,hanuman,yudhishthira,system}.ts`, and
+Modified: `src/index.ts`, `src/bots/{sanjay,narad,yudhishthir,system}.ts`, and
 `src/security/{types,tools}.ts` for the additive host deadline checkpoint.
 Separate adapter: `adapters/inspectra/{package.json,index.mjs,index.d.mts,README.md,refresh-fixtures.mjs,test-live.mjs}`.
 Tests: `tests/inspection.test.mjs`, `tests/fixtures/{inspection-system.mjs,inspectra-loader.mjs,inspection-page.html,inspectra-captures.json}`;
@@ -172,8 +189,32 @@ optional host artifacts. Positional selectors can become stale. No cross-browser
 matrix, real vision-model evaluation or pixel similarity metric is claimed.
 Figma authentication and Visynq application wiring remain future work.
 
-Phase 05's two budget-review findings and Phase 06's delete/recreate concurrency
-and tiny-vector cosine findings remain unresolved. This phase does not modify
-those engines. Default URL inspection requires neither memory nor model inference.
+Phase 05's two budget-review findings remain unresolved. Phase 06's delete/recreate
+concurrency and tiny-vector cosine findings were resolved in the subsequent
+[memory review fixes](memory-engine.md#review-fixes--2026-10-27). Default URL
+inspection requires neither memory nor model inference.
 
 Phase 07 implementation complete; stop before Phase 08.
+
+## Review fixes — 2026-10-27
+
+Resolved the screenshot correspondence and premature cancellation cleanup findings.
+Added `src/inspection/comparison.ts`, used by comparison and review; corrected
+unknown bounds in `src/inspection/vision.ts`. The separate Inspectra adapter now
+caches one cleanup promise for abort and finalization. Cancellation can return
+from RUDRA promptly, while it retains ownership until the underlying cleanup
+settles. Adapter declarations and documentation describe the cleanup contract.
+
+Regression tests assert actual screenshot-to-DOM correspondence, bound changes,
+tamper rejection, ambiguity, partial coverage, unknown confidence and viewport
+mismatch. Cleanup tests cover delayed resolution/rejection, cancellation during
+page acquisition and retained RUDRA ownership. The earlier 349-test result above
+records the original implementation; updated verification is recorded below.
+
+Verification: **360 tests passed, zero failures/cancellations/skips** (11 added
+regressions; 37 inspection tests). Clean TypeScript/Rollup build, type checks,
+portable ESM/CJS declarations and lint pass. The live Inspectra URL workflow
+passes with both isolated leases closed. Package dry run contains 97 entries;
+no package was published. Original ML/visual source, browser digit demo and dataset
+are unchanged. Existing nonfatal Rollup helper and Inspectra module-type warnings
+remain. The two Phase 07 review findings are resolved; no later phase was started.

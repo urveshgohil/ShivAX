@@ -15,6 +15,8 @@ export interface MemoryRecord {
     readonly updatedAt: number;
     readonly expiresAt: number;
     readonly revision: number;
+    /** Engine-owned lifetime identity, retained across updates. Absent only on legacy records. */
+    readonly generation?: string;
     readonly trust: 'untrusted';
     readonly embedding?: { readonly providerId: string; readonly vector: readonly number[] };
 }

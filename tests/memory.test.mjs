@@ -12,7 +12,7 @@ import {
     MEMORY_CATEGORIES,
     MEMORY_ACTIONS,
     createSpecialistSystem,
-    Jaya,
+    Jay,
     PermissionPolicyRegistry,
     RudraOrchestrator,
     BotRegistry,
@@ -346,6 +346,58 @@ test('optional embeddings produce actual cosine ranks and receive only the reque
     );
 });
 
+for (const magnitude of [1e-200, Number.MIN_VALUE, 1e6]) {
+    test(`semantic scores remain finite for magnitude ${magnitude}, including protected tool output`, async () => {
+        const engine = new MemoryEngine({
+            embeddings: {
+                id: 'scaled-vectors',
+                dimensions: 2,
+                embed(text) {
+                    if (text.includes('opposite')) return [-magnitude, 0];
+                    if (text.includes('orthogonal')) return [0, magnitude];
+                    return [magnitude, 0];
+                },
+            },
+        });
+        for (const value of ['aligned', 'opposite', 'orthogonal'])
+            await engine.save(ns, draft(value, value), signal());
+        const results = await engine.search(ns, { text: 'aligned', mode: 'semantic' }, signal());
+        assert.deepEqual(
+            results.map((m) => [m.record.id, m.score]),
+            [
+                ['aligned', 1],
+                ['orthogonal', 0],
+                ['opposite', -1],
+            ]
+        );
+        const f = secured({ engine });
+        const result = await f.system.rudra.run(
+            await f.task('memory.search', { text: 'aligned', mode: 'semantic' })
+        );
+        assert.equal(result.status, 'completed', JSON.stringify(result));
+        assert.deepEqual(result.outputs[0].data.matches, results);
+    });
+}
+
+test('semantic normalization handles mixed scales and preserves stored vectors', async () => {
+    const persistence = new InMemoryMemoryAdapter();
+    const embeddings = {
+        id: 'mixed-scale',
+        dimensions: 3,
+        embed: (text) => (text.includes('record') ? [3e-200, 4e-200, Number.MIN_VALUE] : [3, 4, 0]),
+    };
+    const saved = await new MemoryEngine({ persistence, embeddings }).save(
+        ns,
+        draft('note', 'record'),
+        signal()
+    );
+    const engine = new MemoryEngine({ persistence, embeddings });
+    const results = await engine.search(ns, { text: 'query', mode: 'semantic' }, signal());
+    assert.ok(Number.isFinite(results[0].score));
+    assert.ok(Math.abs(results[0].score - 1) < 1e-14);
+    assert.deepEqual((await engine.retrieve(ns, 'note', signal())).embedding, saved.embedding);
+});
+
 test('embedding errors and cancellation do not commit records', async () => {
     const abort = new AbortController();
     const engine = new MemoryEngine({
@@ -460,7 +512,7 @@ function secured(options = {}) {
         },
     };
     const provider = createMockIdentityProvider(identity),
-        jaya = new Jaya(provider, { now: () => 1000 }),
+        jay = new Jay(provider, { now: () => 1000 }),
         policies = new PermissionPolicyRegistry();
     policies.register({
         kind: 'capability',
@@ -484,20 +536,20 @@ function secured(options = {}) {
         memoryServices: options.memoryServices,
         memoryLifecycle: options.lifecycle,
         hooks: options.hooks,
-        security: { jaya, policies, options: { approve: options.approve ?? (() => true) } },
+        security: { jay, policies, options: { approve: options.approve ?? (() => true) } },
     });
     const task = (capability, data, host = {}) =>
-        jaya.createContext(
+        jay.createContext(
             { id: 'memory-task', input: { capability, data } },
             { signal: signal(), toolPermissions: MEMORY_ACTIONS.map((a) => a.toolId), ...host }
         );
     return { identity, provider, engine, system, task };
 }
 
-test('Chitragupta exposes all record actions with schemas and executes protected storage operations', async () => {
+test('Chitragupt exposes all record actions with schemas and executes protected storage operations', async () => {
     const f = secured();
     for (const action of MEMORY_ACTIONS)
-        assert.equal(f.system.registry.findByCapability(action.capability)[0].id, 'chitragupta');
+        assert.equal(f.system.registry.findByCapability(action.capability)[0].id, 'chitragupt');
     const saved = await f.system.rudra.run(await f.task('memory.save', draft()));
     assert.equal(saved.status, 'completed');
     assert.equal(
@@ -846,4 +898,189 @@ test('shared adapter concurrency rejects stale updates and bounded namespaces ca
     await first.delete(ns, 'note', signal());
     await first.save(other, draft(), signal());
     assert.ok(await first.retrieve(other, 'note', signal()));
+});
+
+for (const storage of ['memory', 'file', 'indexeddb']) {
+    test(`a paused update cannot overwrite a deleted and recreated record (${storage})`, async (t) => {
+        let adapter;
+        if (storage === 'memory') {
+            const shared = new InMemoryMemoryAdapter();
+            adapter = () => shared;
+        } else if (storage === 'file') adapter = (await fileStore(t)).adapter;
+        else {
+            const fixture = memoryIDBFixture();
+            adapter = () => {
+                const instance = new IndexedDBMemoryAdapter({
+                    database: 'generation-race',
+                    factory: () => fixture.factory,
+                });
+                t.after(() => instance.close());
+                return instance;
+            };
+        }
+        const entered = Promise.withResolvers(),
+            release = Promise.withResolvers();
+        const first = new MemoryEngine({
+            persistence: adapter(),
+            now: () => 1000,
+            embeddings: {
+                id: 'pause',
+                dimensions: 1,
+                embed(text) {
+                    if (text === JSON.stringify('stale')) {
+                        entered.resolve();
+                        return release.promise;
+                    }
+                    return [1];
+                },
+            },
+        });
+        const original = await first.save(ns, draft(), signal());
+        const pending = first.update(ns, 'note', { value: 'stale' }, signal(), {
+            expectedRevision: 1,
+        });
+        const checked = reject(pending, 'conflict');
+        // Attach immediately so a failing pre-fix assertion cannot leak a rejection.
+        void checked.catch(() => {});
+        await entered.promise;
+        const second = new MemoryEngine({ persistence: adapter(), now: () => 1000 });
+        let replacement;
+        try {
+            assert.equal(await second.delete(ns, 'note', signal()), true);
+            replacement = await second.save(
+                ns,
+                draft('note', 'approved replacement', {
+                    category: 'user-preference',
+                    ttlMs: 1000,
+                    metadata: { approvedBy: 'host' },
+                }),
+                signal(),
+                { userApproved: true }
+            );
+        } finally {
+            release.resolve([1]);
+        }
+        await checked;
+        assert.equal(replacement.revision, original.revision);
+        assert.equal(replacement.createdAt, original.createdAt);
+        assert.match(original.generation, /^[0-9a-f]{32}$/);
+        assert.notEqual(replacement.generation, original.generation);
+        const reopened = new MemoryEngine({ persistence: adapter(), now: () => 1000 });
+        assert.deepEqual(await reopened.retrieve(ns, 'note', signal()), replacement);
+        await reject(
+            reopened.update(ns, 'note', { value: 'unapproved' }, signal()),
+            'approval-required'
+        );
+        const updated = await reopened.update(ns, 'note', { value: 'approved edit' }, signal(), {
+            userApproved: true,
+        });
+        assert.equal(updated.generation, replacement.generation);
+        assert.equal(updated.revision, 2);
+        assert.equal(
+            (await reopened.export(ns, signal())).records[0].generation,
+            replacement.generation
+        );
+    });
+}
+
+test('legacy records remain readable without writes and acquire a persistent generation on update', async () => {
+    const persistence = new InMemoryMemoryAdapter();
+    const engine = new MemoryEngine({ persistence, now: () => 1000 });
+    const legacy = structuredClone(await engine.save(ns, draft(), signal()));
+    delete legacy.generation;
+    await persistence.transact(
+        ns,
+        () => ({ result: null, write: { version: 1, namespace: ns, records: [legacy] } }),
+        signal()
+    );
+    assert.deepEqual(await engine.retrieve(ns, 'note', signal()), legacy);
+    const raw = await persistence.transact(ns, (state) => ({ result: state }), signal());
+    assert.equal(raw.records[0].generation, undefined);
+    const updated = await engine.update(ns, 'note', { value: 'migrated' }, signal());
+    assert.match(updated.generation, /^[0-9a-f]{32}$/);
+    assert.equal(updated.revision, 2);
+    assert.equal(
+        (await new MemoryEngine({ persistence, now: () => 1000 }).retrieve(ns, 'note', signal()))
+            .generation,
+        updated.generation
+    );
+});
+
+for (const variant of ['legacy', 'expired']) {
+    test(`generation comparison rejects updates racing with ${variant} record replacement`, async () => {
+        const persistence = new InMemoryMemoryAdapter();
+        let now = 1000;
+        const entered = Promise.withResolvers(),
+            release = Promise.withResolvers();
+        const engine = new MemoryEngine({
+            persistence,
+            now: () => now,
+            embeddings: {
+                id: 'pause',
+                dimensions: 1,
+                embed(text) {
+                    if (text === JSON.stringify('stale')) {
+                        entered.resolve();
+                        return release.promise;
+                    }
+                    return [1];
+                },
+            },
+        });
+        const saved = await engine.save(ns, draft('note', 'original', { ttlMs: 10 }), signal());
+        if (variant === 'legacy') {
+            const legacy = structuredClone(saved);
+            delete legacy.generation;
+            await persistence.transact(
+                ns,
+                () => ({ result: null, write: { version: 1, namespace: ns, records: [legacy] } }),
+                signal()
+            );
+        }
+        const pending = engine.update(ns, 'note', { value: 'stale' }, signal());
+        const checked = reject(pending, 'conflict');
+        void checked.catch(() => {});
+        await entered.promise;
+        let replacement;
+        try {
+            if (variant === 'expired') {
+                now = 1010;
+                assert.equal(await engine.purgeExpired(ns, signal()), 1);
+            } else await engine.delete(ns, 'note', signal());
+            replacement = await engine.save(ns, draft('note', 'replacement'), signal());
+        } finally {
+            release.resolve([1]);
+        }
+        await checked;
+        assert.deepEqual(await engine.retrieve(ns, 'note', signal()), replacement);
+    });
+}
+
+test('generation is engine-owned and malformed persisted generations fail closed', async () => {
+    const persistence = new InMemoryMemoryAdapter();
+    const engine = new MemoryEngine({ persistence });
+    await reject(
+        engine.save(ns, draft('bad', 'value', { generation: 'a'.repeat(32) }), signal()),
+        'invalid-input'
+    );
+    const saved = await engine.save(ns, draft(), signal());
+    await reject(
+        engine.update(ns, 'note', { generation: 'a'.repeat(32) }, signal()),
+        'invalid-input'
+    );
+    for (const generation of ['', 123, null, 'z'.repeat(32)]) {
+        await persistence.transact(
+            ns,
+            () => ({
+                result: null,
+                write: {
+                    version: 1,
+                    namespace: ns,
+                    records: [{ ...saved, generation }],
+                },
+            }),
+            signal()
+        );
+        await reject(engine.retrieve(ns, 'note', signal()), 'corrupt-record');
+    }
 });

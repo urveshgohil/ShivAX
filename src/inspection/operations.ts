@@ -3,7 +3,7 @@ import { toolCall } from '../bots/base.js';
 import { object } from '../bots/schema.js';
 import { BotError } from '../agents/errors.js';
 import type { BotValue } from '../agents/types.js';
-import { analyzeUI } from '../visual/analysis/index.js';
+import { analyzeInspectionPair } from './comparison.js';
 import {
     inspectionPairSchema,
     inspectionComparisonSchema,
@@ -50,7 +50,7 @@ export const inspectionOperations: Record<string, Operation> = {
         output: inspectionComparisonSchema,
         run: (data, context) => {
             const pair = inspectionPair(data, context.task.security.scope);
-            const analysis = analyzeUI(pair.baseline.snapshot, pair.target.snapshot);
+            const analysis = analyzeInspectionPair(pair);
             return inspectionJSON({ pair, analysis });
         },
     },
@@ -69,7 +69,7 @@ export const inspectionReviewOperation: Operation = {
     run: (raw, context) => {
         const data = raw as { pair: BotValue; analysis: BotValue },
             pair = inspectionPair(data.pair, context.task.security.scope);
-        const analysis = analyzeUI(pair.baseline.snapshot, pair.target.snapshot);
+        const analysis = analyzeInspectionPair(pair);
         if (!same(analysis, data.analysis)) throw new BotError('invalid-output');
         const element = (observation: InspectionObservation, id: string | null) =>
             id === null

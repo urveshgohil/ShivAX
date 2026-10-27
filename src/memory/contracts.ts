@@ -25,6 +25,7 @@ export const memoryRecordSchema = object(
         updatedAt: count,
         expiresAt: count,
         revision: { type: 'number', minimum: 1 },
+        generation: { type: 'string', minLength: 32, maxLength: 32 },
         trust: { enum: ['untrusted'] },
         embedding: object({ providerId: id, vector: list({ type: 'number' }, 4096) }),
     },

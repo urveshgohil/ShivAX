@@ -1,7 +1,7 @@
 import { SpecialistBot, providerCall } from './base.js';
 import { adapter, providerContext } from './provider.js';
 import { id, list, matches, object, text, value } from './schema.js';
-import { inspectionOutput, validScene } from './hanuman.js';
+import { inspectionOutput, validScene } from './narad.js';
 import type { ReviewProvider } from './types.js';
 import type { BotValue } from '../agents/types.js';
 import { BotError } from '../agents/errors.js';
@@ -35,10 +35,10 @@ const resultSchema = object({
     checks: checked,
     source: { enum: ['deterministic-checks'] },
 });
-export class YudhishthiraBot extends SpecialistBot {
+export class YudhishthirBot extends SpecialistBot {
     constructor(model?: ReviewProvider) {
         const provider = adapter(model, 'review');
-        super('yudhishthira', {
+        super('yudhishthir', {
             'review.findings': inspectionReviewOperation,
             'review.check': {
                 description: 'Run explicit own-property existence, type and deep-equality checks.',

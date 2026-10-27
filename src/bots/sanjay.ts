@@ -43,10 +43,10 @@ const modelOutput = object({
     source: { enum: ['model-adapter'] },
 });
 
-export class SanjayaBot extends SpecialistBot {
+export class SanjayBot extends SpecialistBot {
     constructor(model?: VisionModelAdapter) {
         const provider = adapter(model, 'analyze');
-        super('sanjaya', {
+        super('sanjay', {
             'vision.inspection-reference': screenshotInspectionOperation(provider),
             'vision.observe': {
                 description: 'Validate and preserve supplied visual observations.',

@@ -62,7 +62,7 @@ export interface TaskContext {
 }
 export interface BotContext {
     readonly task: TaskContext;
-    /** Available only for a Vijaya-secured invocation. It cannot alter identity or policy. */
+    /** Available only for a Vijay-secured invocation. It cannot alter identity or policy. */
     readonly tools?: BotToolClient;
 }
 export type BotErrorCode =

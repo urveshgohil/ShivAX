@@ -32,9 +32,9 @@ function scene(value: BotValue, context: BotContext): UISnapshot {
         throw new BotError('tool-not-allowed');
     return value;
 }
-export class HanumanBot extends SpecialistBot {
+export class NaradBot extends SpecialistBot {
     constructor() {
-        super('hanuman', {
+        super('narad', {
             ...inspectionOperations,
             'inspection.normalize': {
                 description: 'Validate and normalize supplied UI data; does not capture browsers.',

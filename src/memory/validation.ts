@@ -136,6 +136,7 @@ export function storedRecord(raw: unknown, ns: MemoryNamespace, bytes: number): 
             'updatedAt',
             'expiresAt',
             'revision',
+            'generation',
             'trust',
             'embedding',
         ]);
@@ -149,6 +150,11 @@ export function storedRecord(raw: unknown, ns: MemoryNamespace, bytes: number): 
     tags(item.tags);
     for (const key of ['createdAt', 'updatedAt', 'expiresAt']) integer(item[key]);
     integer(item.revision, Number.MAX_SAFE_INTEGER, 1);
+    if (
+        item.generation !== undefined &&
+        (typeof item.generation !== 'string' || !/^[0-9a-f]{32}$/.test(item.generation))
+    )
+        throw new MemoryError('corrupt-record');
     if (
         (item.updatedAt as number) < (item.createdAt as number) ||
         (item.expiresAt as number) <= (item.updatedAt as number)

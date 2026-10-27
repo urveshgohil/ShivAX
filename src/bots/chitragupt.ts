@@ -12,9 +12,9 @@ export const memoryReadOutput = {
     ],
 };
 export const memoryWriteOutput = object({ key: id, revision: { type: 'number', minimum: 1 } });
-export class ChitraguptaBot extends SpecialistBot {
+export class ChitraguptBot extends SpecialistBot {
     constructor() {
-        super('chitragupta', {
+        super('chitragupt', {
             ...Object.fromEntries(MEMORY_ACTIONS.map(action => [action.capability, {
                 description: `${action.action} scoped memory records; remembered content remains untrusted.`,
                 input: action.input, output: action.output,

@@ -1,6 +1,6 @@
-# Phase 03 — Jaya and Vijaya security
+# Phase 03 — Jay and Vijay security
 
-Jaya establishes an authenticated context through a trusted host adapter. Vijaya
+Jay establishes an authenticated context through a trusted host adapter. Vijay
 enforces host-owned policies before RUDRA dispatch and again before every
 protected tool handler. They are application guards, not planner-selectable
 agents. A model cannot authenticate a user, grant permissions or approve itself.
@@ -10,7 +10,7 @@ implementations and package entry points remain unchanged. No real authenticatio
 provider, password database, cryptography, shell, filesystem or network tool is
 introduced. Tests use a clearly named mock identity adapter and in-memory tools.
 
-## Trust boundary and Jaya
+## Trust boundary and Jay
 
 Follow-up: the [Phase 04 specialist work](specialist-bots.md) closes both review
 findings from this phase. Protected tool leases receive RUDRA's absolute deadline
@@ -22,9 +22,9 @@ bot-wide requirements with only the selected capability's declared tool IDs.
 
 ```text
 Trusted server/desktop session adapter
-  -> Jaya.createContext(task, hostOptions)
+  -> Jay.createContext(task, hostOptions)
   -> exact authenticated TaskContext object
-  -> RUDRA configured with Vijaya
+  -> RUDRA configured with Vijay
   -> session + capability policy + approval checks
   -> selected bot with a narrow leased tool client
   -> session + tool policy + input + approval checks again
@@ -42,7 +42,7 @@ Trusted server/desktop session adapter
 
 `AuthenticatedIdentity` consists of a principal (`id`, `issuer`, `permissions`)
 and a session (`id`, matching `principalId`, `issuedAt`, `expiresAt`, `scope`).
-Times are integer Unix milliseconds. Jaya validates plain finite data, required
+Times are integer Unix milliseconds. Jay validates plain finite data, required
 fields, permission uniqueness, principal/session correspondence, scope and time
 ordering. Future-issued and expired sessions fail. Values are copied/frozen;
 mutating the adapter's original identity cannot grant additional permissions to
@@ -50,24 +50,24 @@ an existing task. Renewed grants require a newly authenticated context. The host
 must revoke prior sessions when reducing permissions; it cannot silently mutate
 an already issued snapshot.
 
-`new Jaya(provider, { now?, audit? })` accepts an optional trusted clock for tests
+`new Jay(provider, { now?, audit? })` accepts an optional trusted clock for tests
 and a shared audit log. `createContext(task, { signal, limits?, toolPermissions? })`
 derives session, caller and scope from the adapter; optional tool IDs are a
 host-selected narrowing, not permission grants. The method stores provenance in
 a private `WeakMap`. Only the **exact returned context object** is accepted by
-that Jaya instance. `createTaskContext`, JSON reconstruction, object spreading,
+that Jay instance. `createTaskContext`, JSON reconstruction, object spreading,
 copied IDs and even a bot-visible child context cannot manufacture this authority.
 Call `verify(context, signal)` to recheck the host session; synchronous
 `assertActive` checks provenance, cancellation and current expiry.
 
-Construct/configure Jaya and retain the authenticated root context in the trusted
-host. Never install an adapter supplied by a model or expose Jaya, policies,
+Construct/configure Jay and retain the authenticated root context in the trusted
+host. Never install an adapter supplied by a model or expose Jay, policies,
 registries or raw handlers to bots. In a browser, the host must use a server or
 other trusted execution boundary for protected resources; browser claims alone
 are not server authentication. Session IDs in these contracts are **non-secret
 correlation labels**, not bearer tokens. Credentials stay inside the host adapter.
 
-## Vijaya policy and approval
+## Vijay policy and approval
 
 `PermissionPolicyRegistry` supports `register`, `get`, `list` and `unregister`.
 Each policy identifies an exact action by `{ kind: 'capability' | 'tool', id }`,
@@ -86,14 +86,14 @@ rather than relying on TypeScript visibility modifiers for isolation.
 
 Every state-changing policy requires explicit host approval even if a declaration
 sets `requiresApproval: false`. A read-only policy may also require approval via
-`requiresApproval: true`. Configure `new Vijaya(jaya, policies, { tools?, approve?,
+`requiresApproval: true`. Configure `new Vijay(jay, policies, { tools?, approve?,
 audit?, maxToolCalls? })`. Its `approve(request)` callback receives frozen verified
 identity, action kind/ID, effect, exact input and signal. Only literal `true`
 authorizes that operation. Without a configured callback, a protected action
 fails with `approval-required`. False/truthy substitutes and exceptions deny.
 
 Capability and tool approvals are separate. RUDRA's older `hooks.approve` remains
-an additional application gate; it cannot substitute for Vijaya approval. The
+an additional application gate; it cannot substitute for Vijay approval. The
 planner cannot supply an approval flag or token. Session validity, expiry,
 current policy, input and tool registration are rechecked after an approval
 wait. The input snapshot cannot change between approval and invocation.
@@ -102,12 +102,12 @@ wait. The input snapshot cannot change between approval and invocation.
 
 ```ts
 import {
-    Jaya, Vijaya, SecurityAuditLog, PermissionPolicyRegistry,
+    Jay, Vijay, SecurityAuditLog, PermissionPolicyRegistry,
     ProtectedToolRegistry, BotRegistry, RudraOrchestrator,
 } from 'shivax';
 
 const audit = new SecurityAuditLog();
-const jaya = new Jaya(trustedHostIdentityProvider, { audit });
+const jay = new Jay(trustedHostIdentityProvider, { audit });
 const policies = new PermissionPolicyRegistry();
 policies.register({
     kind: 'capability', id: 'notes.lookup', permissions: ['notes:read'],
@@ -120,9 +120,9 @@ policies.register({
     validateInput: (input, identity) => isLookupForScope(input, identity.session.scope),
 });
 const tools = new ProtectedToolRegistry().register(narrowHostNotesTool);
-const security = new Vijaya(jaya, policies, { tools, audit, approve: trustedHostApproval });
+const security = new Vijay(jay, policies, { tools, audit, approve: trustedHostApproval });
 const rudra = new RudraOrchestrator(new BotRegistry().register(notesBot), { security });
-const context = await jaya.createContext(task, { signal, toolPermissions: ['notes.read'] });
+const context = await jay.createContext(task, { signal, toolPermissions: ['notes.read'] });
 const result = await rudra.run(context);
 const decisions = audit.list();
 ```
@@ -152,7 +152,7 @@ failures are not retried.
 For backwards compatibility, a RUDRA instance with no security configuration can
 still run the existing pure Phase 02 workflows. It supplies no tool client and
 rejects execution of bots declaring tools even if their legacy context lists
-tool IDs. **Configure Vijaya for every workflow exposed to untrusted callers or
+tool IDs. **Configure Vijay for every workflow exposed to untrusted callers or
 protected resources.** A legacy context is not authenticated. Ordinary direct
 ML calls and the original standalone `BotExecutor` remain low-level trusted-code
 APIs; they are not advertised as secured application entry points.
@@ -164,7 +164,7 @@ predicates and an explicitly supplied handler. Descriptors are frozen; duplicate
 are rejected. No handler is found or executed by its name alone. Before a handler
 runs, all of these conditions must hold:
 
-1. Jaya recognizes the original root context; its signal and session remain valid.
+1. Jay recognizes the original root context; its signal and session remain valid.
 2. The parent capability remains authorized and its policy snapshot is unchanged.
 3. The selected bot declares the tool, and the host context permits that tool ID.
 4. Both a tool implementation and a current tool policy exist.
@@ -197,7 +197,7 @@ retain capacity indefinitely.
 These protections govern the provided tool boundary. Injected JavaScript is
 trusted application code in a shared runtime, not sandboxed hostile code. Hosts
 must supply genuinely narrow services and truthful effect classifications;
-untrusted native code must be isolated separately. Jaya context creation precedes
+untrusted native code must be isolated separately. Jay context creation precedes
 the RUDRA workflow deadline; identity adapters must bound their own authentication
 transport and honor the supplied signal. No detached I/O or durable transaction
 rollback mechanism is added in this phase.
@@ -226,14 +226,14 @@ Added:
 - `src/security/types.ts` — principal/session, policy, tool, approval and decision contracts.
 - `src/security/errors.ts` — fixed security errors and sanitization.
 - `src/security/audit.ts` — bounded decision records.
-- `src/security/jaya.ts` — trusted adapter validation and context provenance.
+- `src/security/jay.ts` — trusted adapter validation and context provenance.
 - `src/security/registry.ts` — host-owned permission and protected-tool registries.
 - `src/security/tools.ts` — bounded, revocable tool leases.
-- `src/security/vijaya.ts` — authorization, approvals and dispatch/tool enforcement.
+- `src/security/vijay.ts` — authorization, approvals and dispatch/tool enforcement.
 - `src/security/index.ts` — additive public exports.
 - `tests/fixtures/mock-identity.mjs` — local test provider; no real credential verification claimed.
 - `tests/security.test.mjs` — security acceptance and regression cases.
-- `docs/jaya-vijaya-security.md` — this guide.
+- `docs/jay-vijay-security.md` — this guide.
 
 Updated:
 

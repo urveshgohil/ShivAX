@@ -46,6 +46,23 @@ const DEFAULT_TTL: Record<MemoryCategory, number> = {
 const order = (a: MemoryRecord, b: MemoryRecord) =>
     b.updatedAt - a.updatedAt || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 
+/** Lazy platform entropy; never derive record identity from time, revision or content. */
+function newGeneration(): string {
+    if (typeof globalThis.crypto?.getRandomValues !== 'function')
+        throw new MemoryError('unavailable');
+    const bytes = globalThis.crypto.getRandomValues(new Uint8Array(16));
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+/** Scale before taking the norm, including for subnormal nonzero components. */
+function unitVector(values: readonly number[]): readonly number[] {
+    const scale = values.reduce((max, value) => Math.max(max, Math.abs(value)), 0);
+    const scaled = values.map((value) => value / scale);
+    const norm = Math.hypot(...scaled);
+    if (!Number.isFinite(norm) || norm === 0) throw new MemoryError('embedding-error');
+    return scaled.map((value) => value / norm);
+}
+
 /** Portable scoped record service. All remembered content remains untrusted, including verified outcomes. */
 export class MemoryEngine implements MemoryStore {
     readonly #persistence: MemoryPersistence;
@@ -270,6 +287,7 @@ export class MemoryEngine implements MemoryStore {
             updatedAt: now,
             expiresAt,
             revision: (previous?.revision ?? 0) + 1,
+            generation: previous?.generation ?? newGeneration(),
             trust: 'untrusted',
             ...(embedding ? { embedding } : {}),
         };
@@ -342,7 +360,11 @@ export class MemoryEngine implements MemoryStore {
         return this.transaction(safe, signal, (records, now) => {
             const current = records.find((record) => record.id === key && record.expiresAt > now);
             if (!current) throw new MemoryError('not-found');
-            if (current.revision !== previous.revision) throw new MemoryError('conflict');
+            if (
+                current.revision !== previous.revision ||
+                current.generation !== previous.generation
+            )
+                throw new MemoryError('conflict');
             // Updating content must not silently extend retention unless ttlMs was explicitly supplied.
             const entry = this.make(
                 safe,
@@ -424,9 +446,11 @@ export class MemoryEngine implements MemoryStore {
         if (input.mode === 'semantic') {
             if (!input.text.trim() || !this.#embeddings) throw new MemoryError('unavailable');
             try {
-                queryVector = vector(
-                    await this.#embeddings.embed(input.text, { namespace: safe, signal }),
-                    this.#embeddings.dimensions
+                queryVector = unitVector(
+                    vector(
+                        await this.#embeddings.embed(input.text, { namespace: safe, signal }),
+                        this.#embeddings.dimensions
+                    )
                 );
             } catch {
                 throw signal.aborted
@@ -453,19 +477,11 @@ export class MemoryEngine implements MemoryStore {
                         entry.embedding.vector.length !== queryVector.length
                     )
                         continue;
-                    const target = entry.embedding.vector;
-                    const dot = target.reduce((sum, value, i) => sum + value * queryVector![i], 0);
-                    score = Math.max(
-                        -1,
-                        Math.min(
-                            1,
-                            dot /
-                                Math.sqrt(
-                                    target.reduce((sum, v) => sum + v * v, 0) *
-                                        queryVector.reduce((sum, v) => sum + v * v, 0)
-                                )
-                        )
-                    );
+                    const target = unitVector(entry.embedding.vector);
+                    score = target.reduce((sum, value, i) => sum + value * queryVector![i], 0);
+                    if (!Number.isFinite(score)) throw new MemoryError('embedding-error');
+                    // Only floating-point rounding can escape the cosine interval.
+                    score = Math.max(-1, Math.min(1, score));
                 } else if (terms.length) {
                     const text = JSON.stringify([
                         entry.value,

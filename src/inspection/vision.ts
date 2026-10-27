@@ -109,7 +109,11 @@ export function screenshotInspectionOperation(provider?: VisionModelAdapter): Op
                 text: o.label,
                 bounds:
                     o.confidence === null
-                        ? { status: 'unknown', provenance, confidence: { score: null } }
+                        ? {
+                              status: 'unknown',
+                              provenance: { ...provenance, kind: 'unknown' },
+                              confidence: { score: null },
+                          }
                         : {
                               status: 'known',
                               value: o.bounds,
