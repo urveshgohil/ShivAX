@@ -1,0 +1,142 @@
+import { validateInspectionObservation } from 'shivax';
+
+/** Translate actual inspectra-engine 1.0.1 PageCapture data, not an invented scan shape. */
+export function normalizeInspectraCapture(raw, { scope, screenshotReference } = {}) {
+    if (!raw || raw.snapshot?.sourceType !== 'url' || !raw.metadata?.nodes)
+        throw new TypeError('Invalid Inspectra capture.');
+    // Inspectra output is trusted adapter data; SHIVAX's validator snapshots and bounds the result.
+    const snapshot = structuredClone(raw.snapshot);
+    const details = raw.metadata.nodes;
+    const elements = snapshot.nodes.map((node) => {
+        const entry = details[node.id];
+        if (!entry || typeof entry.tag !== 'string' || typeof entry.path !== 'string')
+            throw new TypeError('Incomplete Inspectra metadata.');
+        const parts = entry.path.split('/');
+        const selector =
+            parts[0] === 'body' &&
+            parts.slice(1).every((p) => /^(0|[1-9]\d*)$/.test(p) && Number.isSafeInteger(Number(p)))
+                ? 'body' +
+                  parts
+                      .slice(1)
+                      .map((p) => ` > :nth-child(${Number(p) + 1})`)
+                      .join('')
+                : null;
+        // These measured properties live in Inspectra's metadata sidecar, not UISnapshot v1.
+        node.layout ??= {};
+        for (const key of ['flexDirection', 'alignItems', 'justifyContent']) {
+            if (entry.flexGrid?.[key] !== undefined)
+                node.layout[key] = structuredClone(entry.flexGrid[key]);
+        }
+        return {
+            nodeId: node.id,
+            selector,
+            domPath: entry.path,
+            tag: entry.tag,
+            visibility: 'visible',
+        };
+    });
+    return validateInspectionObservation(
+        {
+            version: 1,
+            providerId: 'inspectra-engine',
+            trust: 'untrusted',
+            snapshot,
+            elements,
+            screenshot:
+                raw.screenshot && screenshotReference
+                    ? {
+                          status: 'available',
+                          width: raw.screenshot.width,
+                          height: raw.screenshot.height,
+                          mimeType: 'image/png',
+                          reference: screenshotReference,
+                      }
+                    : { status: 'unavailable' },
+        },
+        scope
+    );
+}
+
+/** The host's lease owns navigation and browser isolation; Inspectra owns extraction/settling. */
+export class InspectraInspectionProvider {
+    id = 'inspectra-engine';
+    #openPage;
+    #load;
+    #maxNodes;
+    #timeout;
+    constructor({
+        openPage,
+        load = () => import('inspectra-engine/node'),
+        maxNodes = 32,
+        timeout = 15000,
+    } = {}) {
+        if (
+            typeof openPage !== 'function' ||
+            typeof load !== 'function' ||
+            !Number.isInteger(maxNodes) ||
+            maxNodes < 1 ||
+            maxNodes > 64 ||
+            !Number.isInteger(timeout) ||
+            timeout < 1 ||
+            timeout > 300000
+        )
+            throw new TypeError('Invalid Inspectra adapter configuration.');
+        this.#openPage = openPage;
+        this.#load = load;
+        this.#maxNodes = maxNodes;
+        this.#timeout = timeout;
+    }
+    async capture(request, context) {
+        let lease;
+        try {
+            context.checkExecution?.();
+            context.signal.throwIfAborted();
+            const api = await this.#load();
+            context.checkExecution?.();
+            context.signal.throwIfAborted();
+            if (typeof api.captureUIPage !== 'function')
+                throw new Error('Unsupported Inspectra API.');
+            // openPage must enforce allowed navigation, redirects and subresources, and clean up on rejection.
+            lease = await this.#openPage(request, context);
+            if (!lease?.page || typeof lease.close !== 'function')
+                throw new Error('Invalid page lease.');
+            const close = () => {
+                void Promise.resolve()
+                    .then(() => lease.close())
+                    .catch(() => {});
+            };
+            context.signal.addEventListener('abort', close, { once: true });
+            try {
+                context.checkExecution?.();
+                context.signal.throwIfAborted();
+                const raw = await api.captureUIPage(lease.page, {
+                    scope: context.session.scope,
+                    maxNodes: this.#maxNodes,
+                    timeout: this.#timeout,
+                    includeText: true,
+                    ...(lease.screenshot ? { screenshotPath: lease.screenshot.path } : {}),
+                });
+                context.signal.throwIfAborted();
+                context.checkExecution?.();
+                return normalizeInspectraCapture(raw, {
+                    scope: context.session.scope,
+                    screenshotReference: lease.screenshot?.reference,
+                });
+            } finally {
+                context.signal.removeEventListener('abort', close);
+            }
+        } catch {
+            throw new Error(
+                context.signal.aborted ? 'Inspection cancelled.' : 'Inspectra capture failed.'
+            );
+        } finally {
+            if (lease && typeof lease.close === 'function') {
+                try {
+                    await lease.close();
+                } catch {
+                    throw new Error('Inspectra cleanup failed.');
+                }
+            }
+        }
+    }
+}

@@ -59,8 +59,12 @@ import {
     type ModelProvider, type ModelRequest, type ModelResponse, type ModelResult,
     MemoryEngine, MemoryTaskLifecycle, InMemoryMemoryAdapter, NodeFileMemoryAdapter, IndexedDBMemoryAdapter,
     type MemoryStore, type MemoryRecord, type MemoryPersistence, type MemoryFileSystem,
+    InspectionPlanner, registerInspectionService, validateInspectionObservation, createInspectionVisionAdapter,
+    type InspectionProvider, type InspectionObservation, type InspectionRequest,
 } from ${JSON.stringify(entry)};
 import type { ${LEGACY_TYPE_EXPORTS.map(name => `${name} as Legacy_${name}`).join(', ')} } from ${JSON.stringify(entry)};
+import { InspectraInspectionProvider } from ${JSON.stringify(fileURLToPath(new URL('../adapters/inspectra/index.mjs', import.meta.url)))};
+const adapterProvider: InspectionProvider = new InspectraInspectionProvider({ openPage: async (request, context) => ({ page: {}, close() {} }) });
 const legacyTask: Task = 'binary';
 const net = new NeuralNet({ layers: [2, 1], task: legacyTask });
 const models = new ModelProviderRegistry().register(new NeuralModelProvider('numeric', net));
@@ -129,6 +133,13 @@ const protectedTool: ProtectedTool<string, string> = {
     execute: async (input, context) => input,
 };
 const tools = new ProtectedToolRegistry().register(protectedTool);
+declare const captured: InspectionObservation;
+const inspection: InspectionProvider = { id: 'typed-capture', capture: async (request, context) => captured };
+registerInspectionService(tools, inspection, { authorizeURL: (url, identity) => identity.principal.id === 'tester' });
+const inspectionPlanner: Planner = new InspectionPlanner();
+const inspectionVision: VisionModelAdapter = createInspectionVisionAdapter('typed-vision', modelsRouter);
+const inspectionRequest: InspectionRequest = { reference: { kind: 'url', url: 'https://fixture.test/reference' }, target: 'https://fixture.test/target', viewport: { width: 800, height: 600 } };
+validateInspectionObservation(captured, context.security.scope);
 const security = new Vijaya(jaya, policies, { tools, audit, approve: async request => request.effect === 'read-only' });
 const secured = new RudraOrchestrator(new BotRegistry().register(bot), { security });
 const authenticatedRun = jaya.createContext(task, { signal }).then(context => secured.run(context));
@@ -149,7 +160,7 @@ const allSpecialists: Bot[] = [new SanjayaBot(), new BrihaspatiBot(), new Vishwa
 const scopedCapability = { id: 'read', description: 'read only', inputSchema: { type: 'object' }, requiredTools: [tool] };
 `);
         writeFileSync(join(directory, 'tsconfig.json'), JSON.stringify({ compilerOptions: {
-            noEmit: true, strict: true, skipLibCheck: false, lib: ['ES2020'], types: [], module: 'ESNext', moduleResolution: 'bundler',
+            noEmit: true, strict: true, skipLibCheck: false, lib: ['ES2020'], types: [], module: 'ESNext', moduleResolution: 'bundler', paths: { shivax: [entry.replace(/\.js$/, '.d.ts')] },
         }, files: ['consumer.ts'] }));
         const compiler = join(dirname(require.resolve('typescript/package.json')), 'bin', 'tsc');
         const result = spawnSync(process.execPath, [compiler, '-p', join(directory, 'tsconfig.json')], { encoding: 'utf8' });

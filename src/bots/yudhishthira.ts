@@ -5,6 +5,7 @@ import { inspectionOutput, validScene } from './hanuman.js';
 import type { ReviewProvider } from './types.js';
 import type { BotValue } from '../agents/types.js';
 import { BotError } from '../agents/errors.js';
+import { inspectionReviewOperation } from '../inspection/operations.js';
 
 function equal(a: BotValue, b: BotValue): boolean {
     if (a === b) return true;
@@ -38,6 +39,7 @@ export class YudhishthiraBot extends SpecialistBot {
     constructor(model?: ReviewProvider) {
         const provider = adapter(model, 'review');
         super('yudhishthira', {
+            'review.findings': inspectionReviewOperation,
             'review.check': {
                 description: 'Run explicit own-property existence, type and deep-equality checks.',
                 input: object({ result: value, checks: { ...list(check), minItems: 1 } }),

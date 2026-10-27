@@ -3,10 +3,10 @@
 **Synthetic Hybrid Intelligence with Versatile Autonomous eXperts**  
 **One Intelligence. Many Specialized Minds.**
 
-Date: 2026-10-25 (Asia/Calcutta).
+Updated: 2026-10-27 (Asia/Calcutta).
 Companion: [architecture and complete public API inventory](SHIVAX_ARCHITECTURE.md).
-This is the implementation order. **Phases 00–06 have implementations; Phase 05
-has two unresolved review findings, and Phase 06 acceptance is recorded below.
+This is the implementation order. **Phases 00–07 have implementations; Phases 05
+and 06 each have two unresolved review findings. Phase 07 acceptance is recorded below.
 Later phases remain proposals.** Phase numbers below describe this new multi-bot
 roadmap, not the older neural-network, digit or visual-comparison phase numbers.
 
@@ -320,7 +320,9 @@ legacy exports are preserved. Stop before Phase 06.
 
 ## Phase 06 — Chitragupta scoped memory
 
-Status: complete under the user's Phase 06 request (2026-10-26).
+Status: implemented (2026-10-26); review sign-off pending two reproduced defects:
+delete/recreate revision reuse permits a stale update, and tiny embedding vectors
+can produce a non-finite cosine score. Neither is fixed by Phase 07.
 See [memory engine guide](memory-engine.md) for the complete API, file inventory,
 security boundaries, adapter configuration and limitations.
 
@@ -348,20 +350,33 @@ Stop before Phase 07.
 
 ## Phase 07 — Hanuman and Inspectra inspection bridge
 
-Prerequisites: Phases 03–04; inspect the current `inspectra-automation` package
-and its actual API before defining a concrete integration change.
+Status: complete under the user's Phase 07 request (2026-10-27).
+See [vision and inspection guide](inspection-integration.md) for architecture,
+contracts, host configuration, file inventory and limitations.
 
-Add a narrow injectable inspection service to SHIVAX. The Node host owns browser
-launch, URL policy, navigation, capture, artifact paths and resource cleanup;
-Hanuman receives validated snapshots/results and real status events. Reuse
-existing snapshot and analysis contracts. Keep browser runtime dependencies in
-`inspectra-automation`; compose them in the host, avoiding a dependency cycle.
+Inspected the actual sibling package: `inspectra-engine` 1.0.1. A separately
+versioned private adapter in `adapters/inspectra/` calls its public
+`captureUIPage` API. SHIVAX adds portable `InspectionProvider` and normalized
+observation contracts plus a protected capture service. Host page leases own
+navigation/redirect/subresource policy, isolated contexts and artifact paths;
+Inspectra owns extraction and screenshots. SHIVAX adds no browser dependency.
 
-Acceptance: contract fixtures verify normalization/provenance, bounded requests,
-cancel/failure states and scope isolation. Local authorized integration fixtures
-verify the actual runner when available; missing runner tests are reported, not
-replaced by fake scan success. No arbitrary URL-fetch/shell/filesystem tool and
-no React/Playwright dependency in SHIVAX.
+The fixed workflow routes URL references directly to Hanuman capture; screenshot
+references first use Sanjaya's configured vision adapter. Hanuman reuses the
+existing semantic/structural matcher and deterministic visual analysis.
+Yudhishthira recomputes findings before RUDRA returns them. Supplied design/image
+references require separate host approval; Figma authentication remains future
+adapter work. Findings remain untrusted and estimated evidence remains marked.
+
+Acceptance: **349 tests passed**, including 26 new inspection tests and all 323
+previous tests. Six checked-in fixtures were captured by actual Inspectra and
+Chromium, with network blocked. An additional live integration test passed:
+actual capture, screenshot metadata, protected RUDRA routing, measured 30px →
+24px typography finding, review and cleanup of both isolated page leases.
+Build, type checking, lint and portable declarations pass. Existing ML and
+public exports remain compatible. No publication or production operation.
+Real vision-model quality, pixel similarity scoring and cross-browser coverage
+are not claimed. Phases 05/06 review defects remain outstanding. Stop before 08.
 
 ## Phase 08 — Ekalavya controlled supervised learning
 
@@ -421,7 +436,7 @@ requires a separate request and is not part of this roadmap's implementation.
 
 ## Stop condition
 
-Phases 00–04 are complete when their deliverables and relevant checks pass and
-limitations are reported. Later phases remain proposals awaiting an explicit
-request. Specialist interface completion does not start runtime/provider,
-persistence, browser, training or product integrations automatically.
+Phase 07 is complete when its deliverables and checks pass and limitations are
+reported. Phases 08 onward remain proposals awaiting an explicit request.
+Implementation of a later phase does not resolve outstanding review findings
+from earlier phases or automatically authorize training/product integration.

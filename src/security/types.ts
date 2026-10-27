@@ -42,6 +42,8 @@ export interface PermissionPolicy {
 }
 export interface ToolExecutionContext extends AuthenticatedIdentity {
     readonly signal: BotSignal;
+    /** Host deadline/lease checkpoint before a service begins another side effect. */
+    readonly checkExecution?: () => void;
 }
 export interface ProtectedTool<I extends BotValue = BotValue, O extends BotValue = BotValue> {
     readonly id: string;

@@ -19,8 +19,14 @@ import type { MemoryStore } from '../memory/types.js';
 import { registerMemoryServices, type MemoryServiceOptions } from '../memory/services.js';
 import { MemoryTaskLifecycle, type MemoryTaskLifecycleOptions } from '../memory/lifecycle.js';
 import { MemoryError } from '../memory/errors.js';
+import type { InspectionProvider, InspectionServiceOptions } from '../inspection/types.js';
+import { registerInspectionService } from '../inspection/services.js';
 
 export interface SpecialistSystemOptions extends SpecialistProviders {
+    readonly inspection?: {
+        readonly provider: InspectionProvider;
+        readonly options: InspectionServiceOptions;
+    };
     readonly memory?: MemoryStorage;
     readonly memoryStore?: MemoryStore;
     readonly memoryServices?: MemoryServiceOptions;
@@ -56,7 +62,10 @@ export function createSpecialistSystem(options: SpecialistSystemOptions = {}) {
     const registry = new BotRegistry(),
         tools = options.tools ?? new ProtectedToolRegistry();
     registerSpecialistServices(tools, options);
-    if (options.memoryStore) registerMemoryServices(tools, options.memoryStore, options.memoryServices);
+    if (options.inspection)
+        registerInspectionService(tools, options.inspection.provider, options.inspection.options);
+    if (options.memoryStore)
+        registerMemoryServices(tools, options.memoryStore, options.memoryServices);
     const bots = registerSpecialistBots(registry, options);
     const security = options.security
         ? new Vijaya(options.security.jaya, options.security.policies, {
@@ -65,7 +74,13 @@ export function createSpecialistSystem(options: SpecialistSystemOptions = {}) {
           })
         : undefined;
     if (options.memoryLifecycle && !security) throw new MemoryError('invalid-input');
-    const lifecycle = options.memoryLifecycle ? new MemoryTaskLifecycle(security!, options.memoryLifecycle) : options.hooks?.memory;
-    const rudra = new RudraOrchestrator(registry, { ...options.hooks, security, memory: lifecycle });
+    const lifecycle = options.memoryLifecycle
+        ? new MemoryTaskLifecycle(security!, options.memoryLifecycle)
+        : options.hooks?.memory;
+    const rudra = new RudraOrchestrator(registry, {
+        ...options.hooks,
+        security,
+        memory: lifecycle,
+    });
     return Object.freeze({ bots, registry, tools, security, rudra, lifecycle });
 }

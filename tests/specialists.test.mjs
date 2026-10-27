@@ -30,7 +30,7 @@ const explicitPlan = () => ({ steps: [ { id: 'one', capability: 'vision.observe'
 test('all seven specialists register with unique IDs and discoverable per-capability schemas', () => {
     const system = createSpecialistSystem();
     assert.deepEqual(system.registry.list().map(bot => bot.id), ['sanjaya', 'brihaspati', 'vishwakarma', 'chitragupta', 'hanuman', 'yudhishthira', 'ekalavya']);
-    assert.equal(system.registry.listCapabilities().length, 24);
+    assert.equal(system.registry.listCapabilities().length, 28);
     for (const bot of system.registry.list()) for (const capability of bot.capabilities) {
         assert.equal(typeof capability.inputSchema, 'object'); assert.ok(Object.isFrozen(capability.inputSchema));
         assert.equal(system.registry.findByCapability(capability.id)[0].id, bot.id);

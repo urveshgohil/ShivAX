@@ -9,7 +9,8 @@ with the additive [Phase 01 bot foundation](bot-foundation.md) and
 [Phase 03 Jaya/Vijaya security](jaya-vijaya-security.md) and the
 [Phase 04 specialist system](specialist-bots.md) and
 [Phase 05 hybrid intelligence](hybrid-intelligence.md), followed by
-[Phase 06 Chitragupta memory](memory-engine.md) (2026-10-26).
+[Phase 06 Chitragupta memory](memory-engine.md) (2026-10-26) and
+[Phase 07 vision/inspection](inspection-integration.md) (2026-10-27).
 Sections describing the current implementation are source-backed observations.
 The logical structure clarified on 2026-10-26 describes responsibility boundaries,
 not a required repository reorganization. Its mapping to current files is in section 6.
@@ -21,8 +22,10 @@ session memory/feedback. Phase 05 adds a model-independent provider registry and
 router, neural/rules adapters, local Ollama usage reporting and a lazy remote
 client interface. Phase 06 adds scoped memory records, retention, optional file/
 IndexedDB persistence, lexical/semantic retrieval and protected lifecycle hooks.
-The two Phase 05 budget-review findings remain outstanding. Real model configuration and external resource integrations
-remain host-configured or future work.
+Phase 07 adds portable inspection contracts, an independently packaged Inspectra
+adapter and protected capture → comparison → review workflows. Phases 05 and 06
+each have two outstanding review findings; see the phase guide. Real model and
+external resource configuration remains host-owned.
 See [implementation phases](SHIVAX_PHASES.md) and the
 [initial audit evidence](shivax-phase00-audit.md).
 
@@ -75,6 +78,8 @@ and Git history were not audited line by line.
 | `src/bots/` | Phase 04 seven specialists, shared schema/result handling, injected provider contracts, bounded session stores and explicit RUDRA composition |
 | `src/intelligence/` | Phase 05 portable model contracts/registry/router, existing-neural and rules adapters, loopback Ollama wrapper, lazy remote interface and specialist DI bridge |
 | `src/memory/` | Phase 06 record contracts/engine, namespaces/retention/privacy, in-memory/Node file/IndexedDB adapters, optional embeddings, protected tools and Chitragupta lifecycle integration |
+| `src/inspection/` | Phase 07 portable provider/observation contracts, protected capture, screenshot reference conversion, fixed workflow and deterministic finding review |
+| `adapters/inspectra/` | Separately versioned private Node adapter using actual `inspectra-engine` 1.0.1 `captureUIPage`; browser page leases stay host-configured |
 | `src/data/DataFrame.ts`, `src/models/LinearRegression.ts` | Empty placeholders, neither implemented nor root-exported |
 | `examples/` | XOR, regression, text, typed core, scene and comparison examples; digit playground |
 | `examples/digits/` | Drawing/preprocessing, training/inference worker, dashboard, live inference and explicit IndexedDB model storage |
@@ -82,7 +87,7 @@ and Git history were not audited line by line.
 | `scripts/serve-examples.mjs` | Loopback static demo server with explicit route allowlist and ports 4173–4182 |
 | `scripts/prepare-mnist.mjs` | Local bounded IDX/gzip validation, balanced subset conversion and exclusive creation of new JSON output |
 | `scripts/compare-digits.mjs` | Explicit local-file, reproducible 500-sample dataset comparison; distinct in-domain test sets |
-| `tests/` | 19 Node test files plus fixtures, covering core, digits, package, visual, SLM, foundation, RUDRA, security, specialist, hybrid-provider and scoped-memory contracts |
+| `tests/` | 20 Node test files plus fixtures, covering core, digits, package, visual, SLM, foundation, RUDRA, security, specialist, hybrid-provider, scoped-memory and inspection contracts |
 | `docs/`, `README.md`, `examples/README.md`, `SECURITY.md` | Feature guides, prior phase evidence and operating instructions; some historical claims are stale |
 | `Shivax_Visual_Comparison_Phased_Prompts.md` | Historical visual/scanner plan; its claim that SLM/visual analysis is absent is superseded by current source |
 | `custom-js-ai-plan.docx` | Historical aspirational feature plan, inspected as text; not proof that its proposed chat/camera/advanced models exist or current-phase authorization |
@@ -115,8 +120,8 @@ PNG pixels through the visual API. Input source labels describe supplied data.
 
 Only `shivax` (`exports["."]`) is a supported package entry. ESM resolves to
 `dist/index.esm.js`, CommonJS to `dist/index.cjs`, and declarations to
-`dist/index.d.ts`. There are **87 runtime exports and 176 additional type-only
-exports**. Classes below also have declaration types; the 176 count excludes
+`dist/index.d.ts`. There are **92 runtime exports and 185 additional type-only
+exports**. Classes below also have declaration types; the 185 count excludes
 those runtime symbols. Internal `export` statements do not automatically make a
 helper part of the root API.
 
@@ -136,6 +141,7 @@ helper part of the root API.
 | Model integration | `SLMClient`, `SLMError`, `OllamaProvider`, `analyzeUIWithSLM` |
 | Hybrid intelligence | `ModelError`, `ModelProviderRegistry`, `ModelRouter`, `NeuralModelProvider`, `RulesModelProvider`, `OllamaModelAdapter`, `RemoteModelAdapter`, `createModelOperation`, `MODEL_CAPABILITIES` |
 | Scoped memory | `MemoryEngine`, `MemoryError`, `InMemoryMemoryAdapter`, `NodeFileMemoryAdapter`, `IndexedDBMemoryAdapter`, `MEMORY_CATEGORIES`, `MEMORY_ACTIONS`, `registerMemoryServices`, `memoryNamespace`, `MemoryTaskLifecycle` |
+| Inspection integration | `validateInspectionObservation`, `registerInspectionService`, `InspectionPlanner`, `INSPECTION_WORKFLOW_CAPABILITIES`, `createInspectionVisionAdapter` |
 | Bot foundation | `BotRegistry`, `BotExecutor`, `BotEventEmitter`, `BotError`, `createTaskContext`, `DEFAULT_EXECUTION_LIMITS`, `validateBotInput`, `validateBotResult` |
 | RUDRA | `RudraOrchestrator`, `CapabilityPlanner`, `RudraError` |
 | Security | `Jaya`, `Vijaya`, `PermissionPolicyRegistry`, `ProtectedToolRegistry`, `SecurityAuditLog`, `SecurityError` |
@@ -156,6 +162,7 @@ helper part of the root API.
 | Hybrid provider/router | `ModelCapability`, `ModelPricing`, `ModelProviderDescriptor`, `ModelRequest`, `ModelUsage`, `ModelResponse`, `ModelProvider`, `ModelOutputContract`, `ModelInference`, `ModelLimits`, `ModelRoutingOptions`, `ModelErrorCode`, `ModelErrorDetails`, `ModelAttempt`, `ModelBudgetUsage`, `ModelResult`, `ModelRule`, `OllamaModelAdapterOptions`, `RemoteModelAdapterOptions` |
 | Memory records/persistence | `MemoryCategory`, `MemoryRecord`, `MemoryDraft`, `MemoryPatch`, `MemoryWriteApproval`, `MemoryQuery`, `MemoryMatch`, `MemoryExport`, `MemoryStore`, `MemoryTransaction`, `MemoryPersistence`, `MemoryRetention`, `MemoryEmbeddingsAdapter`, `MemoryEngineOptions`, `MemoryErrorCode`, `MemoryFileSystem`, `NodeFileMemoryOptions`, `IndexedDBMemoryOptions`, `MemoryServiceOptions`, `MemoryTaskLifecycleOptions`, `MemoryActionDescriptor` |
 | RUDRA memory integration | `RudraMemoryHooks`, `RudraMemoryExecution`, `RudraMemorySummary` |
+| Inspection integration | `InspectionViewport`, `InspectionObservation`, `InspectionCaptureRequest`, `InspectionProviderContext`, `InspectionProvider`, `InspectionRequest`, `InspectionPair`, `InspectionServiceOptions`, `InspectionScope` |
 | Ollama transport | `OllamaProviderOptions`, `SLMFetch`, `SLMFetchOptions`, `SLMFetchResponse` |
 | Visual SLM advice | `SLMUITask`, `SLMUIOptions`, `SLMAdviceProvenance`, `SLMIssueAdvice`, `SLMUIResult` |
 | Bot foundation | `Bot`, `BotContext`, `BotInput`, `BotResult`, `Capability`, `BotTask`, `TaskStatus`, `ToolDescriptor`, `SecurityContext`, `BotValue`, `BotSignal`, `CallerIdentity`, `ExecutionLimits`, `TaskContextOptions`, `TaskContext`, `BotErrorCode`, `BotErrorDetails`, `BotEventIdentity`, `BotEventMap`, `BotEventType`, `BotEventListener` |
@@ -203,7 +210,9 @@ helper part of the root API.
 | `ProtectedToolRegistry` | Register/get/unregister narrow host tool implementations with input/output predicates; no built-in resource handlers |
 | `SecurityAuditLog.list` | Frozen snapshots of a bounded allow/deny ring; excludes credentials, input/output and raw identity/session/task IDs |
 | `BotContext.tools` | Optional secured invocation client exposing only `execute(id,input)`; invalidated at bot completion |
-| Specialist classes | Shared `Bot` interface, fixed IDs and 16 schema-validated capabilities; see the complete capability table in `specialist-bots.md` |
+| Specialist classes | Shared `Bot` interface, seven fixed IDs and 28 schema-validated capabilities: original 16, eight Phase 06 memory actions and four Phase 07 inspection actions |
+| `InspectionPlanner` / `registerInspectionService` | Fixed capture/compare/review workflow with optional screenshot interpretation; protected host capture and explicit URL/reference admission |
+| `validateInspectionObservation` / `createInspectionVisionAdapter` | Bounded normalized untrusted observations and optional structured image-capable model routing; no browser/model runtime imported by SHIVAX |
 | `createSpecialistBots` / `registerSpecialistBots` | Create or explicitly register all seven instances; duplicate preflight prevents partial registration |
 | `createSpecialistSystem` | Compose the registry, bots, optional protected services/security and RUDRA instance without global state |
 | `registerSpecialistServices` | Install explicitly supplied memory/feedback handlers; grants no policies or permissions |
@@ -263,12 +272,12 @@ confidence or general intelligence.
 | Planned component | Reuse now | Additive integration proposal / limits |
 | --- | --- | --- |
 | RUDRA — orchestrator | Phase 01 registry, executor, context and validation | Implemented Phase 02: deterministic routing and bounded ordered workflows; optional model planner adapters remain future work |
-| Sanjaya — Vision | Foundation JSON validation | Implemented Phase 04: supplied observations and optional vision adapter; actual image understanding requires configured backend/evaluation |
+| Sanjaya — Vision | Foundation JSON validation | Phase 07 adds estimated screenshot references and a structured vision-provider bridge; actual image understanding requires a configured image-capable backend/evaluation |
 | Brihaspati — Reasoning | RUDRA workflow validation; existing SLM interfaces remain usable by host adapters | Implemented Phase 04: explicit/provider-generated plans and replaceable decisions with capability, dependency and evidence-reference checks; missing provider returns unavailable |
 | Vishwakarma — Code | Foundation validation; no built-in code model | Implemented Phase 04: source metadata, explicit replacement artifacts and optional code-provider proposals; never applies or executes patches |
 | Chitragupta — Memory | Jaya/Vijaya and protected tool boundary | Phase 04 legacy key/value memory remains; Phase 06 adds record CRUD/search/export/purge, retention, optional durable adapters and scoped lifecycle recall/capture. All content remains untrusted. |
-| Hanuman — Inspection | Existing `UISnapshot`, normalization and `analyzeUI` | Implemented Phase 04: supplied snapshot normalization/comparison; browser capture and Inspectra runtime remain external |
-| Yudhishthira — Review | Foundation and existing scene validation | Implemented Phase 04: deterministic checks, inspection consistency and optional advisory provider review |
+| Hanuman — Inspection | Existing `UISnapshot`, normalization and `analyzeUI` | Phase 07 adds protected inspection capture and normalized-observation comparison; separately maintained adapter delegates browser extraction to Inspectra |
+| Yudhishthira — Review | Foundation and existing scene validation | Phase 07 adds deterministic recomputation of inspection findings before they return to RUDRA; estimated data remains untrusted |
 | Ekalavya — Learning | Jaya/Vijaya; ML engine stays untouched | Implemented Phase 04: real feedback/training record storage and deterministic summaries; no automatic training or weight updates |
 | Jaya — Authentication | Existing bounded context/JSON validation | Implemented Phase 03: trusted host identity adapter, immutable principal/session contracts and context provenance; real provider remains host-configured |
 | Vijaya — Authorization | Existing bot execution and RUDRA lifecycle | Implemented Phase 03: deny-by-default policies, approval, resource predicates and tool-time rechecks; narrow host services remain injected |
@@ -391,7 +400,7 @@ SHIVAX/
 | `intelligence/routing` | `src/intelligence/router.ts` selects compatible model providers with bounded, explicitly permitted fallback. Distinct from RUDRA selecting specialist tasks. |
 | `memory` | `src/memory/` implements the Phase 06 record engine and persistence/lifecycle adapters. Legacy session stores remain in `src/bots/storage.ts`. Digit model persistence stays separate in `examples/digits/`. |
 | `tools` | Host-owned protected registry/leases in `src/security/`, selected-capability tool metadata in the foundation and explicit storage adapters in `src/bots/services.ts`; no unrestricted I/O handlers. |
-| `integrations` | Future portable contracts/composition for `inspectra-automation` and Visynq. Actual browser automation remains in Inspectra and React in Visynq; no mandatory platform runtime enters SHIVAX. |
+| `integrations` | Phase 07 contracts/composition in `src/inspection/`, separate `adapters/inspectra/` package. Actual browser extraction remains in `inspectra-engine`, React in Visynq; no mandatory platform runtime enters SHIVAX. |
 | Root entry / examples / tests / docs | Retain `src/index.ts`, dual ESM/CJS/declarations, existing examples/digit assets and current test discovery. New test entry files must still match `tests/*.test.mjs`. |
 
 The current physical `src/core/` contains numeric utilities. The logical name

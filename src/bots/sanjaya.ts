@@ -4,6 +4,7 @@ import { adapter, providerContext } from './provider.js';
 import type { VisionModelAdapter, VisionImage } from './types.js';
 import type { BotValue } from '../agents/types.js';
 import { BotError } from '../agents/errors.js';
+import { screenshotInspectionOperation } from '../inspection/vision.js';
 
 const bounds = object({
     x: { type: 'number' },
@@ -46,6 +47,7 @@ export class SanjayaBot extends SpecialistBot {
     constructor(model?: VisionModelAdapter) {
         const provider = adapter(model, 'analyze');
         super('sanjaya', {
+            'vision.inspection-reference': screenshotInspectionOperation(provider),
             'vision.observe': {
                 description: 'Validate and preserve supplied visual observations.',
                 input: observationInput,

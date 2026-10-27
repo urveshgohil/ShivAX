@@ -5,6 +5,7 @@ import { analyzeUI } from '../visual/analysis/index.js';
 import type { UISnapshot } from '../visual/types.js';
 import type { BotContext, BotValue } from '../agents/types.js';
 import { BotError } from '../agents/errors.js';
+import { inspectionOperations } from '../inspection/operations.js';
 
 const snapshotSchema = { type: 'object', additionalProperties: true } as const;
 export const inspectionOutput = object({
@@ -34,6 +35,7 @@ function scene(value: BotValue, context: BotContext): UISnapshot {
 export class HanumanBot extends SpecialistBot {
     constructor() {
         super('hanuman', {
+            ...inspectionOperations,
             'inspection.normalize': {
                 description: 'Validate and normalize supplied UI data; does not capture browsers.',
                 input: object({ snapshot: snapshotSchema }),

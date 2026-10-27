@@ -113,7 +113,11 @@ export class ToolLease {
                     try {
                         rawOutput = await tool.execute(
                             input,
-                            Object.freeze({ ...identity, signal: this.#controller.signal })
+                            Object.freeze({
+                                ...identity,
+                                signal: this.#controller.signal,
+                                checkExecution: () => this.#check(),
+                            })
                         );
                     } catch {
                         throw new SecurityError('tool-error');
