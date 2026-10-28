@@ -1,17 +1,26 @@
-# SHIVAX AI
+# SHIVAX AI — JavaScript & TypeScript Multi-Agent AI Framework
 
 **Synthetic Hybrid Intelligence with Versatile Autonomous eXperts**
 
 *One Intelligence. Many Specialized Minds.*
 
-SHIVAX is a JavaScript and TypeScript AI library combining a CPU neural-network
-engine with specialist bots, model providers, scoped memory, and controlled workflows.
-RUDRA coordinates tasks; Jay and Vijay enforce host-configured security.
+SHIVAX (`shivax` on npm) is a JavaScript and TypeScript multi-agent AI framework
+for Node.js and browser applications. It combines CPU neural networks, agent
+orchestration, model-provider integration, scoped memory, UI inspection, and AI
+evaluation. RUDRA coordinates tasks; Jay and Vijay enforce host-configured security.
 
 **Version:** 0.1.0 · **Runtime:** Node.js 22+ and browser bundles · **License:** Apache-2.0
 
 The core has zero runtime dependencies. Browser automation, storage, authentication,
 and model backends use optional host-configured adapters.
+
+## What can you build with SHIVAX?
+
+- **AI agent workflows:** coordinate specialist bots with capability routing, tool calls, human approval, and execution limits.
+- **JavaScript machine learning:** train dense neural networks for classification, regression, and handwritten digit recognition.
+- **Hybrid AI applications:** combine deterministic rules and numeric inference with optional local Ollama models or remote LLM providers.
+- **UI quality checks:** compare measured typography, spacing, layouts, and element structure using normalized observations and the Inspectra adapter.
+- **Session-aware assistants:** retrieve scoped memory and collect verified feedback for repeatable evaluation and curated offline training.
 
 ## Features
 
@@ -102,6 +111,42 @@ Model-backed capabilities require a configured provider. Protected operations re
 host authentication, permissions, and approval. Feedback storage alone does not change
 model weights. Neural training is synchronous; workflow resume and model rollback retain
 state in memory.
+
+## Frequently asked questions
+
+### What is SHIVAX AI?
+
+SHIVAX AI is an Apache-2.0 JavaScript and TypeScript library for multi-agent
+workflows and CPU machine learning. Its npm package name is `shivax`.
+
+### Does SHIVAX work with Node.js and browsers?
+
+Yes. SHIVAX supports Node.js 22+, browser bundles, ESM, CommonJS, and TypeScript
+declarations. Platform-specific storage and browser automation use separate adapters.
+
+### Does SHIVAX require an API key or a cloud LLM?
+
+Core neural-network training, tensor operations, deterministic checks, and bot
+registration run without a cloud API. Local Ollama integration is optional;
+remote model providers require host configuration and any provider credentials.
+
+### Can SHIVAX run autonomous AI agent workflows?
+
+RUDRA supports bounded workflows with tool proposals, approval gates, retries,
+cancellation, and in-process pause/resume. Protected actions require Jay/Vijay
+authentication and authorization policies supplied by the application host.
+
+### Can SHIVAX compare websites or inspect a browser UI?
+
+SHIVAX compares normalized UI observations and produces structured findings.
+Live browser capture uses the separately maintained Inspectra adapter. Screenshot
+interpretation requires a configured vision provider.
+
+### Does user feedback automatically train a model?
+
+Feedback is stored for review and evaluation. Supported numeric datasets can be
+used for explicit offline neural-network training. Model updates require evaluation
+and host approval; rollback retains model and configuration snapshots in memory.
 
 ## Changelog
 
