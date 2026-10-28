@@ -42,3 +42,5 @@ baseline date and does not assert that a package release was published or tagged
 - Pause requests during workflow resume authentication and fractional cost-budget rounding.
 - Evaluation report consistency and held-out classification-target validation.
 - Training weight-change reporting for zero-gradient updates.
+
+[0.1.1]: https://www.npmjs.com/package/shivax/v/0.1.1
