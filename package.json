@@ -13,11 +13,11 @@
     }
   },
   "files": [
-    "dist/index.cjs",
-    "dist/index.esm.js",
-    "dist/**/*.d.ts",
+    "dist",
     "NOTICE",
-    "SECURITY.md"
+    "SECURITY.md",
+    "CHANGELOG.md",
+    "README.md"
   ],
   "scripts": {
     "example:core": "pnpm build && node --experimental-strip-types examples/core.ts",

@@ -2,14 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.1.1] - 2026-10-28
 
 ### Changed
 
 - Expand npm discovery keywords and describe SHIVAX as a JavaScript/TypeScript multi-agent AI framework.
 - Add feature-based use cases and concise README answers about platforms, model providers, controlled workflows, UI inspection, and learning.
 
-## [0.1.0] - 2026-10-28
+## [0.1.0] - 2026-10-03
 
 This entry records the current development baseline. The date is the documentation
 baseline date and does not assert that a package release was published or tagged.

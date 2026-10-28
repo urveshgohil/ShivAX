@@ -18,3 +18,6 @@ models.test.ts
 .eslintrc.json
 
 scripts
+examples
+docs
+adapters
