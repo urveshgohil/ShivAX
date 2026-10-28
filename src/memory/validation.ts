@@ -67,16 +67,25 @@ export function tags(value: unknown): readonly string[] {
     return Object.freeze([...value]);
 }
 export function approval(value: MemoryWriteApproval, kind: MemoryCategory): void {
-    object(value, ['userApproved', 'outcomeVerified', 'expectedRevision']);
+    object(value, ['userApproved', 'outcomeVerified', 'expectedRevision', 'expectedGeneration']);
     for (const field of [value.userApproved, value.outcomeVerified])
         if (field !== undefined && typeof field !== 'boolean')
             throw new MemoryError('invalid-input');
     if (value.expectedRevision !== undefined)
         integer(value.expectedRevision, Number.MAX_SAFE_INTEGER, 1);
+    expectedGeneration(value.expectedGeneration);
     if (kind === 'user-preference' && value.userApproved !== true)
         throw new MemoryError('approval-required');
     if (kind === 'verified-outcome' && value.outcomeVerified !== true)
         throw new MemoryError('verification-required');
+}
+export function expectedGeneration(value: unknown): void {
+    if (
+        value !== undefined &&
+        value !== null &&
+        (typeof value !== 'string' || !/^[0-9a-f]{32}$/.test(value))
+    )
+        throw new MemoryError('invalid-input');
 }
 /** Conservative defaults, plus optional stricter host admission. Not a general DLP classifier. */
 export function privacy(value: BotValue, validate?: (value: BotValue) => boolean): void {

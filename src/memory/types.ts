@@ -35,11 +35,13 @@ export interface MemoryPatch {
     /** Refresh expiry from now, within the configured category retention limit. */
     readonly ttlMs?: number;
 }
-/** Trusted host assertions. These fields are never accepted from a bot's save/update input. */
+/** Approval flags are trusted host assertions; concurrency preconditions grant no authority. */
 export interface MemoryWriteApproval {
     readonly userApproved?: boolean;
     readonly outcomeVerified?: boolean;
     readonly expectedRevision?: number;
+    /** Update only: require this lifetime identity; null explicitly requires a legacy record without one. */
+    readonly expectedGeneration?: string | null;
 }
 export interface MemoryQuery {
     readonly text?: string;
@@ -82,7 +84,8 @@ export interface MemoryStore {
         namespace: MemoryNamespace,
         id: string,
         signal: BotSignal,
-        expectedRevision?: number
+        expectedRevision?: number,
+        expectedGeneration?: string | null
     ): Promise<boolean>;
     search(
         namespace: MemoryNamespace,
@@ -104,7 +107,9 @@ export interface MemoryTransaction<T> {
     readonly remove?: true;
 }
 export interface MemoryPersistence {
-    /** Callback is synchronous; adapters serialize transactions and never invoke it twice. */
+    /** Callback is synchronous; adapters serialize transactions and never invoke it twice.
+     * Call signal.throwIfAborted() before side effects/commit; it may also enforce a host deadline.
+     */
     transact<T>(
         namespace: MemoryNamespace,
         change: (stored: unknown) => MemoryTransaction<T>,

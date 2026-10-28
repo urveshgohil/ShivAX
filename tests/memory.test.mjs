@@ -1084,3 +1084,297 @@ test('generation is engine-owned and malformed persisted generations fail closed
         await reject(engine.retrieve(ns, 'note', signal()), 'corrupt-record');
     }
 });
+
+test('caller generation preconditions reject recreated records for update and delete', async () => {
+    const engine = new MemoryEngine({ now: () => 1000 });
+    const original = await engine.save(ns, draft(), signal());
+    await engine.delete(ns, 'note', signal());
+    const replacement = await engine.save(ns, draft('note', 'replacement'), signal());
+    assert.equal(original.revision, replacement.revision);
+    await reject(
+        engine.update(ns, 'note', { value: 'stale' }, signal(), {
+            expectedRevision: original.revision,
+            expectedGeneration: original.generation,
+        }),
+        'conflict'
+    );
+    await reject(
+        engine.delete(ns, 'note', signal(), original.revision, original.generation),
+        'conflict'
+    );
+    assert.deepEqual(await engine.retrieve(ns, 'note', signal()), replacement);
+    const updated = await engine.update(ns, 'note', { value: 'current' }, signal(), {
+        expectedRevision: replacement.revision,
+        expectedGeneration: replacement.generation,
+    });
+    assert.equal(updated.revision, 2);
+    await reject(engine.delete(ns, 'note', signal(), 1, updated.generation), 'conflict');
+    assert.equal(await engine.delete(ns, 'note', signal(), 2, updated.generation), true);
+    assert.equal(await engine.delete(ns, 'note', signal(), 2, updated.generation), false);
+});
+
+test('protected memory actions forward generation preconditions without granting approval', async () => {
+    const f = secured();
+    const original = await f.engine.save(ns, draft(), signal());
+    await f.engine.delete(ns, 'note', signal());
+    const replacement = await f.engine.save(ns, draft('note', 'replacement'), signal());
+    for (const action of ['update', 'delete']) {
+        const result = await f.system.rudra.run(
+            await f.task(`memory.${action}`, {
+                id: 'note',
+                expectedRevision: 1,
+                expectedGeneration: original.generation,
+                ...(action === 'update' ? { patch: { value: 'stale' } } : {}),
+            })
+        );
+        assert.equal(result.status, 'failed');
+        assert.deepEqual(await f.engine.retrieve(ns, 'note', signal()), replacement);
+    }
+    const updated = await f.system.rudra.run(
+        await f.task('memory.update', {
+            id: 'note',
+            patch: { value: 'current' },
+            expectedGeneration: replacement.generation,
+        })
+    );
+    assert.equal(updated.status, 'completed', JSON.stringify(updated));
+    const deleted = await f.system.rudra.run(
+        await f.task('memory.delete', {
+            id: 'note',
+            expectedRevision: 2,
+            expectedGeneration: replacement.generation,
+        })
+    );
+    assert.equal(deleted.status, 'completed', JSON.stringify(deleted));
+    const preference = await f.engine.save(
+        ns,
+        draft('note', 'approved', { category: 'user-preference' }),
+        signal(),
+        { userApproved: true }
+    );
+    assert.equal(
+        (
+            await f.system.rudra.run(
+                await f.task('memory.update', {
+                    id: 'note',
+                    patch: { value: 'not approved' },
+                    expectedGeneration: preference.generation,
+                })
+            )
+        ).status,
+        'failed'
+    );
+    assert.deepEqual(await f.engine.retrieve(ns, 'note', signal()), preference);
+});
+
+test('generation preconditions validate format and explicitly support legacy records', async () => {
+    const persistence = new InMemoryMemoryAdapter();
+    const engine = new MemoryEngine({ persistence });
+    const original = await engine.save(ns, draft(), signal());
+    for (const expectedGeneration of ['', 1, 'z'.repeat(32)]) {
+        await reject(
+            engine.update(ns, 'note', { value: 'bad' }, signal(), { expectedGeneration }),
+            'invalid-input'
+        );
+        assert.throws(
+            () => engine.delete(ns, 'note', signal(), undefined, expectedGeneration),
+            (error) => error instanceof MemoryError && error.code === 'invalid-input'
+        );
+    }
+    await reject(
+        engine.update(ns, 'note', { value: 'bad' }, signal(), { expectedGeneration: null }),
+        'conflict'
+    );
+    await reject(engine.delete(ns, 'note', signal(), undefined, null), 'conflict');
+    const legacy = structuredClone(original);
+    delete legacy.generation;
+    await persistence.transact(
+        ns,
+        () => ({ result: null, write: { version: 1, namespace: ns, records: [legacy] } }),
+        signal()
+    );
+    const migrated = await engine.update(ns, 'note', { value: 'migrated' }, signal(), {
+        expectedGeneration: null,
+    });
+    assert.equal(typeof migrated.generation, 'string');
+    await reject(engine.delete(ns, 'note', signal(), undefined, null), 'conflict');
+    assert.equal(await engine.delete(ns, 'note', signal(), undefined, migrated.generation), true);
+});
+
+const blockDeadline = () => {
+    const end = performance.now() + 80;
+    while (performance.now() < end) {
+        /* Deliberate synchronous host callback. */
+    }
+};
+
+test('expired preference approval cannot invoke storage or commit a memory record', async () => {
+    const engine = new MemoryEngine();
+    let calls = 0;
+    const originalSave = engine.save.bind(engine);
+    engine.save = (...args) => {
+        calls++;
+        return originalSave(...args);
+    };
+    const f = secured({
+        engine,
+        memoryServices: {
+            approvePreference() {
+                blockDeadline();
+                return true;
+            },
+        },
+    });
+    const result = await f.system.rudra.run(
+        await f.task('memory.save', draft('note', 'approved', { category: 'user-preference' }), {
+            limits: { timeoutMs: 30 },
+        })
+    );
+    assert.equal(result.error.code, 'timeout');
+    assert.equal(calls, 0);
+    assert.equal(await engine.retrieve(ns, 'note', signal()), null);
+});
+
+test('a blocking embedding cannot commit after the workflow deadline', async () => {
+    let block = false;
+    const engine = new MemoryEngine({
+        embeddings: {
+            id: 'deadline',
+            dimensions: 1,
+            embed() {
+                if (block) blockDeadline();
+                return [1];
+            },
+        },
+    });
+    const original = await engine.save(ns, draft(), signal());
+    const f = secured({ engine });
+    block = true;
+    const result = await f.system.rudra.run(
+        await f.task(
+            'memory.update',
+            { id: 'note', patch: { value: 'late' } },
+            { limits: { timeoutMs: 30 } }
+        )
+    );
+    assert.equal(result.error.code, 'timeout');
+    assert.deepEqual(await engine.retrieve(ns, 'note', signal()), original);
+});
+
+test('a file commit rechecks the workflow deadline after writing its temporary file', async (t) => {
+    const file = await fileStore(t);
+    const original = await file.engine.save(ns, draft(), signal());
+    let renames = 0;
+    const delayedFs = {
+        ...fs,
+        async open(...args) {
+            const handle = await fs.open(...args);
+            return {
+                writeFile: (...values) => handle.writeFile(...values),
+                async close() {
+                    await handle.close();
+                    blockDeadline();
+                },
+            };
+        },
+        async rename(...args) {
+            renames++;
+            return fs.rename(...args);
+        },
+    };
+    const engine = new MemoryEngine({ persistence: file.adapter({ fs: delayedFs }) });
+    const f = secured({ engine });
+    const result = await f.system.rudra.run(
+        await f.task(
+            'memory.update',
+            { id: 'note', patch: { value: 'late' } },
+            { limits: { timeoutMs: 30 } }
+        )
+    );
+    assert.equal(result.error.code, 'timeout');
+    assert.equal(renames, 0);
+    await tick();
+    assert.deepEqual(await file.engine.retrieve(ns, 'note', signal()), original);
+    await assert.rejects(fs.stat(`${file.path}.pending`), (error) => error.code === 'ENOENT');
+});
+
+for (const storage of ['memory', 'indexeddb']) {
+    test(`deadline expiry inside a transaction prevents deletion (${storage})`, async (t) => {
+        let block = false;
+        const fixture = memoryIDBFixture();
+        const adapter =
+            storage === 'memory'
+                ? new InMemoryMemoryAdapter()
+                : new IndexedDBMemoryAdapter({
+                      database: 'deadline-commit',
+                      factory: () => fixture.factory,
+                  });
+        if (storage === 'indexeddb') t.after(() => adapter.close());
+        const engine = new MemoryEngine({
+            persistence: {
+                transact(namespace, change, signal) {
+                    return adapter.transact(
+                        namespace,
+                        (raw) => {
+                            const result = change(raw);
+                            if (block) blockDeadline();
+                            return result;
+                        },
+                        signal
+                    );
+                },
+            },
+        });
+        const original = await engine.save(ns, draft(), signal());
+        const f = secured({ engine });
+        block = true;
+        const result = await f.system.rudra.run(
+            await f.task('memory.delete', { id: 'note' }, { limits: { timeoutMs: 30 } })
+        );
+        assert.equal(result.error.code, 'timeout');
+        block = false;
+        await tick();
+        assert.deepEqual(await engine.retrieve(ns, 'note', signal()), original);
+    });
+}
+
+test('the checkpoint signal forwards cancellation to a pending embedding without committing', async () => {
+    const entered = Promise.withResolvers(),
+        release = Promise.withResolvers();
+    let cancelled = false;
+    const engine = new MemoryEngine({
+        embeddings: {
+            id: 'cancel-forwarding',
+            dimensions: 1,
+            async embed(_text, context) {
+                const onAbort = () => {
+                    cancelled = true;
+                };
+                context.signal.addEventListener('abort', onAbort, { once: true });
+                entered.resolve();
+                try {
+                    await release.promise;
+                    return [1];
+                } finally {
+                    context.signal.removeEventListener('abort', onAbort);
+                }
+            },
+        },
+    });
+    const f = secured({ engine });
+    const controller = new AbortController();
+    const work = f.system.rudra.run(
+        await f.task('memory.save', draft(), { signal: controller.signal })
+    );
+    await entered.promise;
+    controller.abort();
+    try {
+        assert.equal((await work).status, 'cancelled');
+        assert.equal(cancelled, true);
+        assert.equal(await engine.retrieve(ns, 'note', signal()), null);
+    } finally {
+        release.resolve();
+        await tick();
+    }
+    assert.equal(await engine.retrieve(ns, 'note', signal()), null);
+});

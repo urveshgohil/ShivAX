@@ -41,6 +41,7 @@ export interface PermissionPolicy {
     validateInput(input: BotValue, identity: AuthenticatedIdentity): boolean;
 }
 export interface ToolExecutionContext extends AuthenticatedIdentity {
+    readonly taskId?: string;
     readonly signal: BotSignal;
     /** Host deadline/lease checkpoint before a service begins another side effect. */
     readonly checkExecution?: () => void;

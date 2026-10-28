@@ -5,6 +5,9 @@ const count = { type: 'number', minimum: 0 } as const;
 const labels = list(id, 32);
 const metadata = { type: 'object', additionalProperties: true } as const;
 const ttl = { type: 'number', minimum: 1, maximum: 7_776_000_000 } as const;
+const expectedGeneration = {
+    oneOf: [{ type: 'string', minLength: 32, maxLength: 32 }, { type: 'null' }],
+} as const;
 const namespace = object({
     principalId: id,
     issuer: id,
@@ -87,16 +90,19 @@ const definitions: Omit<MemoryActionDescriptor, 'capability' | 'toolId'>[] = [
     {
         action: 'update',
         effect: 'state-changing',
-        input: object({ id, patch, expectedRevision: { type: 'number', minimum: 1 } }, [
-            'id',
-            'patch',
-        ]),
+        input: object(
+            { id, patch, expectedRevision: { type: 'number', minimum: 1 }, expectedGeneration },
+            ['id', 'patch']
+        ),
         output: object({ record: memoryRecordSchema }),
     },
     {
         action: 'delete',
         effect: 'state-changing',
-        input: object({ id, expectedRevision: { type: 'number', minimum: 1 } }, ['id']),
+        input: object(
+            { id, expectedRevision: { type: 'number', minimum: 1 }, expectedGeneration },
+            ['id']
+        ),
         output: object({ deleted: { type: 'boolean' } }),
     },
     {

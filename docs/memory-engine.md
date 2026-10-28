@@ -19,7 +19,7 @@ tags, creation/update/expiry timestamps, revision, generation and `trust: 'untru
 Optional embeddings include provider ID and finite vector. Returned records and
 exports are immutable snapshots. Drafts cannot set namespace, timestamps,
 revision, generation, trust or embeddings. Updates preserve category and creation time;
-`expectedRevision` rejects stale writes. Metadata/tags are replaced explicitly,
+`expectedRevision` rejects stale revisions within a record lifetime. Metadata/tags are replaced explicitly,
 not merged with executable objects. Empty patches fail.
 
 Each new record receives an engine-generated 128-bit random `generation` stored
@@ -29,6 +29,28 @@ expiring a record and recreating the same ID produces a new generation, even if
 the clock and revision are identical. A stale update fails with `conflict` and
 cannot overwrite the replacement's content, category, approval or retention.
 Generation identifies a record lifetime; it does not grant permissions.
+
+Callers protecting a previously read record should supply both its revision and
+`expectedGeneration`. Updates accept the generation in their approval/options
+object; deletes accept it as an optional fifth argument after `expectedRevision`.
+Protected `memory.update` and `memory.delete` inputs accept the same field.
+Omission preserves existing behavior; `null` explicitly requires a legacy record
+with no generation. A supplied generation must be 32 lowercase hexadecimal
+characters. Mismatches fail with `conflict`; these conditions never grant approval.
+
+```ts
+await memory.update(namespace, record.id, { value: 'edited' }, signal, {
+    expectedRevision: record.revision,
+    expectedGeneration: record.generation ?? null,
+});
+// Use the revision/generation from the record intended for deletion.
+await memory.delete(namespace, record.id, signal, record.revision, record.generation ?? null);
+```
+
+Update checks the caller's preconditions against its initial read, then atomically
+compares that record's revision and generation again before writing. Delete checks
+both caller preconditions inside its transaction. Existing callers that omit
+generation do not gain protection against replacement before their call begins.
 
 Version-1 records without generation remain readable/exportable without a storage
 write. Their first successful update adds a persistent generation; replacement
@@ -274,3 +296,30 @@ and subnormal vectors, mixed scales and protected tool output. Build, type check
 lint and the offline memory demo pass. IndexedDB uses a transaction protocol
 fixture, not a live browser. These two Phase 06 review fixes are complete;
 Phase 05 budget-review findings remain outside this change.
+
+## Additional review fixes — 2026-10-28
+
+Resolved deadline enforcement and caller generation preconditions. Memory tool
+services now pass a portable `BotSignal` whose `throwIfAborted()` checks the trusted
+execution deadline as well as cancellation. Approval callbacks are checked before
+and after execution. The same signal reaches embeddings and persistence; the
+built-in adapters check it before publishing in-memory state, before file staging
+and rename, and around IndexedDB writes so expiry can abort the transaction.
+Abort events and reasons are forwarded without granting new permissions.
+
+Custom stores/adapters must call `signal.throwIfAborted()` before side effects and
+commit, rather than checking only `signal.aborted`. The signal is a portable
+interface, not a promise of a native `AbortSignal` instance. A backend operation
+already submitted before expiry may finish afterward; this change cannot roll
+back an already committed operation or preempt arbitrary host code mid-call.
+
+Changed `src/memory/{services,adapters,engine,types,contracts,validation}.ts`,
+`tests/memory.test.mjs`, `tests/package.test.mjs`, this guide and the phase plan.
+Existing method calls remain valid; generation preconditions are optional.
+
+Verification: **380 tests passed, zero failures/cancellations/skips**, including
+**51 memory tests**. Nine added regressions cover expired approval, embedding,
+file staging and in-memory/IndexedDB transactions; cancellation forwarding;
+caller generation conflicts, legacy records and protected-tool forwarding.
+Build, type checks, lint, portable declarations and the offline memory demo pass.
+IndexedDB coverage remains fixture-based. Both additional review fixes are complete.

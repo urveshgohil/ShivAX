@@ -42,6 +42,7 @@ export class InMemoryMemoryAdapter implements MemoryPersistence {
                     this.#bytes - (this.#sizes.get(key) ?? 0) + size > this.#maxTotalBytes
                 )
                     throw new MemoryError('capacity');
+                check(signal);
                 this.#bytes += size - (this.#sizes.get(key) ?? 0);
                 this.#sizes.set(key, size);
                 this.#entries.set(key, safe);
@@ -152,9 +153,11 @@ export class NodeFileMemoryAdapter implements MemoryPersistence {
                     new TextEncoder().encode(next).byteLength > this.#maxBytes
                 )
                     throw new MemoryError('capacity');
+                check(signal);
                 const file = await this.#fs.open(temporary, 'wx', 0o600);
                 created = true;
                 try {
+                    check(signal);
                     await file.writeFile(next, 'utf8');
                 } finally {
                     await file.close();
@@ -280,6 +283,7 @@ export class IndexedDBMemoryAdapter implements MemoryPersistence {
                     result = changed.result;
                     if (changed.remove) store.delete(key);
                     else if (changed.write !== undefined) store.put(changed.write, key);
+                    check(signal);
                 } catch (error) {
                     failure = error;
                     abort();

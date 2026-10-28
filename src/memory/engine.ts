@@ -6,6 +6,7 @@ import {
     approval,
     category,
     check,
+    expectedGeneration as validateExpectedGeneration,
     id,
     integer,
     json,
@@ -342,8 +343,10 @@ export class MemoryEngine implements MemoryStore {
         if (!previous) throw new MemoryError('not-found');
         approval(consent, previous.category);
         if (
-            consent.expectedRevision !== undefined &&
-            consent.expectedRevision !== previous.revision
+            (consent.expectedRevision !== undefined &&
+                consent.expectedRevision !== previous.revision) ||
+            (consent.expectedGeneration !== undefined &&
+                consent.expectedGeneration !== (previous.generation ?? null))
         )
             throw new MemoryError('conflict');
         const input = this.draft({
@@ -388,16 +391,19 @@ export class MemoryEngine implements MemoryStore {
         ns: MemoryNamespace,
         key: string,
         signal: BotSignal,
-        expectedRevision?: number
+        expectedRevision?: number,
+        expectedGeneration?: string | null
     ): Promise<boolean> {
         id(key);
         if (expectedRevision !== undefined) integer(expectedRevision, Number.MAX_SAFE_INTEGER, 1);
+        validateExpectedGeneration(expectedGeneration);
         return this.transaction(ns, signal, (records) => {
             const previous = records.find((record) => record.id === key);
             if (
                 previous &&
-                expectedRevision !== undefined &&
-                previous.revision !== expectedRevision
+                ((expectedRevision !== undefined && previous.revision !== expectedRevision) ||
+                    (expectedGeneration !== undefined &&
+                        (previous.generation ?? null) !== expectedGeneration))
             )
                 throw new MemoryError('conflict');
             return {

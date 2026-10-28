@@ -115,12 +115,13 @@ export class ToolLease {
                             input,
                             Object.freeze({
                                 ...identity,
+                                taskId: options.root.taskId,
                                 signal: this.#controller.signal,
                                 checkExecution: () => this.#check(),
                             })
                         );
-                    } catch {
-                        throw new SecurityError('tool-error');
+                    } catch (error) {
+                        throw securityError(error, 'tool-error');
                     }
                     this.#check();
                     try {

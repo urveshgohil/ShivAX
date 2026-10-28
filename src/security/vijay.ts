@@ -112,6 +112,92 @@ export class Vijay {
         });
     }
 
+    /** Host workflow entry point. Every proposal passes capability and tool policy again. */
+    async executeTool(
+        root: TaskContext,
+        capability: string,
+        id: string,
+        raw: BotValue,
+        signal: BotSignal,
+        hooks: SecurityExecutionHooks,
+        constraints: {
+            readonly readOnly?: boolean;
+            readonly effect?: PermissionPolicy['effect'];
+            readonly tool?: import('./types.js').ProtectedTool;
+        } = {}
+    ): Promise<BotValue> {
+        const input = snapshotValue(raw, root.limits.maxInputBytes, 'invalid-input');
+        const ensure = () => {
+            hooks.checkExecution?.();
+            if (!root.security.toolPermissions.includes(id)) throw new SecurityError('tool-denied');
+            if (constraints.tool && this.#tools.get(id) !== constraints.tool)
+                throw new SecurityError('policy-changed');
+            if (constraints.effect && this.#policies.get('tool', id)?.effect !== constraints.effect)
+                throw new SecurityError('effect-denied');
+            if (
+                constraints.readOnly &&
+                (this.#policies.get('capability', capability)?.effect !== 'read-only' ||
+                    this.#policies.get('tool', id)?.effect !== 'read-only')
+            )
+                throw new SecurityError('effect-denied');
+        };
+        return this.#authorized(
+            root,
+            'capability',
+            capability,
+            input,
+            signal,
+            async (parent) => {
+                const lease = new ToolLease({
+                    root,
+                    signal,
+                    allowed: [id],
+                    maxCalls: 1,
+                    checkExecution: hooks.checkExecution,
+                    getTool: (name) => this.#tools.get(name),
+                    track: hooks.trackTool,
+                    checkParent: () => {
+                        ensure();
+                        this.#assert(root, parent, input, signal);
+                    },
+                    deny: (name, error) => this.#deny('tool', name, error),
+                    authorize: (name, data, childSignal, work, checkTool) =>
+                        this.#authorized(
+                            root,
+                            'tool',
+                            name,
+                            data,
+                            childSignal,
+                            (policy, identity) => {
+                                hooks.onEffect?.(policy.effect);
+                                checkTool();
+                                ensure();
+                                this.#assert(root, policy, data, childSignal);
+                                return work(policy, identity);
+                            },
+                            () => {
+                                ensure();
+                                checkTool();
+                                if (
+                                    parent.effect === 'read-only' &&
+                                    this.#policies.get('tool', name)?.effect === 'state-changing'
+                                )
+                                    throw new SecurityError('effect-denied');
+                            },
+                            hooks.onApproval
+                        ),
+                });
+                try {
+                    return await lease.client.execute(id, input);
+                } finally {
+                    await lease.close();
+                }
+            },
+            ensure,
+            hooks.onApproval
+        );
+    }
+
     async #authorized<T>(
         root: TaskContext,
         kind: SecurityActionKind,

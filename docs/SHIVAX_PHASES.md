@@ -3,7 +3,7 @@
 **Synthetic Hybrid Intelligence with Versatile Autonomous eXperts**  
 **One Intelligence. Many Specialized Minds.**
 
-Updated: 2026-10-27 (Asia/Calcutta).
+Updated: 2026-10-28 (Asia/Calcutta).
 Companion: [architecture and complete public API inventory](SHIVAX_ARCHITECTURE.md).
 This is the implementation order. **Phases 00–07 have implementations; Phase 05
 has two unresolved review findings. Phase 06 review fixes are complete. Phase 07 acceptance is recorded below.
@@ -324,7 +324,10 @@ Status: implemented (2026-10-26); both reproduced review defects fixed (2026-10-
 Updates atomically compare persistent record generation and revision, preventing
 delete/recreate overwrites. Semantic search uses stable vector normalization and
 rejects non-finite scores. Legacy records remain readable and receive a generation
-on update. The complete suite passes 371 tests, including 42 memory tests.
+on update. Additional deadline and caller-generation findings were fixed on
+2026-10-28: protected operations carry execution checkpoints to storage commits,
+and update/delete accept optional generation preconditions. The complete suite
+passes 380 tests, including 51 memory tests. Existing call signatures remain valid.
 See [memory engine guide](memory-engine.md) for the complete API, file inventory,
 security boundaries, adapter configuration and limitations.
 
@@ -380,22 +383,46 @@ public exports remain compatible. No publication or production operation.
 Real vision-model quality, pixel similarity scoring and cross-browser coverage
 are not claimed. Phases 05/06 review defects remain outstanding. Stop before 08.
 
-## Phase 08 — Ekalavy controlled supervised learning
+## Phase 08 — RUDRA autonomous workflow engine
 
-Prerequisites: Phases 02–03; use Phase 06 only if storing model records.
+The user's 2026-10-28 request replaces the earlier supervised-learning proposal
+for this phase. No training or weight updates are included.
 
-Wrap existing `NeuralNet` training/inference and metrics in typed learning tasks.
-Inject a host worker executor and isolated candidate model ownership. Reuse
-existing data/split/augmentation rules where applicable; do not silently promote
-demo helpers into public APIs. Evaluate a candidate independently before an
-explicit authorized activation operation. Keep version 1 inference serialization
-meaning and digit demo behavior unchanged.
+Status: **complete** (2026-10-28). All **420 tests pass**, including 40 new
+workflow tests and all 380 existing tests. Clean TypeScript/Rollup build,
+ES2020-only public types, ESLint, the six-action demo and package dry run pass.
+All ML/demo source and the dataset hash remain unchanged. Packaging contains
+103 entries including six workflow declarations, without test/example files.
 
-Acceptance: deterministic fixtures, held-out isolation, candidate validation,
-bounded work, worker cancellation, failed-training containment and unchanged
-active models on rejected activation. Imported models are not advertised as
-exact resumed checkpoints. No autonomous self-training, shared-model mutation,
-dataset downloads or unmeasured accuracy claims.
+The subsequent Phase 08 code review (2026-10-28) reproduced and fixed two P2
+boundary defects: a new pause during resume authentication could be ignored,
+and fractional-nanodollar budgets were rounded upward. Four regressions now
+cover these cases and decimal/subnormal cost boundaries. **424 tests pass**,
+including 44 workflow tests; clean build, public types, lint, demo and package
+checks pass. No public API or ML source change was required. Details and the
+review-specific file inventory are in the workflow guide.
+
+Implemented additively in `src/workflows/`: capability-bound `ToolRegistry`,
+strict data-only proposals, finite dependency graphs and `RudraWorkflowEngine`.
+Every action is authorized through Vijay's existing capability/tool policy,
+approval and lease mechanisms. Existing protected services can be bound without
+replacement. The Phase 02 bot orchestrator remains compatible.
+
+Host controls support in-process pause/resume and cancellation. Independent
+attested read-only actions can run in bounded parallel batches; writes run alone.
+Retries are limited to read-only tool failures and repeat all approvals. Steps,
+tool calls, deadline and optional model calls/tokens/cost share one task budget
+across pause/resume and retries. A bounded trace records approvals and outcomes
+without payloads or raw errors. Model tools reuse the provider interface with
+explicit fixed-provider calls, reservation accounting and output/usage validation.
+
+The offline website demo inspects a real in-memory fixture value, detects its
+30px/24px discrepancy, proposes an exact correction, requests host approval,
+applies it, rescans and validates the new observation. It changes no files or
+live sites. See [autonomous workflows](autonomous-workflows.md) for API contracts,
+changed files, verification and boundaries. Durable restart recovery, automatic
+write replay, unrestricted tools and model-generated permission changes are not
+supported. Earlier Phase 05 router findings remain separate.
 
 ## Phase 09 — Vishwakarm code artifacts
 
@@ -438,7 +465,7 @@ requires a separate request and is not part of this roadmap's implementation.
 
 ## Stop condition
 
-Phase 07 is complete when its deliverables and checks pass and limitations are
-reported. Phases 08 onward remain proposals awaiting an explicit request.
+Phase 08 is complete when its deliverables and checks pass and limitations are
+reported. Phases 09 onward remain proposals awaiting an explicit request.
 Implementation of a later phase does not resolve outstanding review findings
 from earlier phases or automatically authorize training/product integration.

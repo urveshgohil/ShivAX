@@ -61,6 +61,8 @@ import {
     type MemoryStore, type MemoryRecord, type MemoryPersistence, type MemoryFileSystem,
     InspectionPlanner, registerInspectionService, validateInspectionObservation, createInspectionVisionAdapter,
     type InspectionProvider, type InspectionObservation, type InspectionRequest,
+    RudraWorkflowEngine, ToolRegistry, WorkflowError, type WorkflowTool, type WorkflowRun,
+    type AutonomousWorkflowPlan, type ToolCallProposal, type WorkflowSnapshot, type WorkflowOptions,
 } from ${JSON.stringify(entry)};
 import type { ${LEGACY_TYPE_EXPORTS.map(name => `${name} as Legacy_${name}`).join(', ')} } from ${JSON.stringify(entry)};
 import { InspectraInspectionProvider } from ${JSON.stringify(fileURLToPath(new URL('../adapters/inspectra/index.mjs', import.meta.url)))};
@@ -81,6 +83,13 @@ declare const injectedFs: MemoryFileSystem;
 const fileMemory: MemoryStore = new MemoryEngine({ persistence: new NodeFileMemoryAdapter({ path: '/host/memory.json', fs: injectedFs }) });
 let optionalClient: SLMClient | undefined;
 declare const signal: BotSignal;
+declare const memoryRecord: MemoryRecord;
+recordMemory.update(memoryRecord.namespace, memoryRecord.id, { value: 'edit' }, signal, {
+    expectedRevision: memoryRecord.revision, expectedGeneration: memoryRecord.generation ?? null,
+});
+recordMemory.delete(memoryRecord.namespace, memoryRecord.id, signal, memoryRecord.revision, memoryRecord.generation ?? null);
+// Existing callers can continue to omit the generation precondition.
+recordMemory.delete(memoryRecord.namespace, memoryRecord.id, signal, memoryRecord.revision);
 const task: BotTask = { id: 'typed-task', input: { capability: 'echo', data: 'text' } };
 const tool: ToolDescriptor = { id: 'demo.read', description: 'Metadata only' };
 const context = createTaskContext(task, { sessionId: 'typed-session', signal, security: {
@@ -141,6 +150,23 @@ const inspectionVision: VisionModelAdapter = createInspectionVisionAdapter('type
 const inspectionRequest: InspectionRequest = { reference: { kind: 'url', url: 'https://fixture.test/reference' }, target: 'https://fixture.test/target', viewport: { width: 800, height: 600 } };
 validateInspectionObservation(captured, context.security.scope);
 const security = new Vijay(jay, policies, { tools, audit, approve: async request => request.effect === 'read-only' });
+const workflowTool: WorkflowTool = { id: 'typed.read', capability: 'read', effect: 'read-only', parallelSafe: true,
+    validateInput: (input): input is number => typeof input === 'number',
+    validateOutput: (output): output is number => typeof output === 'number', execute: input => input };
+const workflowTools = new ToolRegistry().register(workflowTool);
+const workflowSecurity = new Vijay(jay, policies, { tools: workflowTools.protectedTools });
+const workflows = new RudraWorkflowEngine(workflowTools, workflowSecurity);
+const proposedAction: ToolCallProposal = { id: 'read', capability: 'read', input: { source: 'task' } };
+const proposedWorkflow: AutonomousWorkflowPlan = { actions: [proposedAction] };
+const workflowOptions: WorkflowOptions = { allowedCapabilities: ['read'], maxParallel: 2, maxToolCalls: 4,
+    modelBudget: { maxCalls: 1, maxTokens: 0, maxCostUSD: 0 } };
+const workflowRun: WorkflowRun = workflows.start(context, proposedWorkflow, workflowOptions);
+const autonomousResult: Promise<WorkflowSnapshot> = workflowRun.result;
+workflowRun.pause().then(() => workflowRun.resume());
+workflowTools.registerModel({ id: 'typed.model', capability: 'validate', provider: rules, modelCapability: 'deterministic-validation',
+    output: { schema: { type: 'object' } }, maxInputTokens: 0, maxOutputTokens: 0, validateInput: () => true });
+// @ts-expect-error Model proposals cannot grant permission.
+const forbiddenProposal: ToolCallProposal = { ...proposedAction, permissions: ['admin'] };
 const secured = new RudraOrchestrator(new BotRegistry().register(bot), { security });
 const authenticatedRun = jay.createContext(task, { signal }).then(context => secured.run(context));
 const decisions: readonly SecurityDecision[] = audit.list();

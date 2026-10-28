@@ -1,4 +1,4 @@
-import type { BotValue } from '../agents/types.js';
+import type { BotSignal, BotValue } from '../agents/types.js';
 import { checkPredicate } from '../agents/validation.js';
 import type { AuthenticatedIdentity, ProtectedTool } from '../security/types.js';
 import { ProtectedToolRegistry } from '../security/registry.js';
@@ -42,23 +42,45 @@ export function registerMemoryServices(
         async execute(raw, context): Promise<BotValue> {
             const ns = memoryNamespace(context),
                 input = raw as Record<string, BotValue>;
-            const approval = (record: MemoryDraft | MemoryPatch) => ({
-                userApproved: !!preference && checkPredicate(() => preference(record, context)),
-                outcomeVerified: !!outcome && checkPredicate(() => outcome(record, context)),
+            // Preserve the portable signal contract and cancellation events while
+            // carrying the host's absolute deadline through embedding and persistence.
+            const signal: BotSignal = Object.freeze({
+                get aborted() {
+                    return context.signal.aborted;
+                },
+                get reason() {
+                    return context.signal.reason;
+                },
+                throwIfAborted() {
+                    context.checkExecution?.();
+                    context.signal.throwIfAborted();
+                },
+                addEventListener: context.signal.addEventListener.bind(context.signal),
+                removeEventListener: context.signal.removeEventListener.bind(context.signal),
             });
+            signal.throwIfAborted();
+            const approval = (record: MemoryDraft | MemoryPatch) => {
+                signal.throwIfAborted();
+                const userApproved =
+                    !!preference && checkPredicate(() => preference(record, context));
+                signal.throwIfAborted();
+                const outcomeVerified = !!outcome && checkPredicate(() => outcome(record, context));
+                signal.throwIfAborted();
+                return { userApproved, outcomeVerified };
+            };
             switch (action.action) {
                 case 'save':
                     return {
                         record: await store.save(
                             ns,
                             raw as unknown as MemoryDraft,
-                            context.signal,
+                            signal,
                             approval(raw as unknown as MemoryDraft)
                         ),
                     } as unknown as BotValue;
                 case 'retrieve':
                     return {
-                        record: await store.retrieve(ns, input.id as string, context.signal),
+                        record: await store.retrieve(ns, input.id as string, signal),
                     } as unknown as BotValue;
                 case 'update':
                     return {
@@ -66,10 +88,12 @@ export function registerMemoryServices(
                             ns,
                             input.id as string,
                             input.patch as unknown as MemoryPatch,
-                            context.signal,
+                            signal,
                             {
                                 ...approval(input.patch as unknown as MemoryPatch),
                                 expectedRevision: input.expectedRevision as number | undefined,
+                                expectedGeneration: input.expectedGeneration as
+                                    string | null | undefined,
                             }
                         ),
                     } as unknown as BotValue;
@@ -78,30 +102,23 @@ export function registerMemoryServices(
                         deleted: await store.delete(
                             ns,
                             input.id as string,
-                            context.signal,
-                            input.expectedRevision as number | undefined
+                            signal,
+                            input.expectedRevision as number | undefined,
+                            input.expectedGeneration as string | null | undefined
                         ),
                     };
                 case 'search':
                     return {
-                        matches: await store.search(
-                            ns,
-                            raw as unknown as MemoryQuery,
-                            context.signal
-                        ),
+                        matches: await store.search(ns, raw as unknown as MemoryQuery, signal),
                     } as unknown as BotValue;
                 case 'list':
                     return {
-                        records: await store.list(
-                            ns,
-                            raw as unknown as MemoryQuery,
-                            context.signal
-                        ),
+                        records: await store.list(ns, raw as unknown as MemoryQuery, signal),
                     } as unknown as BotValue;
                 case 'export':
-                    return (await store.export(ns, context.signal)) as unknown as BotValue;
+                    return (await store.export(ns, signal)) as unknown as BotValue;
                 case 'purge':
-                    return { removed: await store.purgeExpired(ns, context.signal) };
+                    return { removed: await store.purgeExpired(ns, signal) };
             }
         },
     }));

@@ -19,5 +19,6 @@ export * from './bots/index.js';
 export * from './intelligence/index.js';
 export * from './memory/index.js';
 export * from './inspection/index.js';
+export * from './workflows/index.js';
 
 export const VERSION = '0.1.0';
