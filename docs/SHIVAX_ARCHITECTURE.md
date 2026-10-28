@@ -11,7 +11,8 @@ with the additive [Phase 01 bot foundation](bot-foundation.md) and
 [Phase 05 hybrid intelligence](hybrid-intelligence.md), followed by
 [Phase 06 Chitragupt memory](memory-engine.md) (2026-10-26) and
 [Phase 07 vision/inspection](inspection-integration.md) (2026-10-27) and
-[Phase 08 autonomous workflows](autonomous-workflows.md) (2026-10-28).
+[Phase 08 autonomous workflows](autonomous-workflows.md) (2026-10-28), followed by
+[Phase 09 learning/evaluation](learning-evaluation.md) (2026-10-28).
 Sections describing the current implementation are source-backed observations.
 The logical structure clarified on 2026-10-26 describes responsibility boundaries,
 not a required repository reorganization. Its mapping to current files is in section 6.
@@ -124,8 +125,8 @@ PNG pixels through the visual API. Input source labels describe supplied data.
 
 Only `shivax` (`exports["."]`) is a supported package entry. ESM resolves to
 `dist/index.esm.js`, CommonJS to `dist/index.cjs`, and declarations to
-`dist/index.d.ts`. There are **95 runtime exports and 198 additional type-only
-exports**. Classes below also have declaration types; the 198 count excludes
+`dist/index.d.ts`. There are **107 runtime exports and 205 additional type-only
+exports**. Classes below also have declaration types; the 205 count excludes
 those runtime symbols. Internal `export` statements do not automatically make a
 helper part of the root API.
 
@@ -149,6 +150,7 @@ helper part of the root API.
 | Bot foundation | `BotRegistry`, `BotExecutor`, `BotEventEmitter`, `BotError`, `createTaskContext`, `DEFAULT_EXECUTION_LIMITS`, `validateBotInput`, `validateBotResult` |
 | RUDRA | `RudraOrchestrator`, `CapabilityPlanner`, `RudraError` |
 | Autonomous workflows | `RudraWorkflowEngine`, `ToolRegistry`, `WorkflowError` |
+| Learning/evaluation | `EVALUATION_DOMAINS`, `learningFeedbackSchema`, `validateFeedback`, `storeLearningFeedback`, `validateEvaluationDataset`, `evaluateDataset`, `validateEvaluationRecord`, `exportTrainingData`, `validateTrainingExport`, `trainOfflineCandidate`, `trainCuratedCandidate`, `EvaluatedModelUpdates` |
 | Security | `Jay`, `Vijay`, `PermissionPolicyRegistry`, `ProtectedToolRegistry`, `SecurityAuditLog`, `SecurityError` |
 | Specialists | `SanjayBot`, `BrihaspatiBot`, `VishwakarmBot`, `ChitraguptBot`, `NaradBot`, `YudhishthirBot`, `EkalavyBot`, `createSpecialistBots`, `registerSpecialistBots`, `createSpecialistSystem`, `registerSpecialistServices`, `SessionMemoryStore`, `SessionFeedbackStore` |
 
@@ -173,6 +175,7 @@ helper part of the root API.
 | Bot foundation | `Bot`, `BotContext`, `BotInput`, `BotResult`, `Capability`, `BotTask`, `TaskStatus`, `ToolDescriptor`, `SecurityContext`, `BotValue`, `BotSignal`, `CallerIdentity`, `ExecutionLimits`, `TaskContextOptions`, `TaskContext`, `BotErrorCode`, `BotErrorDetails`, `BotEventIdentity`, `BotEventMap`, `BotEventType`, `BotEventListener` |
 | RUDRA | `RudraTaskStatus`, `WorkflowInput`, `WorkflowStep`, `WorkflowPlan`, `PlanningContext`, `Planner`, `RudraOptions`, `RudraErrorCode`, `RudraErrorDetails`, `StepOutput`, `ApprovalRequest`, `ApprovalHandler`, `ExecutionTrace`, `RudraHooks`, `RudraResult` |
 | Autonomous workflows | `ToolCallProposal`, `AutonomousWorkflowPlan`, `WorkflowToolBinding`, `WorkflowTool`, `WorkflowModelTool`, `WorkflowModelBudget`, `WorkflowOptions`, `WorkflowStatus`, `WorkflowErrorCode`, `WorkflowTrace`, `WorkflowOutput`, `WorkflowSnapshot`, `WorkflowRun` |
+| Learning/evaluation | `EvaluationDomain`, `FeedbackRecord`, `EvaluationCase`, `EvaluationObservation`, `EvaluationRecord`, `CuratedTrainingRow`, `ModelConfigurationVersion` |
 | Security | `AuthenticatedPrincipal`, `AuthenticatedSession`, `AuthenticatedIdentity`, `IdentityProvider`, `AuthenticatedContextOptions`, `SecurityActionKind`, `ActionEffect`, `PermissionPolicy`, `ToolExecutionContext`, `ProtectedTool`, `BotToolClient`, `SecurityApprovalRequest`, `SecurityApprovalHandler`, `SecurityErrorCode`, `SecurityDecision`, `VijayOptions`, `SecurityExecutionHooks` |
 | Specialists | `SpecialistSystemOptions`, `SpecialistSchema`, `MemoryNamespace`, `MemoryRead`, `MemoryStorage`, `FeedbackStorage`, `SessionStorageOptions`, `SpecialistProviderContext`, `VisionImage`, `VisionModelAdapter`, `ReasoningProvider`, `CodeProvider`, `ReviewProvider`, `SpecialistProviders` |
 

@@ -1,6 +1,8 @@
 import { SpecialistBot, toolCall } from './base.js';
 import { id, list, object, value } from './schema.js';
 import type { BotValue } from '../agents/types.js';
+import { learningFeedbackSchema, validateFeedback, storeLearningFeedback } from '../learning/index.js';
+import { memoryRecordSchema } from '../memory/contracts.js';
 
 export const feedbackRecordSchema = object(
     {
@@ -14,6 +16,14 @@ export const feedbackAckSchema = object({ recordId: id });
 export class EkalavyBot extends SpecialistBot {
     constructor() {
         super('ekalavy', {
+            'learning.feedback': {
+                description: 'Store host-verified accept/reject/correct feedback through Chitragupt memory; never trains weights.',
+                input: learningFeedbackSchema,
+                output: object({ record: memoryRecordSchema }),
+                tools: [{ id: 'shivax.memory.records.save', description: 'Approved verified feedback storage.' }],
+                validate: data => { try { validateFeedback(data); return true; } catch { return false; } },
+                run: (data, context) => storeLearningFeedback({ execute: (id, input) => toolCall(context, id, input) }, data),
+            },
             'learning.record': {
                 description:
                     'Store a feedback/training record for explicit later use; never updates weights.',

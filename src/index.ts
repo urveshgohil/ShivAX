@@ -20,5 +20,8 @@ export * from './intelligence/index.js';
 export * from './memory/index.js';
 export * from './inspection/index.js';
 export * from './workflows/index.js';
+export * from './learning/index.js';
+export * from './learning/updates.js';
+export * from './learning/training.js';
 
 export const VERSION = '0.1.0';

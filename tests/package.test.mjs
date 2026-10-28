@@ -46,6 +46,8 @@ test('core and bot consumers type-check public exports with ES2020 alone and no 
         const entry = fileURLToPath(new URL('../dist/index.js', import.meta.url));
         writeFileSync(join(directory, 'consumer.ts'), `
 import {
+    validateFeedback, validateEvaluationRecord, validateTrainingExport, trainCuratedCandidate, evaluateDataset, EvaluatedModelUpdates,
+    type FeedbackRecord, type EvaluationRecord, type CuratedTrainingRow,
     NeuralNet, SLMClient, BotRegistry, BotExecutor, BotEventEmitter, createTaskContext,
     type Task, type BotTask, type Bot, type BotInput, type BotSignal, type BotResult,
     type ToolDescriptor, type BotErrorCode, RudraOrchestrator, CapabilityPlanner,
@@ -68,6 +70,8 @@ import type { ${LEGACY_TYPE_EXPORTS.map(name => `${name} as Legacy_${name}`).joi
 import { InspectraInspectionProvider } from ${JSON.stringify(fileURLToPath(new URL('../adapters/inspectra/index.mjs', import.meta.url)))};
 const adapterProvider: InspectionProvider = new InspectraInspectionProvider({ openPage: async (request, context) => ({ page: {}, close() {} }) });
 const legacyTask: Task = 'binary';
+const learningUpdates = new EvaluatedModelUpdates({ model: null, configuration: {} });
+const learningFeedback: FeedbackRecord = validateFeedback({ version: 1, id: 'f', taskId: 't', botId: 'b', domain: 'routing', input: null, output: null, decision: 'accept' });
 const net = new NeuralNet({ layers: [2, 1], task: legacyTask });
 const models = new ModelProviderRegistry().register(new NeuralModelProvider('numeric', net));
 const modelsRouter = new ModelRouter(models, { scope: { kind: 'personal', id: 'typed' } });

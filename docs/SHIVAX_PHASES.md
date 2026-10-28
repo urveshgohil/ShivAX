@@ -424,26 +424,30 @@ changed files, verification and boundaries. Durable restart recovery, automatic
 write replay, unrestricted tools and model-generated permission changes are not
 supported. Earlier Phase 05 router findings remain separate.
 
-## Phase 09 — Vishwakarm code artifacts
+## Phase 09 — Ekalavy learning and evaluation
 
-Phase 04 already provides source summaries, exact replacement artifacts and
-validated optional code-provider patch proposals. Further backend adapters or
-artifact operations require their own concrete scope; file application remains
-separate and is never implied by a generation request.
+Status: complete and reviewed (2026-10-28). The user's requested learning/evaluation
+scope replaces the earlier code-artifact proposal. Added closed feedback/evaluation
+contracts, accept/reject/correct feedback through Chitragupt's protected verified
+memory, curated exports, six-domain repeatable evaluations and measured metrics.
+Ekalavy adds `learning.feedback`; no existing capabilities are removed.
 
-Prerequisites: Phases 02–03, 05 for a shared optional model service, and 04 review
-contracts; add a distinct backend contract only if code tasks require it.
+Numeric offline training clones the current NeuralNet; curated training requires
+disjoint held-out data. Weights are reported changed only when parameters actually
+differ. Model/configuration snapshots require internally generated passing evaluation
+and explicit host approval before activation, with approved rollback to retained
+versions. No automatic feedback learning, deployment or remote training is implied.
 
-Accept bounded code requests and return validated text/patch artifacts with
-provenance and limitations. An absent code backend reports unavailable. Keep
-generation separate from applying a patch or executing code. Any future apply/
-execution feature is an explicit host capability with workspace/resource policy
-and isolation; ordinary generated code has no filesystem, shell or network access.
+Acceptance: **437 tests pass**, including 13 learning tests and representative
+positive/negative fixtures through actual APIs in all six domains. Clean build,
+ES2020-only consumers, lint and package dry run pass. ML source, digit demo and
+dataset are unchanged. See [learning/evaluation guide](learning-evaluation.md) for
+full API, changed files, validation and trusted-host/in-memory rollback limitations.
 
-Acceptance: backend/schema failures, unsafe artifact paths, unsupported edits,
-policy denial, cancellation and size limits are tested. Review references real
-artifacts; no canned claims that generated code compiles or tests pass. Execution
-and repository mutations are outside this phase unless separately requested.
+Follow-up review (2026-10-28): fixed contradictory imported security/routing metrics
+and missing held-out classification-label checks. All **441 tests pass**, including
+17 learning tests; clean build, types, lint and package checks pass. These fixes
+preserve public signatures and the original ML engine. Details are in the guide.
 
 ## Phase 10 — Visynq composition and compatibility acceptance
 
@@ -465,7 +469,7 @@ requires a separate request and is not part of this roadmap's implementation.
 
 ## Stop condition
 
-Phase 08 is complete when its deliverables and checks pass and limitations are
-reported. Phases 09 onward remain proposals awaiting an explicit request.
+Phase 09 is complete with its deliverables and checks passing and limitations
+reported. Phases 10 onward remain proposals awaiting an explicit request.
 Implementation of a later phase does not resolve outstanding review findings
 from earlier phases or automatically authorize training/product integration.
