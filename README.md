@@ -1,210 +1,113 @@
-# ShivAX
+# SHIVAX AI
 
-The dependency-free [UI scene graph API](docs/visual-scene-graph.md) provides
-validated URL/Figma/PNG measurement types, CSS-pixel normalization, provenance,
-and geometry helpers. [Semantic element matching](docs/visual-matching.md) adds
-hierarchical, one-to-one correspondence with evidence scores and explicit
-ambiguity; it does not report visual/style differences.
+**Synthetic Hybrid Intelligence with Versatile Autonomous eXperts**
 
-[Deterministic UI comparison](docs/visual-comparison.md) adds `analyzeUI()` for
-measured style/layout differences, content policies and structured review issues.
+*One Intelligence. Many Specialized Minds.*
 
-[Optional local SLM reasoning](docs/optional-slm.md) adds `SLMProvider`,
-`SLMClient`, `OllamaProvider` and `analyzeUIWithSLM()` for evidence-backed review.
-It is disabled by default; existing neural-network and Visual Intelligence APIs
-remain synchronous and deterministic.
+SHIVAX is a JavaScript and TypeScript AI library combining a CPU neural-network
+engine with specialist bots, model providers, scoped memory, and controlled workflows.
+RUDRA coordinates tasks; Jay and Vijay enforce host-configured security.
 
-Run `pnpm example:digits` for the framework-free browser playground: live digit
-inference, normalized previews, training charts, confusion matrices, and local
-model save/load/export/import. See [the playground guide](docs/digit-phase4.md).
+**Version:** 0.1.0 · **Runtime:** Node.js 22+ and browser bundles · **License:** Apache-2.0
 
-The neural-network core also supports opt-in ReLU/Leaky ReLU/sigmoid hidden
-activations, momentum/Adam optimizers, He initialization, inference JSON
-serialization, and reusable classification/regression metrics. Defaults remain
-tanh + Xavier + SGD. See [Phase 3 core guide](docs/neuralnet-phase3.md) and run
-`pnpm example:core` for the typed example.
+The core has zero runtime dependencies. Browser automation, storage, authentication,
+and model backends use optional host-configured adapters.
 
-Dependency-free JavaScript AI/ML foundations with TypeScript declarations:
-CPU tensors, matrix math, dense neural networks, and bag-of-words text features.
-Training uses mini-batch SGD with explicit backpropagation, tanh hidden layers,
-and binary cross-entropy, softmax cross-entropy, or mean squared error.
+## Features
 
-## Phase 1 examples
+- **Machine learning:** tensors, matrix operations, dense neural networks, binary and multiclass classification, regression, SGD/momentum/Adam, evaluation metrics, and JSON model serialization.
+- **Text features:** bounded Unicode bag-of-words vocabulary and normalized vectors.
+- **Specialist bots:** capability discovery, validated inputs/results, lifecycle events, and dependency injection.
+- **RUDRA orchestration:** capability routing, dependent tasks, approvals, pause/resume, safe parallel reads, retries, cancellation, execution limits, and traces.
+- **Hybrid models:** existing neural engine, deterministic rules, optional Ollama-compatible models, and host-configured remote providers.
+- **Memory:** scoped records, retention, lexical retrieval, optional embeddings, explicit export/deletion, and in-memory, Node file, or IndexedDB adapters.
+- **UI inspection:** semantic matching, measured visual/layout comparison, structured findings, and a separate Inspectra browser adapter.
+- **Security:** trusted host identities, expiring sessions, deny-by-default policies, protected tools, explicit approvals, and audit records.
+- **Learning and evaluation:** accept/reject/correct feedback, curated datasets, repeatable evaluations, isolated numeric training, evaluation-gated model updates, and rollback.
+- **Digit playground:** browser-based handwritten digit training and inference using the existing neural engine.
 
-```sh
-pnpm example:xor
-pnpm example:regression
-pnpm example:text
-pnpm example:digits
-```
+## Specialist bots
 
-The digit demo starts at http://127.0.0.1:4173, or the next available port through
-4182 if it is occupied. Open the URL printed in your terminal.
-It requires your own labeled dataset; no MNIST data or pretrained weights are
-bundled. See [examples/README.md](examples/README.md) for the data schema and limits.
+| Bot | Role |
+| --- | --- |
+| Sanjay | Vision through an optional model adapter |
+| Brihaspati | Structured plans and reasoning decisions |
+| Vishwakarm | Source summaries and code patch proposals |
+| Chitragupt | Scoped memory and retrieval |
+| Narad | UI inspection and comparison |
+| Yudhishthir | Deterministic checks and optional model review |
+| Ekalavy | Feedback, evaluation, and controlled learning |
 
-```js
-import { Tensor, NeuralNet, BagOfWords } from 'shivax';
-
-const a = new Tensor([1, 2, 3, 4], [2, 2]);
-console.log(a.matmul(a).data); // Float32Array [7, 10, 15, 22]
-
-const net = new NeuralNet({ layers: [2, 8, 1], task: 'binary', seed: 42 });
-net.train([[0, 0], [0, 1], [1, 0], [1, 1]], [[0], [1], [1], [0]], {
-  epochs: 2000, learningRate: 0.5, batchSize: 4,
-});
-console.log(net.predictClass([0, 1])); // 1
-```
-
-Tensors use row-major Float32 storage and return defensive data copies. Tensor
-operations return new tensors; element-wise operations require equal shapes
-(scalars are supported), and matrix multiplication/transpose require rank 2.
-Neural networks use Float64 parameter buffers for CPU training stability.
-`predict` accepts one feature vector; classification returns probabilities and
-regression returns numeric outputs. Multiclass targets are probability vectors
-summing to one (normally one-hot). Normalize features and regression targets.
-
-`train` is synchronous and mutates the model. It returns per-epoch losses and
-supports an `onEpoch(epoch, loss)` callback (return `false` to stop). For a
-responsive UI and immediate cancellation, run training in a worker as the digit
-demo does. Repeated training calls continue from existing weights. Failed or
-cancelled training can retain updates from completed batches.
-
-Fit `BagOfWords` on training data only and retain that fitted vocabulary with the
-model. Unknown words are ignored and empty/unknown-only input produces a zero
-vector. The current tokenizer handles Unicode letters/numbers and normalizes
-counts by the total known-token count. It is a simple baseline, not a language model.
-
-These are educational CPU implementations. There is no GPU backend, automatic
-differentiation engine, model persistence, or production accuracy guarantee yet.
-
-## Package usage
-
-Requires Node.js 22 or newer. Both module formats are supported:
-
-```js
-import { VERSION } from 'shivax';
-// CommonJS: const { VERSION } = require('shivax');
-```
-
-The production package has zero runtime dependencies and no installation hooks.
-Development tools are not installed by consumers. Builds publish only the two
-JavaScript entry points, declarations, package metadata, and documentation.
-
-## Development and release checks
-
-Use pnpm 12.8.1 and commit `pnpm-lock.yaml` with dependency changes.
-
-```sh
-pnpm install --frozen-lockfile
-pnpm lint
-pnpm test
-pnpm audit
-npm pack --dry-run --ignore-scripts
-```
-
-`pnpm lint` checks TypeScript with the compiler and lints JavaScript tooling.
-`pnpm test` rebuilds before checking ESM/CommonJS loading and package invariants.
-For watch mode, build once, then run `pnpm dev` alongside `pnpm test:watch`.
-Packing runs lint and tests automatically. GitLab CI also runs the dependency
-audit. No automated publishing or deployment is configured.
-
-See [SECURITY.md](SECURITY.md) for vulnerability reporting and security
-requirements for future AI features and applications using this library.
-
-## License
-
-Copyright 2025-2026 Urvesh Gohil. Licensed under [Apache License 2.0](LICENSE).
-See [NOTICE](NOTICE) for attribution.
-
-
-
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.com/urveshgohil.developer/shivax.git
-git branch -M main
-git push -uf origin main
-```
-
-## Integrate with your tools
-
-* [Set up project integrations](https://gitlab.com/urveshgohil.developer/shivax/-/settings/integrations)
-
-## Collaborate with your team
-
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+Jay handles authentication and Vijay handles authorization at protected execution boundaries.
 
 ## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+```sh
+npm install shivax
+```
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+## Basic usage
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+### Imports
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+```js
+import { Tensor, NeuralNet, BagOfWords, createSpecialistBots, BotRegistry } from 'shivax';
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+// CommonJS is also supported:
+// const { Tensor, NeuralNet } = require('shivax');
+```
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+### Tensor operations
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+```js
+const matrix = new Tensor([1, 2, 3, 4], [2, 2]);
+console.log(Array.from(matrix.matmul(matrix).data)); // [7, 10, 15, 22]
+```
+
+### Train and predict
+
+```js
+const model = new NeuralNet({ layers: [2, 8, 1], task: 'binary', seed: 42 });
+
+model.train(
+  [[0, 0], [0, 1], [1, 0], [1, 1]],
+  [[0], [1], [1], [0]],
+  { epochs: 2000, learningRate: 0.5, batchSize: 4 },
+);
+
+console.log(model.predictClass([0, 1])); // 1
+
+const restored = NeuralNet.fromJSON(JSON.stringify(model.toJSON()));
+console.log(restored.predictClass([0, 1])); // 1
+```
+
+### Text features
+
+```js
+const text = new BagOfWords().fit(['hello world', 'hello shivax']);
+console.log(text.transform('hello shivax')); // [0.5, 0, 0.5]
+```
+
+### Register specialist bots
+
+```js
+const registry = new BotRegistry();
+createSpecialistBots().forEach(bot => registry.register(bot));
+
+console.log(registry.findByCapability('code.patch').map(bot => bot.id));
+// ['vishwakarm']
+```
+
+Model-backed capabilities require a configured provider. Protected operations require
+host authentication, permissions, and approval. Feedback storage alone does not change
+model weights. Neural training is synchronous; workflow resume and model rollback retain
+state in memory.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for versioned changes.
 
 ## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Copyright 2025–2026 Urvesh Gohil. Licensed under [Apache License 2.0](LICENSE).
+See [NOTICE](NOTICE) for attribution.
