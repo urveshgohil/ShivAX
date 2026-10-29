@@ -10,6 +10,61 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.esm.js",
       "require": "./dist/index.cjs"
+    },
+    "./core": {
+      "types": "./dist/sdk/core.d.ts",
+      "import": "./dist/sdk/core.esm.js",
+      "require": "./dist/sdk/core.cjs"
+    },
+    "./rudra": {
+      "types": "./dist/sdk/rudra.d.ts",
+      "import": "./dist/sdk/rudra.esm.js",
+      "require": "./dist/sdk/rudra.cjs"
+    },
+    "./bots": {
+      "types": "./dist/sdk/bots.d.ts",
+      "import": "./dist/sdk/bots.esm.js",
+      "require": "./dist/sdk/bots.cjs"
+    },
+    "./security": {
+      "types": "./dist/sdk/security.d.ts",
+      "import": "./dist/sdk/security.esm.js",
+      "require": "./dist/sdk/security.cjs"
+    },
+    "./models": {
+      "types": "./dist/sdk/models.d.ts",
+      "import": "./dist/sdk/models.esm.js",
+      "require": "./dist/sdk/models.cjs"
+    },
+    "./memory": {
+      "types": "./dist/sdk/memory.d.ts",
+      "import": "./dist/sdk/memory.esm.js",
+      "require": "./dist/sdk/memory.cjs"
+    },
+    "./integrations": {
+      "types": "./dist/sdk/integrations.d.ts",
+      "import": "./dist/sdk/integrations.esm.js",
+      "require": "./dist/sdk/integrations.cjs"
+    },
+    "./learning": {
+      "types": "./dist/sdk/learning.d.ts",
+      "import": "./dist/sdk/learning.esm.js",
+      "require": "./dist/sdk/learning.cjs"
+    },
+    "./diagnostics": {
+      "types": "./dist/sdk/diagnostics.d.ts",
+      "import": "./dist/sdk/diagnostics.esm.js",
+      "require": "./dist/sdk/diagnostics.cjs"
+    },
+    "./licensing/server": {
+      "types": "./dist/licensing/index.d.ts",
+      "import": "./dist/licensing/index.esm.js",
+      "require": "./dist/licensing/index.cjs"
+    },
+    "./adapters/inspectra": {
+      "types": "./dist/sdk/inspectra.d.ts",
+      "import": "./dist/sdk/inspectra.esm.js",
+      "require": "./dist/sdk/inspectra.cjs"
     }
   },
   "files": [
@@ -17,7 +72,12 @@
     "NOTICE",
     "SECURITY.md",
     "CHANGELOG.md",
-    "README.md"
+    "README.md",
+    "adapters/inspectra/index.mjs",
+    "adapters/inspectra/index.d.mts",
+    "adapters/inspectra/README.md",
+    "docs/sdk.md",
+    "docs/release-readiness.md"
   ],
   "scripts": {
     "example:core": "pnpm build && node --experimental-strip-types examples/core.ts",
@@ -32,7 +92,8 @@
     "lint": "tsc --noEmit && eslint .",
     "format": "prettier --write src/**/*.ts",
     "audit": "pnpm audit --audit-level=low",
-    "prepack": "pnpm lint && pnpm test"
+    "prepack": "pnpm lint && pnpm test",
+    "verify:package": "node scripts/check-sdk-package.mjs"
   },
   "keywords": [
     "shivax",

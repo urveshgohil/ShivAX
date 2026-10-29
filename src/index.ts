@@ -23,5 +23,7 @@ export * from './workflows/index.js';
 export * from './learning/index.js';
 export * from './learning/updates.js';
 export * from './learning/training.js';
+export { toSDKDiagnostic } from './sdk/diagnostics.js';
+export type { SDKDiagnostic } from './sdk/diagnostics.js';
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.1.1';

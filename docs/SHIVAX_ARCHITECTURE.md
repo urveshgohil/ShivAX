@@ -123,12 +123,18 @@ PNG pixels through the visual API. Input source labels describe supplied data.
 
 ## 3. Existing public API inventory
 
-Only `shivax` (`exports["."]`) is a supported package entry. ESM resolves to
+Phase 10 adds focused subpaths alongside the compatible root. All 12 ESM/CJS/type
+entry points are listed in [the SDK guide](sdk.md). Licensing is server-only;
+actual capture is optional. Shared chunks preserve runtime class identity.
+
+The aggregate `shivax` entry (`exports["."]`) remains supported. ESM resolves to
 `dist/index.esm.js`, CommonJS to `dist/index.cjs`, and declarations to
-`dist/index.d.ts`. There are **107 runtime exports and 205 additional type-only
-exports**. Classes below also have declaration types; the 205 count excludes
+`dist/index.d.ts`. There are **108 runtime exports and 206 additional type-only
+exports**. Classes below also have declaration types; the 206 count excludes
 those runtime symbols. Internal `export` statements do not automatically make a
 helper part of the root API.
+
+The root additionally exports `toSDKDiagnostic` and the type `SDKDiagnostic`.
 
 ### Runtime exports: complete inventory
 

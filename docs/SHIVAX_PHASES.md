@@ -451,6 +451,19 @@ preserve public signatures and the original ML engine. Details are in the guide.
 
 ## Phase 10 — Visynq composition and compatibility acceptance
 
+Status: implemented 2026-10-29; publication remains blocked by the two existing
+Phase 05 router budget findings reconfirmed during readiness review.
+Added 12 supported SDK root/subpath entries, shared ESM/CJS classes, portable
+declarations, diagnostics and server licensing contracts. The actual sibling
+Visynq application adds a lazy `/shivax` route with real RUDRA/Narad/Yudhishthir
+execution, approval and recorded inspection evidence. Its mock identity is labelled.
+
+Acceptance: 445 SHIVAX tests and 214 Visynq tests pass, both builds pass, packed
+ES2020 consumer checks pass for all 12 entries, and Chromium approval/denial plus
+actual Inspectra capture/cleanup passed. See [SDK guide](sdk.md) and
+[release-readiness report](release-readiness.md) for evidence, changed files,
+platform limits and blockers. No publication or deployment occurred.
+
 Prerequisites: implemented specialist phases required by the selected product
 workflow; inspect the current Workstation repository before changing it.
 
@@ -469,7 +482,7 @@ requires a separate request and is not part of this roadmap's implementation.
 
 ## Stop condition
 
-Phase 09 is complete with its deliverables and checks passing and limitations
-reported. Phases 10 onward remain proposals awaiting an explicit request.
+Phase 10 deliverables and the release-readiness report are complete. Publication
+remains blocked as documented. Later work requires its own requested scope.
 Implementation of a later phase does not resolve outstanding review findings
 from earlier phases or automatically authorize training/product integration.

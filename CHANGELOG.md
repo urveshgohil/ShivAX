@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- Supported SDK entry points for core intelligence, RUDRA, specialists, security, models, memory, learning and integrations, with ESM/CommonJS declarations and shared runtime classes.
+- UI-safe structured diagnostics and a server-verified licensing interface for a future Lemon Squeezy adapter.
+- Registry, local inference, workflow, durable memory, Inspectra and React examples, plus an approval-gated SHIVAX demo in Visynq Workstation.
+- Packed-consumer export/type verification and release-readiness reporting.
+
+### Changed
+
+- Build shared SDK chunks while preserving the existing package name and root exports.
+
 ## [0.1.1] - 2026-10-28
 
 ### Changed

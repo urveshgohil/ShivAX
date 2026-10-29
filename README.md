@@ -9,7 +9,7 @@ for Node.js and browser applications. It combines CPU neural networks, agent
 orchestration, model-provider integration, scoped memory, UI inspection, and AI
 evaluation. RUDRA coordinates tasks; Jay and Vijay enforce host-configured security.
 
-**Version:** 0.1.0 · **Runtime:** Node.js 22+ and browser bundles · **License:** Apache-2.0
+**Version:** 0.1.1 · **Runtime:** Node.js 22+ and browser bundles · **License:** Apache-2.0
 
 The core has zero runtime dependencies. Browser automation, storage, authentication,
 and model backends use optional host-configured adapters.
@@ -147,6 +147,14 @@ interpretation requires a configured vision provider.
 Feedback is stored for review and evaluation. Supported numeric datasets can be
 used for explicit offline neural-network training. Model updates require evaluation
 and host approval; rollback retains model and configuration snapshots in memory.
+
+## SDK entry points
+
+Use `shivax/core`, `shivax/rudra`, `shivax/bots`, `shivax/security`, `shivax/models`,
+`shivax/memory`, `shivax/integrations`, or `shivax/learning` for focused imports.
+Optional adapters are available at `shivax/adapters/inspectra`; server entitlement
+contracts at `shivax/licensing/server`. Existing root imports remain supported.
+See the [SDK guide](docs/sdk.md) for examples and the Visynq `/shivax` demo.
 
 ## Changelog
 
