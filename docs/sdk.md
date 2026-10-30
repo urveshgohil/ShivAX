@@ -1,6 +1,6 @@
 # SHIVAX SDK
 
-Version 0.1.1. Existing `shivax` root imports remain supported. All 12 public entry
+Version 0.1.2. Existing `shivax` root imports remain supported. All 12 public entry
 points provide ESM, CommonJS and portable ES2020 declarations.
 
 | Entry point | API |

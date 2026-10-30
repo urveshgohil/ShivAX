@@ -9,7 +9,7 @@ for Node.js and browser applications. It combines CPU neural networks, agent
 orchestration, model-provider integration, scoped memory, UI inspection, and AI
 evaluation. RUDRA coordinates tasks; Jay and Vijay enforce host-configured security.
 
-**Version:** 0.1.1 · **Runtime:** Node.js 22+ and browser bundles · **License:** Apache-2.0
+**Version:** 0.1.2 · **Runtime:** Node.js 22+ and browser bundles · **License:** Apache-2.0
 
 The core has zero runtime dependencies. Browser automation, storage, authentication,
 and model backends use optional host-configured adapters.

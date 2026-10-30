@@ -1,6 +1,6 @@
 # Phase 10 release-readiness report
 
-Date: 2026-10-29 (Asia/Calcutta). Package: shivax 0.1.1.
+Date: 2026-10-29 (Asia/Calcutta). Package: shivax 0.1.2.
 
 **Decision: Phase 10 SDK/demo implemented; review fixes pending; publication blocked.**
 No package publication, production operation or deployment was performed.
@@ -68,7 +68,7 @@ examples in this phase do not rely on the affected paid/fallback paths.
 ## Delivered architecture
 
 - Existing package name/version and compatible root exports retained. VERSION now
-  matches package.json at 0.1.1; the stale 0.1.0 runtime constant was detected and fixed.
+  matches package.json at 0.1.2; the stale 0.1.0 runtime constant was detected and fixed.
 - Twelve supported entry points covering core, RUDRA, specialists, security, models,
   memory, integrations, optional Inspectra, learning, diagnostics and server licensing.
 - Shared Rollup chunks preserve class identity across root/subpath imports within
