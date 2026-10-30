@@ -56,4 +56,4 @@ baseline date and does not assert that a package release was published or tagged
 - Evaluation report consistency and held-out classification-target validation.
 - Training weight-change reporting for zero-gradient updates.
 
-[0.1.1]: https://www.npmjs.com/package/shivax/v/0.1.1
+[0.1.2]: https://www.npmjs.com/package/shivax/v/0.1.2
