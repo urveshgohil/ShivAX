@@ -1,6 +1,6 @@
 import { validateInspectionObservation } from 'shivax';
 
-/** Translate actual inspectra-engine 1.0.1 PageCapture data, not an invented scan shape. */
+/** Translate actual Inspectra PageCapture data, not an invented scan shape. */
 export function normalizeInspectraCapture(raw, { scope, screenshotReference } = {}) {
     if (!raw || raw.snapshot?.sourceType !== 'url' || !raw.metadata?.nodes)
         throw new TypeError('Invalid Inspectra capture.');
@@ -89,6 +89,7 @@ export class InspectraInspectionProvider {
     async capture(request, context) {
         let lease;
         let cleanup;
+        let failureMessage = 'Inspectra capture failed.';
         // Abort and finally must await the same invocation, including synchronous
         // close failures and hosts whose repeated close calls return immediately.
         const close = () => (cleanup ??= Promise.resolve().then(() => lease.close()));
@@ -98,11 +99,17 @@ export class InspectraInspectionProvider {
         try {
             context.checkExecution?.();
             context.signal.throwIfAborted();
+            failureMessage =
+                'Inspectra is unavailable. Install optional peer inspectra-engine@1.0.4 and its dependencies, or provide a compatible load function.';
             const api = await this.#load();
+            failureMessage = 'Inspectra capture failed.';
             context.checkExecution?.();
             context.signal.throwIfAborted();
-            if (typeof api.captureUIPage !== 'function')
+            if (typeof api?.captureUIPage !== 'function') {
+                failureMessage =
+                    'Incompatible Inspectra API: expected captureUIPage. Use inspectra-engine@1.0.4 or provide a compatible load function.';
                 throw new Error('Unsupported Inspectra API.');
+            }
             // openPage must enforce allowed navigation, redirects and subresources, and clean up on rejection.
             lease = await this.#openPage(request, context);
             if (!lease?.page || typeof lease.close !== 'function')
@@ -129,7 +136,7 @@ export class InspectraInspectionProvider {
             }
         } catch {
             throw new Error(
-                context.signal.aborted ? 'Inspection cancelled.' : 'Inspectra capture failed.'
+                context.signal.aborted ? 'Inspection cancelled.' : failureMessage
             );
         } finally {
             if (lease && typeof lease.close === 'function') {

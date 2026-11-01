@@ -1,70 +1,130 @@
 {
   "name": "shivax",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "JavaScript and TypeScript multi-agent AI framework with neural networks, controlled workflows, model adapters, scoped memory, UI inspection and evaluation.",
   "main": "dist/index.cjs",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.esm.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/index.d.ts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./core": {
-      "types": "./dist/sdk/core.d.ts",
-      "import": "./dist/sdk/core.esm.js",
-      "require": "./dist/sdk/core.cjs"
+      "import": {
+        "types": "./dist/sdk/core.d.ts",
+        "default": "./dist/sdk/core.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/core.d.ts",
+        "default": "./dist/sdk/core.cjs"
+      }
     },
     "./rudra": {
-      "types": "./dist/sdk/rudra.d.ts",
-      "import": "./dist/sdk/rudra.esm.js",
-      "require": "./dist/sdk/rudra.cjs"
+      "import": {
+        "types": "./dist/sdk/rudra.d.ts",
+        "default": "./dist/sdk/rudra.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/rudra.d.ts",
+        "default": "./dist/sdk/rudra.cjs"
+      }
     },
     "./bots": {
-      "types": "./dist/sdk/bots.d.ts",
-      "import": "./dist/sdk/bots.esm.js",
-      "require": "./dist/sdk/bots.cjs"
+      "import": {
+        "types": "./dist/sdk/bots.d.ts",
+        "default": "./dist/sdk/bots.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/bots.d.ts",
+        "default": "./dist/sdk/bots.cjs"
+      }
     },
     "./security": {
-      "types": "./dist/sdk/security.d.ts",
-      "import": "./dist/sdk/security.esm.js",
-      "require": "./dist/sdk/security.cjs"
+      "import": {
+        "types": "./dist/sdk/security.d.ts",
+        "default": "./dist/sdk/security.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/security.d.ts",
+        "default": "./dist/sdk/security.cjs"
+      }
     },
     "./models": {
-      "types": "./dist/sdk/models.d.ts",
-      "import": "./dist/sdk/models.esm.js",
-      "require": "./dist/sdk/models.cjs"
+      "import": {
+        "types": "./dist/sdk/models.d.ts",
+        "default": "./dist/sdk/models.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/models.d.ts",
+        "default": "./dist/sdk/models.cjs"
+      }
     },
     "./memory": {
-      "types": "./dist/sdk/memory.d.ts",
-      "import": "./dist/sdk/memory.esm.js",
-      "require": "./dist/sdk/memory.cjs"
+      "import": {
+        "types": "./dist/sdk/memory.d.ts",
+        "default": "./dist/sdk/memory.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/memory.d.ts",
+        "default": "./dist/sdk/memory.cjs"
+      }
     },
     "./integrations": {
-      "types": "./dist/sdk/integrations.d.ts",
-      "import": "./dist/sdk/integrations.esm.js",
-      "require": "./dist/sdk/integrations.cjs"
+      "import": {
+        "types": "./dist/sdk/integrations.d.ts",
+        "default": "./dist/sdk/integrations.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/integrations.d.ts",
+        "default": "./dist/sdk/integrations.cjs"
+      }
     },
     "./learning": {
-      "types": "./dist/sdk/learning.d.ts",
-      "import": "./dist/sdk/learning.esm.js",
-      "require": "./dist/sdk/learning.cjs"
+      "import": {
+        "types": "./dist/sdk/learning.d.ts",
+        "default": "./dist/sdk/learning.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/learning.d.ts",
+        "default": "./dist/sdk/learning.cjs"
+      }
     },
     "./diagnostics": {
-      "types": "./dist/sdk/diagnostics.d.ts",
-      "import": "./dist/sdk/diagnostics.esm.js",
-      "require": "./dist/sdk/diagnostics.cjs"
+      "import": {
+        "types": "./dist/sdk/diagnostics.d.ts",
+        "default": "./dist/sdk/diagnostics.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/diagnostics.d.ts",
+        "default": "./dist/sdk/diagnostics.cjs"
+      }
     },
     "./licensing/server": {
-      "types": "./dist/licensing/index.d.ts",
-      "import": "./dist/licensing/index.esm.js",
-      "require": "./dist/licensing/index.cjs"
+      "import": {
+        "types": "./dist/licensing/index.d.ts",
+        "default": "./dist/licensing/index.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/licensing/index.d.ts",
+        "default": "./dist/licensing/index.cjs"
+      }
     },
     "./adapters/inspectra": {
-      "types": "./dist/sdk/inspectra.d.ts",
-      "import": "./dist/sdk/inspectra.esm.js",
-      "require": "./dist/sdk/inspectra.cjs"
+      "import": {
+        "types": "./dist/sdk/inspectra.d.ts",
+        "default": "./dist/sdk/inspectra.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/inspectra.d.ts",
+        "default": "./dist/sdk/inspectra.cjs"
+      }
     }
   },
   "files": [
@@ -85,7 +145,7 @@
     "example:regression": "pnpm build && node examples/regression.mjs",
     "example:text": "pnpm build && node examples/text-classifier.mjs",
     "example:digits": "pnpm build && node --watch scripts/serve-examples.mjs",
-    "build": "node scripts/clean.mjs && tsc && rollup -c rollup.config.mjs",
+    "build": "node scripts/clean.mjs && tsc && node scripts/build-cjs-declarations.mjs && rollup -c rollup.config.mjs",
     "dev": "tsc --watch",
     "test": "pnpm build && node --test tests/*.test.mjs",
     "test:watch": "node --test --watch tests/*.test.mjs",
@@ -141,6 +201,14 @@
   },
   "packageManager": "pnpm@12.8.1",
   "type": "module",
+  "peerDependencies": {
+    "inspectra-engine": "1.0.4"
+  },
+  "peerDependenciesMeta": {
+    "inspectra-engine": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@changesets/cli": "^3.0.3",
     "eslint": "^10.11.0",

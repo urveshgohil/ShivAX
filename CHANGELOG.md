@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.3] - 2026-11-01
+
+### Added
+
+- Conditional ESM and CommonJS declaration graphs for every public SDK entrypoint, including the optional Inspectra adapter.
+- Packed-consumer verification for strict bundler, Node16 and NodeNext TypeScript consumers, with ESM/CommonJS type compatibility checks.
+- Cross-platform package verification CI for Linux and Windows on Node.js 22, 24 and 26.
+
+### Changed
+
+- Target ES2022 JavaScript while preserving the previous public class-field assignment semantics. Older browser targets require application-side dependency transpilation.
+- Declare inspectra-engine 1.0.4 as an optional peer, verified separately from SHIVAX core.
+- Install verification tarballs into isolated temporary projects outside the repository and retain cleanup on failures.
+
+### Fixed
+
+- Rollup private-field helper warnings and unresolved optional Inspectra subpath imports.
+- Windows pnpm.exe execution in package verification, with safe native/JavaScript CLI dispatch, wrapper handling and actionable child-process diagnostics.
+- TS1479 errors for CommonJS SDK consumers using TypeScript Node16 resolution.
+- Missing or incompatible Inspectra modules now produce sanitized setup guidance while preserving lazy loading, cancellation and page cleanup.
+
 ## [0.1.2] - 2026-10-29
 
 ### Added
@@ -56,4 +77,5 @@ baseline date and does not assert that a package release was published or tagged
 - Evaluation report consistency and held-out classification-target validation.
 - Training weight-change reporting for zero-gradient updates.
 
+[0.1.3]: https://www.npmjs.com/package/shivax/v/0.1.3
 [0.1.2]: https://www.npmjs.com/package/shivax/v/0.1.2
