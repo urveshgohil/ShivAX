@@ -1,6 +1,6 @@
 # SHIVAX SDK
 
-Version 0.1.2. Existing `shivax` root imports remain supported. All 12 public entry
+Version 0.1.3. Existing `shivax` root imports remain supported. All 12 public entry
 points provide ESM, CommonJS and portable ES2020 declarations.
 
 | Entry point | API |
@@ -20,10 +20,23 @@ points provide ESM, CommonJS and portable ES2020 declarations.
 
 Shared build chunks preserve class identity between root and subpath imports
 within one module format. Keep the entire packaged `dist/`, including `chunks/`.
+Conditional exports select ESM declarations for imports and the CommonJS
+declaration graph under `dist/types-cjs` for require consumers. Keep that graph
+and its `package.json` scope marker when copying the package. Package verification
+checks strict bundler, Node16 and NodeNext consumers, including `.mts` and `.cts`.
 Instantiate a host's guards in one module format; ESM and CJS are separate graphs.
+Distributed JavaScript targets ES2022, retaining native private class fields and
+methods. Use a compatible modern browser engine or transpile dependency code for
+older browsers. TypeScript public declarations still pass strict ES2020-only
+consumer checks. Public class fields retain the previous assignment semantics
+through explicit `useDefineForClassFields: false` in the build configuration.
 No model, React, browser engine or licensing service is loaded on import. The core
 requires Node 22+; actual Inspectra execution requires Node 22.15+ and an optional
-host-installed `inspectra-engine`. Browser bundles exclude Node-only host services.
+host-installed `inspectra-engine@1.0.4` (the exact tested optional peer). Neither
+SHIVAX nor its adapter eagerly loads Inspectra. Both ESM and CommonJS adapters
+use dynamic import for its ESM-only `/node` API. Missing-provider and unsupported-API
+errors give fixed setup guidance without exposing provider exception details.
+Browser bundles exclude Node-only host services.
 
 ```js
 import { BotRegistry } from 'shivax/rudra';
