@@ -38,6 +38,10 @@ const messages: Record<SLMErrorCode, string> = {
 export class SLMError extends Error {
     constructor(public readonly code: SLMErrorCode) { super(messages[code]); this.name = 'SLMError'; }
 }
+/** Internal distinction for an unusable usage envelope; preserves the low-level error code. */
+export class SLMUsageError extends SLMError {
+    constructor() { super('provider-error'); }
+}
 export type SLMResult<T> = { source: 'slm'; value: T } | { source: 'fallback'; error: { code: SLMErrorCode; message: string } };
 export interface SLMClientOptions {
     scope: SLMScope;

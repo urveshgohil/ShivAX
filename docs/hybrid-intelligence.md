@@ -96,8 +96,8 @@ host control, rather than creating a new router for each untrusted retry.
 | Limit | Default | Meaning |
 | --- | --- | --- |
 | `maxCalls` | 100 | Attempt admissions over the router lifetime, including failed/preflight-rejected attempts |
-| `maxTokens` | 65,536 | Sum of reserved input/output token ceilings over all attempts |
-| `maxCostUSD` | 0 | Maximum sum of reserved host-priced attempt costs; paid inference requires explicit configuration |
+| `maxTokens` | 65,536 | Retained input/output token ceilings plus verified per-direction excess over all attempts |
+| `maxCostUSD` | 0 | Admission budget for retained ceilings plus reported excess; paid inference requires explicit configuration |
 | `timeoutMs` | 30,000 | Total elapsed budget for one inference and all fallback attempts |
 | `maxInputTokens` | 4,096 | Reserved per token-based attempt; adapter must enforce backend input limits |
 | `maxOutputTokens` | 1,024 | Reserved per token-based attempt; adapter must pass generation limits to its backend |
@@ -109,11 +109,88 @@ cost, but still consume call budgets and obey byte/deadline limits. Rates must
 include fees/overheads and represent a conservative maximum. No live pricing
 lookup or billing account is configured.
 
-`budgetUsage` reports calls and reserved totals. Reservations are never refunded,
-even on failure, timeout or an unreported usage value. `ModelUsage` reports actual
-counts/cost where available; `null` explicitly means unreported. It is never
-converted into a fabricated zero. A reported overrun fails with `usage-limit`,
-blocks subsequent use of that router and prevents fallback.
+USD configuration and result fields remain numbers. Internally, ModelRouter
+converts each validated number's shortest decimal representation into BigInt
+units of 10^-324 USD. This covers every supported finite price, even 5e-324,
+without making tiny positive prices free. Integer multiplication/addition and
+comparison govern admissions; no epsilon or floating-point accumulated cost is
+used. A value already computed as 0.30000000000000004 by the caller retains that
+value; the router does not guess that the caller intended 0.30.
+
+An attempt's exact price sum is converted to the smallest representable Number
+cap that covers it, rounding upward only if needed. That entire public cap is
+reserved and checked before dispatch. Thus numeric adapter limits are fully
+funded. Extremely fine mixed rates can conservatively reserve a small surplus.
+Public totals are numeric displays; all decisions use the integer ledger.
+
+`budgetUsage.reservedCostUSD` reports retained ceilings plus valid reported
+excess. Reservations are never refunded, including when a successful response
+reports a lower or zero charge: the API has no final-invoice indicator. Unknown,
+failed, timed-out and cancelled work retains its full reservation. `ModelUsage`
+preserves the provider's reported usage; `null` means unreported, not zero.
+Each attempt is reconciled conservatively as max(reservation, valid reported
+cost). Reported excess is debited, fails with `usage-limit` and disables the
+router without fallback, even if model data is malformed. The total can exceed
+the configured budget after an already incurred provider overrun; it is not
+clamped or hidden. Late reports after cancellation/timeout can increase this
+ledger and latch the overrun but cannot change the returned cancelled/timeout
+result. Malformed or out-of-range billing reports retain the reservation and
+cannot be treated as authoritative charges.
+
+One active inference per router remains the contract: simultaneous or reentrant
+requests return `busy` without consuming budget. The owning call reserves before
+provider dispatch; retries initiated by callers and each fallback reserve again.
+Separate router instances do not share an account-level budget.
+
+R02 validates usage independently before inspecting model data. Input and output
+token overruns stop fallback even when the data has the wrong schema, is cyclic,
+is oversized or contains accessors. The lifetime token ledger retains each
+attempt's input/output ceilings and adds valid reported excess per direction.
+Failed attempts retain sanitized usage snapshots where available; revalidation
+does not debit the same excess twice. See `docs/audits/shivax-r02.md`.
+
+A token-based provider must supply both token counts as nonnegative safe integers
+no greater than 100,000,000. Missing, null, invalid, inherited or accessor usage
+metadata fails closed with `usage-unverifiable`: no fallback and no router reuse.
+Each valid field is still checked independently, so a known overrun takes
+precedence over another invalid field. Only host-declared token-free providers
+may return null token counts; any positive count still exceeds their zero ceiling.
+The full usage envelope must contain inputTokens, outputTokens and costUSD.
+Explicit null cost remains permitted because a conservative monetary ceiling is
+already reserved; an absent or invalid cost field is unverifiable.
+
+Schema/semantic output failures can fall back only after usage was verified.
+Provider-declared invalid output without usage cannot establish that condition.
+Ordinary execution/transport failures mapped to `provider-error` and explicit
+`unavailable` remain retryable with host opt-in and full retained reservations:
+these trusted adapter error categories are not evidence of free or unbilled work.
+Adapters must report known hard limits or unverifiable returned usage explicitly.
+Provider timeouts and hard limit errors are terminal for the inference. Router
+usage overruns and unverifiable usage latch a persistent block. A late returned
+report or terminal usage failure can latch that block after cancellation, without
+changing the result already returned to the caller.
+
+### Typed, sanitized failures
+
+Existing code values remain compatible. New `ModelError` constructor aliases
+normalize to those codes; `error.reason` is the additive `ModelFailureReason`
+classification. Both result and attempt error details carry fixed messages and
+these bounded classifications, never provider exception text, prompts or secrets.
+
+| Classification / accepted constructor alias | Emitted code |
+| --- | --- |
+| `token-limit-exceeded` | `token-limit` for admission, `usage-limit` for a reported overrun |
+| `cost-limit-exceeded` | `cost-limit` for admission, `usage-limit` for a reported overrun |
+| `invalid-provider-output` | `invalid-output` after verifiable usage |
+| `usage-unverifiable` | `usage-unverifiable` |
+| `provider-timeout` | `timeout` |
+
+When both token and cost excess are reported, both ledgers are updated and the
+token classification takes precedence. The model-operation bridge preserves the
+classification; specialist bots retain their existing sanitized error mapping.
+Ollama preserves known usage when generated JSON cannot be parsed, and distinguishes
+invalid token metadata from retryable transport failures. Its low-level SLM error
+codes and public method signatures remain unchanged.
 
 These are admission limits, not a remote billing guarantee. A remote backend can
 already have incurred a charge before returning an over-limit report. Host

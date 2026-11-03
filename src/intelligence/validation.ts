@@ -1,7 +1,7 @@
 import { snapshotValue, record, identifier, checkPredicate } from '../agents/validation.js';
 import { matches, type SpecialistSchema } from '../bots/schema.js';
 import type { BotValue } from '../agents/types.js';
-import type { ModelCapability, ModelLimits, ModelResponse } from './types.js';
+import type { ModelCapability, ModelLimits, ModelResponse, ModelUsage } from './types.js';
 import { ModelError } from './errors.js';
 
 export const MODEL_CAPABILITIES: readonly ModelCapability[] = Object.freeze([
@@ -162,33 +162,79 @@ export function schema(input: unknown): SpecialistSchema {
     }
     return safe as SpecialistSchema;
 }
+/** Read only own data properties. Bad model data cannot hide valid usage fields. */
+export function usageReport(raw: unknown): { usage: Readonly<ModelUsage>; valid: boolean } {
+    const usage: {
+        inputTokens: number | null;
+        outputTokens: number | null;
+        costUSD: number | null;
+    } = {
+        inputTokens: null,
+        outputTokens: null,
+        costUSD: null,
+    };
+    let valid = true;
+    try {
+        if (
+            !raw ||
+            typeof raw !== 'object' ||
+            ![Object.prototype, null].includes(Object.getPrototypeOf(raw))
+        )
+            throw new Error();
+        const field = Object.getOwnPropertyDescriptor(raw, 'usage');
+        if (!field || !field.enumerable || !('value' in field)) throw new Error();
+        const value = field.value;
+        if (
+            !value ||
+            typeof value !== 'object' ||
+            ![Object.prototype, null].includes(Object.getPrototypeOf(value))
+        )
+            throw new Error();
+        const fields = Object.getOwnPropertyDescriptors(value);
+        if (
+            Reflect.ownKeys(fields).some(
+                (key) =>
+                    typeof key !== 'string' ||
+                    !['inputTokens', 'outputTokens', 'costUSD'].includes(key)
+            )
+        )
+            valid = false;
+        for (const key of ['inputTokens', 'outputTokens', 'costUSD'] as const) {
+            const descriptor = fields[key];
+            if (!descriptor || !descriptor.enumerable || !('value' in descriptor)) {
+                valid = false;
+                continue;
+            }
+            if (descriptor.value === null) continue;
+            try {
+                if (key === 'costUSD') money(descriptor.value);
+                else integer(descriptor.value, 100_000_000, 0);
+                usage[key] = descriptor.value as number;
+            } catch {
+                valid = false;
+            }
+        }
+    } catch {
+        valid = false;
+    }
+    return Object.freeze({ usage: Object.freeze(usage), valid });
+}
+
 export function response(
     raw: unknown,
     output: SpecialistSchema,
     validate: ((data: BotValue) => boolean) | undefined,
-    maxBytes: number
+    maxBytes: number,
+    usage?: Readonly<ModelUsage>
 ): ModelResponse {
     try {
+        const report = usage ? { usage, valid: true } : usageReport(raw);
+        if (!report.valid) throw new ModelError('invalid-output');
         const value = record(raw, ['data', 'usage'], 'invalid-output');
         const data = json(value.data, maxBytes, 'invalid-output');
-        const usage = record(
-            value.usage,
-            ['inputTokens', 'outputTokens', 'costUSD'],
-            'invalid-output'
-        );
-        for (const field of ['inputTokens', 'outputTokens'])
-            if (usage[field] !== null) integer(usage[field], 100_000_000, 0);
-        if (usage.costUSD !== null) money(usage.costUSD);
         if (!matches(output, data) || (validate && !checkPredicate(() => validate(data))))
             throw new ModelError('invalid-output');
-        return Object.freeze({
-            data,
-            usage: Object.freeze({
-                inputTokens: usage.inputTokens as number | null,
-                outputTokens: usage.outputTokens as number | null,
-                costUSD: usage.costUSD as number | null,
-            }),
-        });
+        return Object.freeze({ data, usage: report.usage });
     } catch {
         throw new ModelError('invalid-output');
     }

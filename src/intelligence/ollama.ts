@@ -1,7 +1,7 @@
 import { OllamaProvider, type OllamaProviderOptions } from '../slm/ollama.js';
-import { SLMError, byteLength } from '../slm/provider.js';
+import { SLMError, SLMUsageError, byteLength } from '../slm/provider.js';
 import type { ModelCapability, ModelProvider, ModelRequest, ModelResponse } from './types.js';
-import { ModelError } from './errors.js';
+import { ModelError, ProviderOutputError } from './errors.js';
 import { name } from './validation.js';
 
 export interface OllamaModelAdapterOptions extends OllamaProviderOptions {
@@ -59,26 +59,30 @@ export class OllamaModelAdapter implements ModelProvider {
                 },
                 request.checkExecution
             );
+            const usage = {
+                inputTokens: result.inputTokens,
+                outputTokens: result.outputTokens,
+                costUSD: 0,
+            };
             let data;
             try {
                 data = JSON.parse(result.text);
             } catch {
-                throw new ModelError('invalid-output');
+                throw new ProviderOutputError(usage);
             }
             return {
                 data,
-                usage: {
-                    inputTokens: result.inputTokens,
-                    outputTokens: result.outputTokens,
-                    costUSD: 0,
-                },
+                usage,
             };
         } catch (error) {
             if (error instanceof ModelError) throw error;
+            if (error instanceof SLMUsageError) throw new ModelError('usage-unverifiable');
             if (error instanceof SLMError) {
                 if (error.code === 'missing-model') throw new ModelError('unavailable');
                 if (error.code === 'invalid-json' || error.code === 'invalid-output')
-                    throw new ModelError('invalid-output');
+                    throw new ModelError('usage-unverifiable');
+                if (error.code === 'timeout') throw new ModelError('provider-timeout');
+                if (error.code === 'cancelled') throw new ModelError('cancelled');
                 if (error.code === 'context-limit' || error.code === 'output-limit')
                     throw new ModelError('token-limit');
                 if (error.code === 'external-disabled') throw new ModelError('remote-disabled');

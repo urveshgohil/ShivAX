@@ -34,6 +34,11 @@ console.log('Packed ESM/CJS SDK imports passed.');`);
     process.stdout.write(command(process.execPath, ['verify.mjs'], consumer));
     const compiler = join(require.resolve('typescript/package.json'), '..', 'bin', 'tsc');
     const source = entries.map((entry, i) => `import * as entry${i} from '${entry}'; void entry${i};`).join('\n') + `
+import { ModelError, type ModelFailureReason, type ModelErrorDetails } from 'shivax/models';
+const reasons: readonly ModelFailureReason[] = ['token-limit-exceeded', 'cost-limit-exceeded', 'invalid-provider-output', 'usage-unverifiable', 'provider-timeout'];
+for (const reason of reasons) { const error = new ModelError(reason); const details: ModelErrorDetails = error; void details.reason; }
+// @ts-expect-error Only documented failure classifications are accepted.
+new ModelError('unrecognized-provider-error');
 import { Tensor } from 'shivax/core';
 import { Jay } from 'shivax/security';
 import type { Tensor as RootTensor, Jay as RootJay, InspectionProvider } from 'shivax';
