@@ -3,8 +3,9 @@ import { record } from '../agents/validation.js';
 import type { SpecialistProviderContext } from '../bots/types.js';
 import type { SLMScope } from '../slm/provider.js';
 import { ModelProviderRegistry } from './registry.js';
-import { ModelError, modelDetails, modelError } from './errors.js';
-import { capability, json, limits, name, response, schema } from './validation.js';
+import { ModelError, ProviderOutputError, modelDetails, modelError } from './errors.js';
+import { capability, json, limits, name, usageReport, response, schema } from './validation.js';
+import { costUnits, costUSD, reservationUSD } from './cost.js';
 import type {
     ModelAttempt,
     ModelBudgetUsage,
@@ -13,6 +14,7 @@ import type {
     ModelProvider,
     ModelResult,
     ModelRoutingOptions,
+    ModelUsage,
 } from './types.js';
 
 /** One scope and one active operation per instance. Cancellation retains ownership until work settles. */
@@ -23,10 +25,11 @@ export class ModelRouter {
     readonly #enabled: boolean;
     #owner?: AbortController;
     #disposed = false;
-    #overrun = false;
+    #blocked?: ModelError;
     #calls = 0;
     #tokens = 0;
-    #cost = 0;
+    readonly #costLimit: bigint;
+    #costUnits = 0n;
     constructor(
         registry: ModelProviderRegistry,
         options: { scope: SLMScope; limits?: Partial<ModelLimits>; enabled?: boolean }
@@ -38,6 +41,7 @@ export class ModelRouter {
         name(scope.id);
         this.#scope = scope;
         this.#limits = limits(options.limits);
+        this.#costLimit = costUnits(this.#limits.maxCostUSD);
         if (options.enabled !== undefined && typeof options.enabled !== 'boolean')
             throw new ModelError('invalid-input');
         this.#enabled = options.enabled ?? true;
@@ -46,7 +50,7 @@ export class ModelRouter {
         return Object.freeze({
             calls: this.#calls,
             reservedTokens: this.#tokens,
-            reservedCostUSD: this.#cost,
+            reservedCostUSD: costUSD(this.#costUnits),
         });
     }
     dispose(): void {
@@ -57,7 +61,10 @@ export class ModelRouter {
     async infer(input: ModelInference, options: ModelRoutingOptions = {}): Promise<ModelResult> {
         const attempts: ModelAttempt[] = [];
         let pendingAttempt:
-            Pick<ModelAttempt, 'providerId' | 'reservedTokens' | 'reservedCostUSD'> | undefined;
+            | (Pick<ModelAttempt, 'providerId' | 'reservedTokens' | 'reservedCostUSD'> & {
+                  usage?: Readonly<ModelUsage>;
+              })
+            | undefined;
         const failure = (error: unknown): ModelResult => {
             const safe = modelError(error);
             return Object.freeze({
@@ -80,7 +87,7 @@ export class ModelRouter {
         if (this.#disposed) return failure(new ModelError('disposed'));
         if (!this.#enabled) return failure(new ModelError('disabled'));
         if (this.#owner) return failure(new ModelError('busy'));
-        if (this.#overrun) return failure(new ModelError('usage-limit'));
+        if (this.#blocked) return failure(this.#blocked);
         const controller = new AbortController();
         this.#owner = controller;
         const now =
@@ -201,47 +208,108 @@ export class ModelRouter {
                     const inputTokens = provider.tokenBased ? this.#limits.maxInputTokens : 0;
                     const outputTokens = provider.tokenBased ? this.#limits.maxOutputTokens : 0;
                     const reservedTokens = inputTokens + outputTokens;
-                    const reservedCostUSD =
-                        provider.pricing.callUSD +
-                        provider.pricing.inputTokenUSD * inputTokens +
-                        provider.pricing.outputTokenUSD * outputTokens;
+                    const pricedUnits =
+                        costUnits(provider.pricing.callUSD) +
+                        costUnits(provider.pricing.inputTokenUSD) * BigInt(inputTokens) +
+                        costUnits(provider.pricing.outputTokenUSD) * BigInt(outputTokens);
                     if (this.#calls >= this.#limits.maxCalls) throw new ModelError('call-limit');
                     if (this.#tokens + reservedTokens > this.#limits.maxTokens)
                         throw new ModelError('token-limit');
-                    if (
-                        !Number.isFinite(reservedCostUSD) ||
-                        this.#cost + reservedCostUSD > this.#limits.maxCostUSD
-                    )
+                    if (this.#costUnits + pricedUnits > this.#costLimit)
+                        throw new ModelError('cost-limit');
+                    // The Number cap given to a provider must itself be fully funded.
+                    const reservedCostUSD = reservationUSD(pricedUnits);
+                    const reservedUnits = costUnits(reservedCostUSD);
+                    if (this.#costUnits + reservedUnits > this.#costLimit)
                         throw new ModelError('cost-limit');
                     // Reserve before calling host code. Never refund uncertain, cancelled or failed work.
                     this.#calls++;
                     this.#tokens += reservedTokens;
-                    this.#cost += reservedCostUSD;
+                    this.#costUnits += reservedUnits;
                     pendingAttempt = { providerId: provider.id, reservedTokens, reservedCostUSD };
-                    try {
-                        const raw = await provider.infer(
-                            Object.freeze({
-                                capability: selectedCapability,
-                                input: data,
-                                schema: output,
-                                context,
-                                maxInputTokens: inputTokens,
-                                maxOutputTokens: outputTokens,
-                                maxCostUSD: reservedCostUSD,
-                                checkExecution: check,
-                            })
-                        );
-                        check();
-                        const result = response(raw, output, validate, this.#limits.maxOutputBytes);
-                        check();
-                        if (
-                            (result.usage.inputTokens ?? 0) > inputTokens ||
-                            (result.usage.outputTokens ?? 0) > outputTokens ||
-                            (result.usage.costUSD ?? 0) > reservedCostUSD
-                        ) {
-                            this.#overrun = true;
-                            throw new ModelError('usage-limit');
+                    let attemptUsage: Readonly<ModelUsage> | undefined;
+                    let verified = false;
+                    let accountedInput = inputTokens,
+                        accountedOutput = outputTokens,
+                        accountedCost = reservedUnits;
+                    const reconcile = (raw: unknown) => {
+                        const report = usageReport(raw),
+                            usage = report.usage;
+                        attemptUsage = usage;
+                        pendingAttempt = {
+                            providerId: provider.id,
+                            reservedTokens,
+                            reservedCostUSD,
+                            usage,
+                        };
+                        // Keep per-direction maxima: neither retries nor revalidation refund work.
+                        const input = Math.max(accountedInput, usage.inputTokens ?? 0);
+                        const output = Math.max(accountedOutput, usage.outputTokens ?? 0);
+                        this.#tokens += input - accountedInput + output - accountedOutput;
+                        accountedInput = input;
+                        accountedOutput = output;
+                        if (usage.costUSD !== null) {
+                            const charged = costUnits(usage.costUSD);
+                            if (charged > accountedCost) {
+                                this.#costUnits += charged - accountedCost;
+                                accountedCost = charged;
+                            }
                         }
+                        const failure =
+                            input > inputTokens || output > outputTokens
+                                ? new ModelError('usage-limit', 'token-limit-exceeded')
+                                : accountedCost > reservedUnits
+                                  ? new ModelError('usage-limit', 'cost-limit-exceeded')
+                                  : !report.valid ||
+                                      (provider.tokenBased &&
+                                          (usage.inputTokens === null ||
+                                              usage.outputTokens === null))
+                                    ? new ModelError('usage-unverifiable')
+                                    : undefined;
+                        if (failure) {
+                            this.#blocked = failure;
+                            throw failure;
+                        }
+                        verified = true;
+                        return usage;
+                    };
+                    try {
+                        let raw: unknown;
+                        try {
+                            raw = await provider.infer(
+                                Object.freeze({
+                                    capability: selectedCapability,
+                                    input: data,
+                                    schema: output,
+                                    context,
+                                    maxInputTokens: inputTokens,
+                                    maxOutputTokens: outputTokens,
+                                    maxCostUSD: reservedCostUSD,
+                                    checkExecution: check,
+                                })
+                            );
+                        } catch (error) {
+                            if (error instanceof ProviderOutputError)
+                                raw = { data: undefined, usage: error.usage };
+                            else throw error;
+                        }
+                        // Account valid reported excess even for malformed data or late work.
+                        // Smaller/unknown reports are not proof of final billing: retain the ceiling.
+                        const usage = reconcile(raw);
+                        check();
+                        let result: ReturnType<typeof response>;
+                        try {
+                            result = response(
+                                raw,
+                                output,
+                                validate,
+                                this.#limits.maxOutputBytes,
+                                usage
+                            );
+                        } finally {
+                            reconcile(raw);
+                        }
+                        check();
                         attempts.push(
                             Object.freeze({
                                 providerId: provider.id,
@@ -260,8 +328,16 @@ export class ModelRouter {
                             attempts: Object.freeze(attempts.slice()),
                         });
                     } catch (error) {
-                        check();
                         last = modelError(error);
+                        // A provider-declared output failure without usage is not safely retryable.
+                        if (last.code === 'invalid-output' && !verified) {
+                            last = new ModelError('usage-unverifiable');
+                            this.#blocked = last;
+                        }
+                        if (last.code === 'usage-unverifiable' || last.code === 'usage-limit')
+                            this.#blocked = last;
+                        // Late terminal usage failures still block reuse; cancellation wins publicly.
+                        check();
                         attempts.push(
                             Object.freeze({
                                 providerId: provider.id,
@@ -269,6 +345,7 @@ export class ModelRouter {
                                 reservedTokens,
                                 reservedCostUSD,
                                 error: modelDetails(last),
+                                ...(attemptUsage ? { usage: attemptUsage } : {}),
                             })
                         );
                         pendingAttempt = undefined;

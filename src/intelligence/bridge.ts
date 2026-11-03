@@ -23,7 +23,8 @@ export function createModelOperation(
             { capability: modelCapability, input: input as BotValue, output, context },
             routing
         );
-        if (result.status !== 'completed') throw new ModelError(result.error.code);
+        if (result.status !== 'completed')
+            throw new ModelError(result.error.code, result.error.reason);
         return result.data;
     };
 }

@@ -20,6 +20,7 @@ export type {
     ModelLimits,
     ModelRoutingOptions,
     ModelErrorCode,
+    ModelFailureReason,
     ModelErrorDetails,
     ModelAttempt,
     ModelBudgetUsage,

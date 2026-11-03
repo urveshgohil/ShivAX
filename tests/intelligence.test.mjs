@@ -516,7 +516,7 @@ test('lifetime call, token and cost reservations include failed attempts and are
     fail(await cost.infer(request()), 'cost-limit');
 });
 
-test('unreported usage stays null and usage overruns disable further inference without fallback', async () => {
+test('unverifiable token usage and usage overruns disable further inference without fallback', async () => {
     const unknown = provider('unknown', {
         infer: () => ({
             data: { answer: 42 },
@@ -525,7 +525,10 @@ test('unreported usage stays null and usage overruns disable further inference w
     });
     const r = router([unknown]);
     const result = await r.infer(request());
-    assert.equal(result.usage.inputTokens, null);
+    fail(result, 'usage-unverifiable');
+    assert.equal(result.error.reason, 'usage-unverifiable');
+    assert.equal(result.attempts[0].usage.inputTokens, null);
+    fail(await r.infer(request()), 'usage-unverifiable');
     assert.equal(r.budgetUsage.reservedTokens, 5120);
     let fallback = 0;
     const over = router([
@@ -547,7 +550,7 @@ test('unreported usage stays null and usage overruns disable further inference w
             await router([
                 provider('bad', { infer: () => ({ data: { answer: 42 }, usage }) }),
             ]).infer(request()),
-            'invalid-output'
+            'usage-unverifiable'
         );
 });
 

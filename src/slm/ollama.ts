@@ -1,4 +1,4 @@
-import { SLMError, byteLength, checkBudget, validateLimits } from './provider.js';
+import { SLMError, SLMUsageError, byteLength, checkBudget, validateLimits } from './provider.js';
 import type { SLMLimits, SLMProvider, SLMRequest, SLMSignal } from './provider.js';
 
 /** Minimal response contract; native fetch responses satisfy this interface. */
@@ -77,7 +77,8 @@ export class OllamaProvider implements SLMProvider {
         } finally { await reader.cancel(); reader.releaseLock(); }
         let value: unknown;
         try { value = JSON.parse(raw); } catch { throw new SLMError('invalid-json'); }
-        if (!record(value) || value.error) throw new SLMError('provider-error');
+        if (!record(value)) throw new SLMUsageError();
+        if (value.error) throw new SLMError('provider-error');
         return value;
     }
     async initialize(signal: SLMSignal): Promise<void> {
@@ -105,7 +106,7 @@ export class OllamaProvider implements SLMProvider {
         if (value.remote_model || value.remote_host) throw new SLMError('external-disabled');
         if (value.done !== true || value.done_reason !== 'stop') throw new SLMError('output-limit');
         if (!Number.isSafeInteger(value.prompt_eval_count) || !Number.isSafeInteger(value.eval_count) ||
-            (value.prompt_eval_count as number) < 0 || (value.eval_count as number) < 0) throw new SLMError('provider-error');
+            (value.prompt_eval_count as number) < 0 || (value.eval_count as number) < 0) throw new SLMUsageError();
         if ((value.prompt_eval_count as number) + (value.eval_count as number) > this.limits.contextTokens) throw new SLMError('context-limit');
         if ((value.eval_count as number) > request.maxOutputTokens) throw new SLMError('output-limit');
         if (!record(value.message) || typeof value.message.content !== 'string') throw new SLMError('invalid-output');

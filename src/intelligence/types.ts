@@ -32,7 +32,7 @@ export interface ModelRequest {
     /** Check the absolute deadline immediately before an adapter starts another operation. */
     checkExecution(): void;
 }
-/** Null means unreported, never zero. The router retains the full reservation either way. */
+/** Null means unreported. Token-based providers must report both token counts; unknown cost retains its ceiling. */
 export interface ModelUsage {
     readonly inputTokens: number | null;
     readonly outputTokens: number | null;
@@ -74,7 +74,15 @@ export interface ModelRoutingOptions {
     readonly allowFallback?: boolean;
     readonly allowRemote?: boolean;
 }
+/** Additive classifications; legacy error.code values remain supported. */
+export type ModelFailureReason =
+    | 'token-limit-exceeded'
+    | 'cost-limit-exceeded'
+    | 'invalid-provider-output'
+    | 'usage-unverifiable'
+    | 'provider-timeout';
 export type ModelErrorCode =
+    | ModelFailureReason
     | 'invalid-provider'
     | 'duplicate-provider'
     | 'invalid-input'
@@ -96,6 +104,7 @@ export type ModelErrorCode =
 export interface ModelErrorDetails {
     readonly code: ModelErrorCode;
     readonly message: string;
+    readonly reason?: ModelFailureReason;
 }
 export interface ModelAttempt {
     readonly providerId: string;
@@ -107,7 +116,9 @@ export interface ModelAttempt {
 }
 export interface ModelBudgetUsage {
     readonly calls: number;
+    /** Retained token ceilings plus verified per-direction excess across all attempts. */
     readonly reservedTokens: number;
+    /** Retained admission ceilings plus valid reported excess; a numeric display, not an exact ledger export. */
     readonly reservedCostUSD: number;
 }
 export type ModelResult =

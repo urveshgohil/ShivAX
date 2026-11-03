@@ -1,5 +1,10 @@
-import type { ModelErrorCode, ModelErrorDetails } from './types.js';
+import type { ModelErrorCode, ModelErrorDetails, ModelFailureReason, ModelUsage } from './types.js';
 const messages: Record<ModelErrorCode, string> = {
+    'token-limit-exceeded': 'Inference token budget exceeded.',
+    'cost-limit-exceeded': 'Inference cost budget exceeded.',
+    'invalid-provider-output': 'Model response failed validation.',
+    'usage-unverifiable': 'Provider usage could not be verified.',
+    'provider-timeout': 'Model inference deadline exceeded.',
     'invalid-provider': 'Invalid model provider configuration.',
     'duplicate-provider': 'Model provider ID is already registered.',
     'invalid-input': 'Invalid model inference input or limits.',
@@ -19,14 +24,41 @@ const messages: Record<ModelErrorCode, string> = {
     disabled: 'Model inference is disabled.',
     'scope-mismatch': 'Model inference scope does not match the router scope.',
 };
+const aliases: Partial<Record<ModelErrorCode, ModelErrorCode>> = {
+    'token-limit-exceeded': 'token-limit',
+    'cost-limit-exceeded': 'cost-limit',
+    'invalid-provider-output': 'invalid-output',
+    'provider-timeout': 'timeout',
+};
+const reasons: Partial<Record<ModelErrorCode, ModelFailureReason>> = {
+    'token-limit': 'token-limit-exceeded',
+    'cost-limit': 'cost-limit-exceeded',
+    'invalid-output': 'invalid-provider-output',
+    'usage-unverifiable': 'usage-unverifiable',
+    timeout: 'provider-timeout',
+};
 export class ModelError extends Error {
-    constructor(readonly code: ModelErrorCode) {
-        super(
-            Object.prototype.hasOwnProperty.call(messages, code)
-                ? messages[code]
-                : messages['provider-error']
-        );
+    readonly code: ModelErrorCode;
+    readonly reason?: ModelFailureReason;
+    constructor(code: ModelErrorCode, reason?: ModelFailureReason) {
+        const safe = Object.prototype.hasOwnProperty.call(messages, code) ? code : 'provider-error';
+        const canonical = Object.prototype.hasOwnProperty.call(aliases, safe)
+            ? aliases[safe]!
+            : safe;
+        super(messages[canonical]);
         this.name = 'ModelError';
+        this.code = canonical;
+        this.reason =
+            canonical === 'usage-limit' &&
+            (reason === 'token-limit-exceeded' || reason === 'cost-limit-exceeded')
+                ? reason
+                : reasons[canonical];
+    }
+}
+/** Internal adapter handoff: retain usage when generated JSON itself is malformed. */
+export class ProviderOutputError extends ModelError {
+    constructor(readonly usage: ModelUsage) {
+        super('invalid-output');
     }
 }
 export function modelError(
@@ -35,16 +67,23 @@ export function modelError(
 ): ModelError {
     const descriptor =
         error instanceof ModelError ? Object.getOwnPropertyDescriptor(error, 'code') : undefined;
+    const reason =
+        error instanceof ModelError ? Object.getOwnPropertyDescriptor(error, 'reason') : undefined;
     return new ModelError(
         descriptor &&
             'value' in descriptor &&
             typeof descriptor.value === 'string' &&
             Object.prototype.hasOwnProperty.call(messages, descriptor.value)
             ? (descriptor.value as ModelErrorCode)
-            : fallback
+            : fallback,
+        reason && 'value' in reason ? reason.value : undefined
     );
 }
 export function modelDetails(error: ModelError): ModelErrorDetails {
     const safe = modelError(error);
-    return Object.freeze({ code: safe.code, message: safe.message });
+    return Object.freeze({
+        code: safe.code,
+        message: safe.message,
+        ...(safe.reason ? { reason: safe.reason } : {}),
+    });
 }
