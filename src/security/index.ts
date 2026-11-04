@@ -21,3 +21,26 @@ export type {
     SecurityErrorCode,
     SecurityDecision,
 } from './types.js';
+export { createShivaxFirewall } from './firewall/runtime.js';
+export { FirewallError } from './firewall/errors.js';
+export type {
+    FirewallMode,
+    FirewallOperationKind,
+    FirewallErrorCode,
+    FirewallRealm,
+    FirewallRule,
+    FirewallLimits,
+    FirewallPolicy,
+    FirewallPolicySnapshot,
+    FirewallExecutionContext,
+    FirewallHostOperation,
+    FirewallToolOperation,
+    FirewallModelOperation,
+    FirewallOperation,
+    FirewallAuditEvent,
+    FirewallStatus,
+    ShivaxFirewallRuntime,
+    ShivaxFirewallAdmin,
+    ShivaxFirewallOptions,
+    ShivaxFirewall,
+} from './firewall/types.js';

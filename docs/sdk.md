@@ -121,3 +121,133 @@ PLAYWRIGHT_BROWSERS_PATH to the installed browser cache, and run
 metadata, review and page cleanup using local fixtures.
 
 See `docs/release-readiness.md` for acceptance evidence and release blockers.
+
+## Managed firewall core
+
+`createShivaxFirewall` is exported from `shivax/security` and the root entrypoint.
+It adds a managed boundary around trusted host registrations while retaining Jay
+authentication and Vijay authorization/approvals. There is no global mode setter.
+Keep the returned `admin` object at the trusted composition root; bots receive
+only narrow host tool clients, never administrator or root-context references.
+
+Configuration is required, validated and snapshotted. Initial mode must be
+`enforce`; omitted, malformed or initially permissive configuration throws.
+Every operation needs an explicit non-optional allow rule, its baseline Vijay
+policy, and permission for every declared capability, provider/locality, bot,
+file and network resource. An empty allowlist denies that resource.
+
+- `enforce`: enforce all rules.
+- `monitor`: observe only rules marked `optional: true` (additional deny rules).
+  Default deny, non-optional denies, resource allowlists, authentication, tenant
+  binding, approval, sandbox checks and hard budgets remain enforced.
+- `lockdown`: reject model, workflow, bot, tool, file and network operations.
+  Explicitly allowed `cpu` registrations remain usable with mandatory checks.
+  CPU registrations must be read-only and declare no file or network resources.
+  Existing CPU Tensor/NeuralNet APIs are unchanged.
+
+The host must configure the root capability policy plus each operation capability.
+The separate administrator capability must have a state-changing Vijay policy,
+so administrative changes require its permissions and human approval. The
+`authorizeAdmin` callback is an additional host role check, called before approval
+and again before commit; it should be idempotent and must not derive roles from
+task/model data. Jay and Vijay must come from the same ESM or CommonJS graph.
+
+Illustrative CPU registration, using an already configured Jay/Vijay pair:
+
+```ts
+import { createShivaxFirewall } from 'shivax/security';
+
+// jay, security and isAdministrator are trusted host services.
+// Vijay policies for the task, numeric.square and firewall.admin already exist.
+const firewall = createShivaxFirewall({
+  jay, security,
+  realm: { issuer: 'host', scope: { kind: 'company', id: 'tenant' } },
+  adminCapability: 'firewall.admin',
+  authorizeAdmin: (root, signal) => isAdministrator(root, signal),
+  operations: [{
+    id: 'square', kind: 'cpu', capability: 'numeric.square', effect: 'read-only',
+    files: { read: [], write: [] }, networkOrigins: [],
+    check: input => typeof input === 'number' && Number.isFinite(input),
+    execute: input => (input as number) ** 2,
+  }],
+  policy: {
+    mode: 'enforce',
+    rules: [{ id: 'square.allow', decision: 'allow', operationIds: ['square'] }],
+    capabilities: ['numeric.square'], bots: [],
+    providers: { ids: [], localities: [] },
+    files: { read: [], write: [] }, network: { origins: [] },
+    limits: {
+      maxConcurrent: 2, maxOperations: 100, maxTokens: 0, maxCostUSD: 0,
+      timeoutMs: 1000, maxInputBytes: 4096, maxOutputBytes: 4096,
+    },
+    audit: { required: false },
+  },
+});
+
+await firewall.runtime.execute(authenticatedRoot, 'square', 3);
+await firewall.admin.lockdown(adminRoot, firewall.runtime.snapshot().version);
+```
+
+`runtime.execute` invokes only a registered handler; a task cannot supply code,
+permission metadata, provider credentials or a replacement callback. Registration
+`check` is a mandatory synchronous host predicate for credentials, sandbox and
+input/resource constraints. It must return literal true in every mode. It must not
+call its own `context.checkExecution()` recursively. Host handlers call that
+checkpoint after awaits and immediately before each additional effect. It
+rechecks the lease, policy, identity, baseline authorization and mandatory predicate.
+
+`tool` registrations use the existing protected tool registry through Vijay.
+`model` registrations supply one trusted provider, output contract and a complete
+`ModelLimits` object. They use a persistent ModelRouter per registration, preserving
+R01 exact accounting and R02 usage validation. Each model attempt is reserved
+against the shared firewall budget before dispatch. There is no implicit fallback
+in this API; a hard model limit or unverifiable usage blocks further managed model
+dispatch across registrations. Policy changes and rollback never refund or reset
+reservations. Unknown billing retains the full ceiling; valid excess is charged,
+including late responses after cancellation. Model failure classifications are
+preserved. Model output exceeding a declared bound can only be detected after the
+provider has already done work; provider pricing and declared ceilings are trusted.
+
+File permissions match exact host-canonical absolute paths using forward slashes;
+there are no globs or prefix grants. Relative paths, dot segments, alternate stream
+syntax and ambiguous forms are rejected. The host must resolve symlinks, case and
+filesystem aliases and bind the handler to those actual resources. Network
+permissions match exact HTTP(S) origins. Local/remote model registrations must
+declare at least one origin. Declared metadata is not network interception: a
+trusted transport must enforce actual destinations, redirects, DNS resolution
+and subresources, and keep credentials inside its own closure.
+
+`admin.replace(root, expectedVersion, policy)` and
+`admin.rollback(root, expectedVersion, targetVersion)` use optimistic version
+checks and serialized administration. Rollback revalidates one of the last 32
+in-memory policies and publishes a new increasing version. An authorized invalid
+update closes admission; explicit authorized replacement/rollback is needed for
+recovery. Unauthorized updates leave the current policy unchanged. Updates revoke
+existing leases before awaiting required audit acknowledgement. Late approvals
+cannot restore them. Versions, history and budgets are local to this instance;
+durable policy persistence, anti-rollback and multi-process coordination belong to
+the trusted host and are not implemented by this core.
+
+Audit records contain fixed reason codes, versions and registered operation IDs;
+they omit inputs, results, principal/session IDs, paths, URLs, credentials and raw
+exceptions. Use non-sensitive registration IDs. The ring and optional observer
+queue are bounded; `droppedAuditEvents` reports lost ring entries or observer
+deliveries. When `audit.required` is true, a host `auditSink` must acknowledge true
+before business dispatch; missing, failed or timed-out acknowledgements deny.
+Authorized lockdown takes priority over external audit availability and records
+its transition locally.
+
+Cancellation rejects the public operation promptly and signals cooperating work.
+The runtime retains concurrency ownership and potential charges until actual work
+settles; `status().draining` distinguishes that work. It cannot preempt synchronous
+JavaScript, stop an arbitrary remote request, reverse a committed write or prove
+that provider billing stopped. Isolate noncooperative work and enforce egress with
+a trusted host, OS firewall, proxy or sandbox.
+
+Raw RUDRA/workflow/model/memory/Inspectra instances are not automatically attached
+to this controller. Host registrations must propagate the supplied signal and
+checkpoints and route nested effects through managed operations where needed.
+The existing workflow `registerModel` path is still distinct from this core's
+ModelRouter path; the R03 null-usage/error-classification findings remain tracked
+for that legacy path. An npm library cannot stop a malicious host from bypassing
+its own code.

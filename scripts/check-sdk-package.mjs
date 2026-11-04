@@ -30,6 +30,10 @@ try {
     const entries = Object.keys(manifest.exports).map(name => name === '.' ? 'shivax' : name.replace('.', 'shivax'));
     writeFileSync(join(consumer, 'verify.mjs'), `import assert from 'node:assert/strict'; import {createRequire} from 'node:module'; const require=createRequire(import.meta.url);
 for (const name of ${JSON.stringify(entries)}) {const esm=await import(name); const cjs=require(name); assert.deepEqual(Object.keys(esm).sort(),Object.keys(cjs).sort());}
+for (const api of [await import('shivax/security'), require('shivax/security')]) {
+assert.equal(typeof api.createShivaxFirewall, 'function');
+assert.throws(() => api.createShivaxFirewall(), error => error.code === 'invalid-configuration');
+}
 console.log('Packed ESM/CJS SDK imports passed.');`);
     process.stdout.write(command(process.execPath, ['verify.mjs'], consumer));
     const compiler = join(require.resolve('typescript/package.json'), '..', 'bin', 'tsc');
@@ -39,6 +43,22 @@ const reasons: readonly ModelFailureReason[] = ['token-limit-exceeded', 'cost-li
 for (const reason of reasons) { const error = new ModelError(reason); const details: ModelErrorDetails = error; void details.reason; }
 // @ts-expect-error Only documented failure classifications are accepted.
 new ModelError('unrecognized-provider-error');
+import { createShivaxFirewall, FirewallError, type FirewallMode, type ShivaxFirewallOptions,
+    type FirewallPolicySnapshot } from 'shivax/security';
+import type { TaskContext } from 'shivax';
+declare const firewallOptions: ShivaxFirewallOptions;
+declare const authenticatedRoot: TaskContext;
+const firewall = createShivaxFirewall(firewallOptions);
+const snapshot: FirewallPolicySnapshot = firewall.runtime.snapshot();
+const mode: FirewallMode = snapshot.policy.mode;
+void firewall.runtime.execute(authenticatedRoot, 'operation', null);
+void firewall.admin.rollback(authenticatedRoot, snapshot.version, 1);
+void mode; void new FirewallError('denied');
+// @ts-expect-error Runtime consumers cannot mutate the mode directly.
+firewall.runtime.setMode('monitor');
+// @ts-expect-error Unsupported modes are not accepted.
+const invalidMode: FirewallMode = 'disabled';
+void invalidMode;
 import { Tensor } from 'shivax/core';
 import { Jay } from 'shivax/security';
 import type { Tensor as RootTensor, Jay as RootJay, InspectionProvider } from 'shivax';

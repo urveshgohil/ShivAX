@@ -265,6 +265,50 @@ export class Vijay {
         }
     }
 
+    /** Trusted host integration: reuse mandatory capability authorization and approvals.
+     * The callback receives a live baseline checkpoint, not a transferable authorization.
+     */
+    async runOperation<T>(
+        root: TaskContext,
+        capability: string,
+        raw: BotValue,
+        signal: BotSignal,
+        effect: PermissionPolicy['effect'],
+        work: (checkpoint: () => void) => T | Promise<T>,
+        checkExecution: () => void
+    ): Promise<T> {
+        const input = snapshotValue(raw, root.limits.maxInputBytes, 'invalid-input');
+        const ensure = () => {
+            checkExecution();
+            if (this.#policies.get('capability', capability)?.effect !== effect)
+                throw new SecurityError('effect-denied');
+        };
+        const outcome = await this.#authorized(
+            root,
+            'capability',
+            capability,
+            input,
+            signal,
+            async (policy) => {
+                try {
+                    const value = await work(() => {
+                        ensure();
+                        this.#assert(root, policy, input, signal);
+                        ensure();
+                    });
+                    return { ok: true as const, value };
+                } catch (error) {
+                    return { ok: false as const, error };
+                }
+            },
+            ensure,
+            () => {}
+        );
+        // The callback belongs to the trusted host. Preserve its terminal error
+        // classification; authorization failures above remain sanitized SecurityErrors.
+        if (!outcome.ok) throw outcome.error;
+        return outcome.value;
+    }
     /** Host integration point. Bots receive only a leased tool client, never Jay/policies/registries. */
     async runBot(
         root: TaskContext,

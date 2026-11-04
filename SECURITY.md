@@ -1,7 +1,7 @@
 # Security policy
 
 ShivAX implements local CPU tensors, dense-network training/inference, and text
-features. It does not load executable models, make network requests, or host an
+features. Optional host-configured model, memory and inspection adapters can make network requests. It does not host an
 API. There are no production dependencies or consumer installation scripts. Dependency audits
 cover known published advisories; they are not a security certification.
 
@@ -52,10 +52,28 @@ executing inside your own process. Do not execute untrusted code in-process.
   resource limits and cancellation.
 - Never evaluate user-provided JavaScript or deserialize executable models.
   Validate model formats and verify downloaded artifacts against trusted hashes.
-- Any future URL loader needs an explicit destination policy, redirect checks,
+- Every host URL transport needs an explicit destination policy, redirect checks,
   response-size limits, and timeouts to prevent SSRF and resource exhaustion.
 - Applications hosting the library must provide authentication, authorization,
-  rate limits, TLS, and safe error handling. These are not implemented by this
+  rate limits, TLS, and safe error handling. Jay/Vijay and the optional managed firewall enforce SDK checks using trusted host identity and approval adapters; deployment security remains the responsibility of the host using this
   library. Keep AI service keys on the server and minimize sensitive prompt logs.
 - Deploy application production dependencies only. ShivAX's compiler, bundler,
   and other development tools are not required by consumers at runtime.
+
+
+## Managed firewall boundary
+
+The additive firewall core starts in enforce mode and retains mandatory Jay/Vijay,
+approval, tenant, sandbox and budget checks in monitor mode. Lockdown blocks new
+managed external operations and requests cancellation; explicitly permitted pure
+CPU operations remain available. Administrative mutation is a separate capability
+requiring authenticated host authorization and Vijay approval. See docs/sdk.md for
+configuration, rollback, audit and cancellation semantics.
+
+Coverage is explicit: registered managed operations participate; raw SDK calls and
+arbitrary host code do not become isolated automatically. File paths and network
+origins are declared contracts that trusted adapters must honor. Actual egress,
+symlink/redirect/DNS controls, durable policy storage, multi-process revocation and
+termination of noncooperative I/O require the host, proxy, OS firewall or sandbox.
+An npm JavaScript library cannot prevent a malicious host from bypassing its code.
+Never pass administrator capabilities or authenticated root objects to bots.
