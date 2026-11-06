@@ -38,6 +38,9 @@ export interface InspectionCaptureRequest {
 export interface InspectionProviderContext extends AuthenticatedIdentity {
     readonly signal: BotSignal;
     readonly checkExecution?: () => void;
+    /** Host transport must call for every navigation, redirect and subresource. */
+    readonly checkNetworkAccess?: (url: string) => void;
+    readonly checkFileAccess?: (path: string, mode: 'read' | 'write') => void;
 }
 /** Host owns browser navigation, resource restrictions and cleanup. No implicit global provider. */
 export interface InspectionProvider {

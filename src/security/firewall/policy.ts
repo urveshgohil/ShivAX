@@ -1,4 +1,5 @@
 import { array, record, snapshotValue } from '../../agents/validation.js';
+import { capability } from '../../intelligence/validation.js';
 import { costUnits } from '../../intelligence/cost.js';
 import { FirewallError } from './errors.js';
 import type { FirewallOperation, FirewallPolicy, FirewallRealm } from './types.js';
@@ -89,8 +90,16 @@ export function policy(
             if (rule.optional !== undefined && typeof rule.optional !== 'boolean') throw 0;
             if (rule.optional === true && rule.decision !== 'deny') throw 0;
         }
-        const providers = object(source.providers, ['ids', 'localities']);
+        const providers = object(source.providers, ['ids', 'localities', 'capabilities']);
         list(providers.ids);
+        if (providers.capabilities !== undefined) {
+            const seen = new Set<string>();
+            for (const raw of array(providers.capabilities, 256, 'invalid-input')) {
+                const rule = object(raw, ['providerId', 'allow']); id(rule.providerId);
+                if (seen.has(rule.providerId)) throw 0;
+                seen.add(rule.providerId); list(rule.allow, capability);
+            }
+        }
         list(providers.localities, (value) => {
             if (!['in-process', 'local', 'remote'].includes(value as string)) throw 0;
         });
@@ -139,7 +148,9 @@ export function evaluate(policy: FirewallPolicy, operation: FirewallOperation): 
     if (
         operation.kind === 'model' &&
         (!policy.providers.ids.includes(operation.provider.id) ||
-            !policy.providers.localities.includes(operation.provider.locality))
+            !policy.providers.localities.includes(operation.provider.locality) ||
+            (policy.providers.capabilities !== undefined && !policy.providers.capabilities.some(rule =>
+                rule.providerId === operation.provider.id && rule.allow.includes(operation.modelCapability))))
     )
         throw new FirewallError('denied');
     const optionalDenied = rules.some((rule) => rule.decision === 'deny' && rule.optional);

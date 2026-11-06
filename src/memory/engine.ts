@@ -1,3 +1,4 @@
+import { resources } from '../security/firewall/resources.js';
 import type { BotSignal, BotValue } from '../agents/types.js';
 import type { MemoryNamespace } from '../bots/storage.js';
 import { InMemoryMemoryAdapter } from './adapters.js';
@@ -74,14 +75,18 @@ export class MemoryEngine implements MemoryStore {
     readonly #retention: Readonly<Record<MemoryCategory, MemoryRetention>>;
     readonly #embeddings?: {
         id: string;
+        networkOrigins?: readonly string[];
         dimensions: number;
         embed: NonNullable<MemoryEngineOptions['embeddings']>['embed'];
     };
     readonly #validate?: MemoryEngineOptions['validateContent'];
     constructor(options: MemoryEngineOptions = {}) {
-        this.#persistence = options.persistence ?? new InMemoryMemoryAdapter();
-        if (typeof this.#persistence.transact !== 'function')
-            throw new MemoryError('invalid-input');
+        const persistence = options.persistence ?? new InMemoryMemoryAdapter();
+        if (typeof persistence.transact !== 'function') throw new MemoryError('invalid-input');
+        this.#persistence = Object.freeze({
+            networkOrigins: persistence.networkOrigins && Object.freeze([...persistence.networkOrigins]),
+            transact: persistence.transact.bind(persistence),
+        });
         this.#now = options.now ?? Date.now;
         this.#maxRecords = options.maxRecords ?? 128;
         this.#maxRecordBytes = options.maxRecordBytes ?? 65_536;
@@ -115,6 +120,7 @@ export class MemoryEngine implements MemoryStore {
             if (typeof adapter.embed !== 'function') throw new MemoryError('invalid-input');
             this.#embeddings = Object.freeze({
                 id: adapter.id,
+                networkOrigins: adapter.networkOrigins && Object.freeze([...adapter.networkOrigins]),
                 dimensions: adapter.dimensions,
                 embed: adapter.embed.bind(adapter),
             });
@@ -141,6 +147,8 @@ export class MemoryEngine implements MemoryStore {
         const safe = namespace(ns);
         check(signal);
         try {
+            resources.get(signal)?.namespace(safe);
+            this.checkResources(this.#persistence.networkOrigins, signal);
             return await this.#persistence.transact(
                 safe,
                 (raw) => {
@@ -202,7 +210,8 @@ export class MemoryEngine implements MemoryStore {
                                 };
                     return result;
                 },
-                signal
+                signal,
+                resources.has(signal) ? { checkNetworkAccess: (url: string) => resources.get(signal)!.network(url) } : undefined
             );
         } catch (error) {
             throw signal.aborted ? new MemoryError('cancelled') : memoryError(error);
@@ -247,6 +256,20 @@ export class MemoryEngine implements MemoryStore {
         );
         return input as unknown as MemoryDraft;
     }
+    private checkResources(origins: readonly string[] | undefined, signal: BotSignal): void {
+        const boundary = resources.get(signal);
+        if (!boundary) return;
+        if (!origins) throw new MemoryError('unavailable');
+        for (const origin of origins) boundary.network(origin);
+        check(signal);
+    }
+    private embeddingContext(ns: MemoryNamespace, signal: BotSignal) {
+        resources.get(signal)?.namespace(ns);
+        this.checkResources(this.#embeddings?.networkOrigins, signal);
+        const boundary = resources.get(signal);
+        return Object.freeze({ namespace: ns, signal,
+            ...(boundary ? { checkNetworkAccess: (url: string) => boundary.network(url) } : {}) });
+    }
     private async embedding(
         value: BotValue,
         ns: MemoryNamespace,
@@ -256,7 +279,7 @@ export class MemoryEngine implements MemoryStore {
         check(signal);
         try {
             const result = vector(
-                await this.#embeddings.embed(JSON.stringify(value), { namespace: ns, signal }),
+                await this.#embeddings.embed(JSON.stringify(value), this.embeddingContext(ns, signal)),
                 this.#embeddings.dimensions
             );
             check(signal);
@@ -454,7 +477,7 @@ export class MemoryEngine implements MemoryStore {
             try {
                 queryVector = unitVector(
                     vector(
-                        await this.#embeddings.embed(input.text, { namespace: safe, signal }),
+                        await this.#embeddings.embed(input.text, this.embeddingContext(safe, signal)),
                         this.#embeddings.dimensions
                     )
                 );

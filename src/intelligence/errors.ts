@@ -12,6 +12,7 @@ const messages: Record<ModelErrorCode, string> = {
     'missing-provider': 'No compatible model provider is registered.',
     'provider-error': 'Model provider execution failed.',
     unavailable: 'Model provider is unavailable.',
+    'provider-denied': 'Model transport is denied by policy.',
     'remote-disabled': 'Remote inference requires explicit host permission.',
     'call-limit': 'Inference call budget exhausted.',
     'token-limit': 'Inference token budget exceeded.',

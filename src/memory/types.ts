@@ -107,13 +107,16 @@ export interface MemoryTransaction<T> {
     readonly remove?: true;
 }
 export interface MemoryPersistence {
+    /** Host-declared destinations. Required for protected use; [] asserts no network I/O. */
+    readonly networkOrigins?: readonly string[];
     /** Callback is synchronous; adapters serialize transactions and never invoke it twice.
      * Call signal.throwIfAborted() before side effects/commit; it may also enforce a host deadline.
      */
     transact<T>(
         namespace: MemoryNamespace,
         change: (stored: unknown) => MemoryTransaction<T>,
-        signal: BotSignal
+        signal: BotSignal,
+        boundary?: { readonly checkNetworkAccess: (url: string) => void }
     ): Promise<T>;
 }
 export interface MemoryRetention {
@@ -121,11 +124,13 @@ export interface MemoryRetention {
     readonly maxTtlMs: number;
 }
 export interface MemoryEmbeddingsAdapter {
+    /** Host-declared destinations. Required for protected use; [] asserts CPU-only embeddings. */
+    readonly networkOrigins?: readonly string[];
     readonly id: string;
     readonly dimensions: number;
     embed(
         text: string,
-        context: { readonly namespace: MemoryNamespace; readonly signal: BotSignal }
+        context: { readonly namespace: MemoryNamespace; readonly signal: BotSignal; readonly checkNetworkAccess?: (url: string) => void }
     ): readonly number[] | Promise<readonly number[]>;
 }
 export interface MemoryEngineOptions {

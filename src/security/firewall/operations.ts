@@ -53,14 +53,7 @@ export function operations(raw: unknown): ReadonlyMap<string, FirewallOperation>
                     base.effect !== 'read-only'
                 )
                     throw 0;
-                object(item.provider, [
-                    'id',
-                    'capabilities',
-                    'locality',
-                    'tokenBased',
-                    'pricing',
-                    'infer',
-                ]);
+                // The host may register an SDK adapter instance. The registry snapshots its validated descriptor and method.
                 const registry = new ModelProviderRegistry().register(item.provider as never);
                 const registered = registry.get(registry.list()[0].id)!;
                 if (registered.locality !== 'in-process' && !base.networkOrigins.length) throw 0;

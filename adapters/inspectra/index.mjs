@@ -90,6 +90,16 @@ export class InspectraInspectionProvider {
         let lease;
         let cleanup;
         let failureMessage = 'Inspectra capture failed.';
+        const checkDestination = (url) => {
+            context.checkExecution?.(); context.signal.throwIfAborted();
+            context.checkNetworkAccess?.(url);
+        };
+        // The host acknowledges this exact per-capture lease contract. Never accept it from task data.
+        const security = context.checkNetworkAccess ? Object.freeze({
+            owner: Object.freeze({ issuer: context.principal.issuer, principalId: context.principal.id,
+                sessionId: context.session.id, scope: Object.freeze({ ...context.session.scope }) }),
+            checkDestination, maxNodes: this.#maxNodes, timeoutMs: this.#timeout,
+        }) : undefined;
         // Abort and finally must await the same invocation, including synchronous
         // close failures and hosts whose repeated close calls return immediately.
         const close = () => (cleanup ??= Promise.resolve().then(() => lease.close()));
@@ -99,6 +109,7 @@ export class InspectraInspectionProvider {
         try {
             context.checkExecution?.();
             context.signal.throwIfAborted();
+            checkDestination(request.url);
             failureMessage =
                 'Inspectra is unavailable. Install optional peer inspectra-engine@1.0.4 and its dependencies, or provide a compatible load function.';
             const api = await this.#load();
@@ -111,13 +122,23 @@ export class InspectraInspectionProvider {
                 throw new Error('Unsupported Inspectra API.');
             }
             // openPage must enforce allowed navigation, redirects and subresources, and clean up on rejection.
-            lease = await this.#openPage(request, context);
+            checkDestination(request.url);
+            lease = await this.#openPage(request, context, security);
             if (!lease?.page || typeof lease.close !== 'function')
                 throw new Error('Invalid page lease.');
+            if (security && lease.security !== security) {
+                failureMessage = 'Inspectra host must acknowledge the protected page security contract.';
+                throw new Error('Unbound page lease.');
+            }
             context.signal.addEventListener('abort', onAbort, { once: true });
             try {
                 context.checkExecution?.();
                 context.signal.throwIfAborted();
+                checkDestination(request.url);
+                if (security && lease.screenshot) {
+                    if (!context.checkFileAccess) throw new Error('Protected screenshot requires file authorization.');
+                    context.checkFileAccess(lease.screenshot.path, 'write');
+                }
                 const raw = await api.captureUIPage(lease.page, {
                     scope: context.session.scope,
                     maxNodes: this.#maxNodes,
@@ -127,6 +148,8 @@ export class InspectraInspectionProvider {
                 });
                 context.signal.throwIfAborted();
                 context.checkExecution?.();
+                if (!Array.isArray(raw?.snapshot?.nodes) || raw.snapshot.nodes.length > this.#maxNodes)
+                    throw new Error('Inspectra node limit exceeded.');
                 return normalizeInspectraCapture(raw, {
                     scope: context.session.scope,
                     screenshotReference: lease.screenshot?.reference,

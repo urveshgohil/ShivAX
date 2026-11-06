@@ -16,9 +16,11 @@ export class OllamaModelAdapter implements ModelProvider {
     readonly tokenBased = true;
     readonly pricing = Object.freeze({ inputTokenUSD: 0, outputTokenUSD: 0, callUSD: 0 });
     readonly capabilities: readonly ModelCapability[];
+    readonly #origin: string;
     readonly #provider: OllamaProvider;
     constructor(options: OllamaModelAdapterOptions) {
         this.#provider = new OllamaProvider(options); // Lightweight configuration only; no model load or request.
+        this.#origin = new URL(options.baseURL ?? 'http://127.0.0.1:11434').origin;
         this.id = options.id ?? this.#provider.id;
         name(this.id);
         const capabilities = options.capabilities ?? ['text-reasoning'];
@@ -57,7 +59,7 @@ export class OllamaModelAdapter implements ModelProvider {
                     maxOutputTokens: request.maxOutputTokens,
                     signal: request.context.signal,
                 },
-                request.checkExecution
+                () => { request.checkExecution(); request.checkNetworkAccess?.(this.#origin); }
             );
             const usage = {
                 inputTokens: result.inputTokens,

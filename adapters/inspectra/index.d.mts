@@ -5,7 +5,18 @@ import type {
     InspectionObservation,
     InspectionScope,
 } from 'shivax';
+/** Trusted host must bind the page to owner, install request interception before navigation,
+ * check every destination, enforce DNS/proxy isolation and the timeout, and close rejected acquisitions. */
+export interface InspectraPageSecurity {
+    readonly owner: { readonly issuer: string; readonly principalId: string; readonly sessionId: string;
+        readonly scope: InspectionScope };
+    readonly maxNodes: number;
+    readonly timeoutMs: number;
+    checkDestination(url: string): void;
+}
 export interface InspectraPageLease {
+    /** Return the exact contract passed to openPage after applying it to the isolated page. */
+    readonly security?: InspectraPageSecurity;
     readonly page: unknown;
     /** Host-selected local path and separately safe opaque artifact reference. Neither comes from task input. */
     readonly screenshot?: { readonly path: string; readonly reference: string };
@@ -15,7 +26,8 @@ export interface InspectraPageLease {
 export interface InspectraAdapterOptions {
     openPage(
         request: InspectionCaptureRequest,
-        context: InspectionProviderContext
+        context: InspectionProviderContext,
+        security?: InspectraPageSecurity
     ): Promise<InspectraPageLease>;
     /** unknown avoids binding SHIVAX consumers to Playwright's Page type. Runtime checks the real API. */
     load?(): Promise<unknown>;

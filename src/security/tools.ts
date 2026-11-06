@@ -1,3 +1,4 @@
+import { resources } from './firewall/resources.js';
 import { checkPredicate, snapshotValue } from '../agents/validation.js';
 import type { BotSignal, BotValue, TaskContext } from '../agents/types.js';
 import { SecurityError, securityError } from './errors.js';
@@ -19,7 +20,12 @@ export interface ToolLeaseOptions {
         id: string,
         input: BotValue,
         signal: BotSignal,
-        work: (policy: PermissionPolicy, identity: AuthenticatedIdentity) => T | Promise<T>,
+        work: (
+            policy: PermissionPolicy,
+            identity: AuthenticatedIdentity,
+            signal?: BotSignal,
+            check?: () => void
+        ) => T | Promise<T>,
         ensure: () => void
     ): Promise<T>;
     checkParent(): void;
@@ -107,8 +113,20 @@ export class ToolLease {
                 id,
                 input,
                 this.#controller.signal,
-                async (_policy, identity) => {
-                    this.#check();
+                async (_policy, identity, authorizedSignal, checkAuthorized) => {
+                    const checkpoint = () => {
+                        this.#check();
+                        checkAuthorized?.();
+                    };
+                    checkpoint();
+                    const signal = authorizedSignal ?? this.#controller.signal;
+                    const boundary = resources.get(signal) ?? resources.get(options.signal);
+                    const checks = boundary ? Object.freeze({
+                        namespace: (value: import('../bots/storage.js').MemoryNamespace) => { checkpoint(); boundary.namespace(value); },
+                        network: (url: string) => { checkpoint(); boundary.network(url); },
+                        file: (path: string, mode: 'read' | 'write') => { checkpoint(); boundary.file(path, mode); },
+                    }) : undefined;
+                    if (checks) resources.set(signal, checks);
                     let rawOutput: BotValue;
                     try {
                         rawOutput = await tool.execute(
@@ -116,14 +134,15 @@ export class ToolLease {
                             Object.freeze({
                                 ...identity,
                                 taskId: options.root.taskId,
-                                signal: this.#controller.signal,
-                                checkExecution: () => this.#check(),
+                                signal,
+                                ...(checks ? { checkNetworkAccess: checks.network, checkFileAccess: checks.file } : {}),
+                                checkExecution: checkpoint,
                             })
                         );
                     } catch (error) {
                         throw securityError(error, 'tool-error');
                     }
-                    this.#check();
+                    checkpoint();
                     try {
                         const output = snapshotValue(
                             rawOutput,
@@ -132,7 +151,7 @@ export class ToolLease {
                         );
                         if (!checkPredicate(() => tool.validateOutput(output)))
                             throw new SecurityError('invalid-output');
-                        this.#check();
+                        checkpoint();
                         return output;
                     } catch (error) {
                         throw securityError(error, 'invalid-output');

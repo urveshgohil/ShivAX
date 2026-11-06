@@ -56,9 +56,18 @@ export function registerInspectionService(
             const scan = async (url: string) => {
                 context.checkExecution?.();
                 context.signal.throwIfAborted();
+                if (!checkPredicate(() => authorize(url, context)))
+                    throw new BotError('tool-not-allowed');
+                context.checkNetworkAccess?.(url);
                 let result: unknown;
                 try {
-                    result = await capture({ url, viewport: input.viewport }, context);
+                    result = await capture({ url, viewport: input.viewport }, Object.freeze({ ...context,
+                        ...(context.checkNetworkAccess ? { checkNetworkAccess(destination: string) {
+                            context.checkExecution?.(); context.signal.throwIfAborted();
+                            if (!checkPredicate(() => authorize(destination, context))) throw new BotError('tool-not-allowed');
+                            context.checkNetworkAccess!(destination);
+                        } } : {}),
+                    }));
                 } catch {
                     throw new BotError('provider-error');
                 }

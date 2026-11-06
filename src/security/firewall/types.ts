@@ -52,6 +52,8 @@ export interface FirewallPolicy {
     readonly rules: readonly FirewallRule[];
     readonly providers: {
         readonly ids: readonly string[];
+        /** When configured, an omitted provider or capability is denied. */
+        readonly capabilities?: readonly { readonly providerId: string; readonly allow: readonly ModelCapability[] }[];
         readonly localities: readonly ('in-process' | 'local' | 'remote')[];
     };
     readonly capabilities: readonly string[];
@@ -158,6 +160,8 @@ export interface ShivaxFirewallOptions {
     /** Optional bounded acknowledgement; required policies deny if unavailable/false. */
     auditSink?(event: FirewallAuditEvent, signal: BotSignal): boolean | Promise<boolean>;
     readonly auditCapacity?: number;
+    /** One-way binding of this controller to existing protected execution on security. */
+    readonly protectExecution?: boolean;
 }
 export interface ShivaxFirewall {
     readonly runtime: ShivaxFirewallRuntime;

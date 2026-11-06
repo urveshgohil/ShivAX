@@ -1,3 +1,4 @@
+import { resources } from '../security/firewall/resources.js';
 import type { BotSignal, BotValue } from '../agents/types.js';
 import type { MemoryNamespace } from '../bots/storage.js';
 import type { MemoryPersistence, MemoryTransaction } from './types.js';
@@ -6,6 +7,7 @@ import { MemoryError, memoryError } from './errors.js';
 
 /** Share this adapter instance between engines to serialize updates to its namespace snapshots. */
 export class InMemoryMemoryAdapter implements MemoryPersistence {
+    readonly networkOrigins = Object.freeze([]);
     readonly #entries = new Map<string, BotValue>();
     readonly #maxNamespaces: number;
     readonly #maxTotalBytes: number;
@@ -76,6 +78,7 @@ export interface NodeFileMemoryOptions {
 }
 /** One explicit absolute file and exclusive temporary sibling; no path input is accepted from tasks. */
 export class NodeFileMemoryAdapter implements MemoryPersistence {
+    readonly networkOrigins = Object.freeze([]);
     readonly #path: string;
     readonly #fs: MemoryFileSystem;
     readonly #maxBytes: number;
@@ -112,9 +115,11 @@ export class NodeFileMemoryAdapter implements MemoryPersistence {
             const key = namespaceKey(namespace(ns));
             let text: string | null;
             try {
+                resources.get(signal)?.file(this.#path, 'read');
                 if ((await this.#fs.stat(this.#path)).size > this.#maxBytes)
                     throw new MemoryError('capacity');
                 check(signal);
+                resources.get(signal)?.file(this.#path, 'read');
                 text = await this.#fs.readFile(this.#path, 'utf8');
             } catch (error) {
                 if ((error as { code?: string })?.code === 'ENOENT') text = null;
@@ -154,15 +159,20 @@ export class NodeFileMemoryAdapter implements MemoryPersistence {
                 )
                     throw new MemoryError('capacity');
                 check(signal);
+                resources.get(signal)?.file(this.#path, 'write');
+                resources.get(signal)?.file(temporary, 'write');
                 const file = await this.#fs.open(temporary, 'wx', 0o600);
                 created = true;
                 try {
                     check(signal);
+                    resources.get(signal)?.file(temporary, 'write');
                     await file.writeFile(next, 'utf8');
                 } finally {
                     await file.close();
                 }
                 check(signal);
+                resources.get(signal)?.file(this.#path, 'write');
+                resources.get(signal)?.file(temporary, 'write');
                 await this.#fs.rename(temporary, this.#path);
                 created = false;
             }
@@ -188,6 +198,7 @@ export interface IndexedDBMemoryOptions {
 }
 /** One object store, one namespace envelope per key. Native readwrite transactions serialize writers. */
 export class IndexedDBMemoryAdapter implements MemoryPersistence {
+    readonly networkOrigins = Object.freeze([]);
     readonly #name: string;
     readonly #factory: () => unknown;
     #database?: Promise<IDBDatabase>;

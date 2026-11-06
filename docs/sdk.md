@@ -244,10 +244,168 @@ JavaScript, stop an arbitrary remote request, reverse a committed write or prove
 that provider billing stopped. Isolate noncooperative work and enforce egress with
 a trusted host, OS firewall, proxy or sandbox.
 
-Raw RUDRA/workflow/model/memory/Inspectra instances are not automatically attached
-to this controller. Host registrations must propagate the supplied signal and
+With the default explicit-runtime configuration, other SDK instances require host integration. Host registrations must propagate the supplied signal and
 checkpoints and route nested effects through managed operations where needed.
 The existing workflow `registerModel` path is still distinct from this core's
 ModelRouter path; the R03 null-usage/error-classification findings remain tracked
 for that legacy path. An npm library cannot stop a malicious host from bypassing
 its own code.
+
+### Binding the firewall to protected execution
+
+Set `protectExecution: true` in `createShivaxFirewall` before the supplied Vijay
+instance first admits work. Pass that same Vijay to `RudraOrchestrator` or
+`RudraWorkflowEngine`. For `createSpecialistSystem`, use the returned `security`
+instance and attach the controller before the first run. A binding lasts for the
+lifetime of that Vijay. A late or second binding is rejected so every active
+protected authorization belongs to one controller. Omitting the option retains
+the explicit R04 runtime API.
+
+Declare the registrations and rules for each actual path. A root task matches a
+`workflow` registration with its root capability. A bot attempt matches a `bot`
+registration with its selected source bot ID, capability and effect. A tool matches
+a `tool` registration with its capability, tool ID and effect. Set its `botId` to
+restrict it to that invoking bot. A tool registration without a bot ID can apply
+to a workflow or bot, subject to its separate Vijay grants. Missing or ambiguous
+matches deny admission. Explicit allows and the policy's capability and bot lists
+still apply. A boundary uses the registered metadata and mandatory predicate,
+then dispatches through the existing planner, bot or tool implementation.
+
+```ts
+const { admin, runtime } = createShivaxFirewall({
+  ...hostOptions,
+  security: vijay,
+  protectExecution: true,
+});
+const rudra = new RudraOrchestrator(registry, { security: vijay, planner });
+const workflows = new RudraWorkflowEngine(toolRegistry, vijay);
+```
+
+RUDRA and workflows hold the root lease until tracked work settles. Paused and
+waiting runs receive revocation. Vijay checks the actual input, security policy,
+registration and lease around approvals and dispatch. Tool handlers must call
+`context.checkExecution()` after asynchronous preparation and immediately before
+a later side effect. The signal includes caller cancellation and firewall
+revocation. Bot execution also retains its executor deadline. A saved tool context
+expires after its invocation.
+
+Concurrency and operation budgets count nested admissions. For example, a
+workflow action can hold a root lease, a capability lease and a tool lease
+simultaneously. Size the limits for the intended parallelism. Retries acquire
+fresh authorization. Monitor observes optional denies while enforcing Vijay,
+mandatory rules, approvals and controller resource ceilings. An operation
+already admitted through the explicit R04 runtime keeps its own reservation.
+
+The binding covers calls through this Vijay. Direct host I/O and raw provider calls
+require their own managed boundary. The existing workflow model adapter retains
+the separate R03 G02 usage/error findings. Protected tool admission alone does
+not add ModelRouter accounting to a raw provider call.
+
+### Guarded model and integration calls (R06)
+
+Use `createGuardedModelGateway` from `shivax/models` in protected applications.
+Create the firewall with host-selected `model` registrations, then bind a fixed
+ordered route. Each registration selects one provider, one model capability,
+an output contract and bounded model limits. The gateway accepts the original
+Jay context. A copied context, prompt, model output or arbitrary runtime object
+cannot mint authority.
+
+```ts
+import { createGuardedModelGateway } from 'shivax/models';
+
+const infer = createGuardedModelGateway(runtime, {
+  capability: 'text-reasoning',
+  operationIds: ['local-reasoning', 'approved-remote-reasoning'],
+  timeoutMs: 15_000,
+  allowRemote: true,
+});
+const result = await infer(authenticatedRoot, taskData);
+```
+
+Provider IDs, localities and network origins must be allowed by the effective
+firewall policy. Remote routes additionally require `allowRemote: true`, which
+defaults to false. Optional `policy.providers.capabilities` entries use
+`{ providerId, allow: ModelCapability[] }`. When that list is present, a missing
+provider/capability entry denies. Existing R04 policies without the list continue
+to use the capability pinned in each model registration.
+
+Every attempt uses the existing exact cost reservation and token accounting.
+All attempts share the controller's cumulative ceilings, including concurrent
+routes. Verified invalid output and retryable provider failures may fall back.
+Hard limits, unverifiable usage, transport denial, cancellation and timeouts
+are terminal. A policy transition invalidates an active route, including between
+attempts. One route deadline bounds the complete attempt sequence. An operation
+registration retains its own model budget and busy state between calls.
+Uncertain billing retains the conservative reservation until verified, and
+unsafe usage can close later model admission as in R04.
+
+The legacy `new ModelRouter(...)` and `createModelOperation(...)` APIs remain
+available. They do not authenticate a Jay identity or automatically inherit a
+firewall. Compose protected applications with the guarded gateway and retain the
+root context in trusted host code. Bot payloads must never receive the admin
+controller or choose registrations.
+
+For protected `RemoteModelAdapter` use, configure a fixed HTTPS `endpoint`
+without URL credentials, query parameters or fragments. Its lazy loader must
+return `inferGuarded(request, policy)` in addition to the legacy `infer` method.
+The guarded method receives the exact approved endpoint, `redirect: 'error'`
+and `checkDestination(url)`. The host transport must disable redirects,
+validate resolved addresses and proxy routing, protect credentials, bound request
+and response resources, propagate the signal and call the destination check
+immediately before I/O and again after asynchronous preparation. A legacy-only
+transport is denied in protected use. Raw legacy adapter calls retain their
+previous contract. Other host-supplied model providers have the same trusted
+transport responsibility and receive `request.checkNetworkAccess`.
+
+Ollama retains its loopback-only transport, cloud-alias checks, disabled
+redirects and omitted credentials. The firewall rechecks the registered origin
+before metadata acquisition and before chat dispatch. Disabled local permission
+denies before loading or transport invocation.
+
+Protected tools receive live `checkNetworkAccess(url)` and
+`checkFileAccess(path, 'read' | 'write')` functions. They check the active lease,
+current policy and that operation's registered resources. This applies both to
+explicit runtime execution and to the R05-bound Vijay path. These callbacks
+expire with the invocation. Host handlers must call them before later I/O.
+
+Memory services keep their identity-derived principal, issuer, tenant and
+session namespace. Direct MemoryEngine calls carrying a protected tool signal
+also enforce that signal's authenticated namespace and resource boundary. Protected embeddings and custom persistence must declare
+`networkOrigins`. An empty array is the trusted host's assertion that the
+adapter performs no network I/O. Omission fails closed only in protected use.
+Destinations are checked before invocation. Embeddings receive
+`context.checkNetworkAccess` and persistence receives an optional fourth
+argument with that check for use after waits and before transport.
+Both must honor the supplied signal. Node file persistence checks the actual
+target file for reads and requires write permission for both the target and its
+`.pending` sibling. Cleanup of a temporary file already acquired by the
+operation remains permitted after cancellation. Retention, approvals, namespace
+isolation and transactional commit checks remain in place. Custom adapters and
+symlink/reparse-point resolution remain trusted host responsibilities.
+
+Inspection services reauthorize each page after the preceding capture and apply
+the host URL predicate to every destination checked by the provider.
+The optional Inspectra adapter still lazily imports `inspectra-engine/node`
+and remains an optional peer at the existing tested version, 1.0.4.
+In protected use, `openPage(request, context, security)` receives a fresh
+`InspectraPageSecurity` contract. Before navigating, the trusted host must bind
+an isolated page/browser context to `security.owner`, install interception for
+navigation, redirects and every subresource, and invoke
+`security.checkDestination` for each destination. It must enforce DNS/IP,
+proxy, browser, time and resource limits, and clean up acquisitions that reject.
+
+Return that exact contract as `lease.security` after applying it. A missing or
+different acknowledgement denies capture and closes the acquired lease.
+This acknowledgement expresses a trusted host obligation, not proof of browser
+isolation. The adapter enforces its extraction node ceiling, rechecks permission
+after loading and acquisition, and closes leases exactly once on failure or
+cancellation, including late acquisition. Protected screenshots also require
+explicit write permission for the host-selected path. Legacy unguarded page
+leases retain their previous shape.
+
+These boundaries constrain cooperating SDK calls. An npm library cannot
+prevent a malicious host running arbitrary JavaScript from bypassing its code.
+DNS rebinding, redirect enforcement, filesystem aliasing and complete browser
+network isolation require the trusted transport, OS, proxy or sandbox.
+Cancellation cannot undo committed effects or preempt synchronous or
+non-cooperative work. No new unrestricted network or filesystem tool is exposed.

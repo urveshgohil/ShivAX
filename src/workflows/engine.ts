@@ -1,6 +1,7 @@
 import { snapshotContext } from '../agents/context.js';
 import { snapshotValue } from '../agents/validation.js';
 import type { BotValue, TaskContext } from '../agents/types.js';
+import type { ProtectedLease } from '../security/firewall/binding.js';
 import { SecurityError } from '../security/errors.js';
 import type { Vijay } from '../security/vijay.js';
 import { WorkflowError } from './errors.js';
@@ -59,6 +60,8 @@ export class RudraWorkflowEngine {
             proposalError = error;
         }
         const controller = new AbortController();
+        let firewallLease: ProtectedLease | undefined;
+        const revokeFirewall = () => controller.abort(new SecurityError('permission-denied'));
         let status: WorkflowStatus = 'queued',
             error: WorkflowSnapshot['error'];
         const outputs = new Map<number, WorkflowOutput>(),
@@ -104,6 +107,7 @@ export class RudraWorkflowEngine {
                 ...(error ? { error } : {}),
             });
         const check = () => {
+            try { firewallLease?.check(); } catch { revokeFirewall(); }
             if (!controller.signal.aborted && now() - started >= task.limits.timeoutMs)
                 controller.abort(new WorkflowError('timeout'));
             if (controller.signal.aborted) throw controller.signal.reason;
@@ -164,7 +168,9 @@ export class RudraWorkflowEngine {
         if (task.signal.aborted) cancel();
         emit({ type: 'state', status });
         const work = track(async () => {
-            await this.#security.validateTask(context, controller.signal);
+            firewallLease = await this.#security.protectTask(context, controller.signal);
+            firewallLease?.signal.addEventListener('abort', revokeFirewall, { once: true });
+            if (firewallLease?.signal.aborted) revokeFirewall();
             check();
             if (proposalError) throw proposalError;
             const workflow = validated!;
@@ -247,7 +253,7 @@ export class RudraWorkflowEngine {
                         try {
                             snapshotValue(
                                 [...outputs.values(), entry],
-                                task.limits.maxOutputBytes,
+                                firewallLease?.maxOutputBytes ?? task.limits.maxOutputBytes,
                                 'invalid-output'
                             );
                         } catch {
@@ -330,6 +336,8 @@ export class RudraWorkflowEngine {
         const release = async () => {
             await Promise.allSettled([...pending]);
             if (pending.size) return release();
+            firewallLease?.signal.removeEventListener('abort', revokeFirewall);
+            firewallLease?.close();
             this.#occupied = false;
             this.#cancel = undefined;
         };

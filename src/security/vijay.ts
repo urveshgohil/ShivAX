@@ -6,6 +6,15 @@ import { SecurityError, securityError } from './errors.js';
 import { Jay } from './jay.js';
 import { PermissionPolicyRegistry, ProtectedToolRegistry } from './registry.js';
 import { ToolLease } from './tools.js';
+import {
+    enterProtected,
+    isFirewallControl,
+    noteProtectedUse,
+    coreRootChecks,
+    hasBinding,
+    withProtectedSignal,
+} from './firewall/binding.js';
+import type { ProtectedLease, ProtectedRequest } from './firewall/binding.js';
 import type {
     AuthenticatedIdentity,
     PermissionPolicy,
@@ -37,6 +46,9 @@ export class Vijay {
     readonly #audit: SecurityAuditLog;
     readonly #maxToolCalls: number;
     constructor(jay: Jay, policies: PermissionPolicyRegistry, options: VijayOptions = {}) {
+        coreRootChecks.set(this, async (root, signal) => {
+            await this.#openTask(root, signal, false);
+        });
         this.#jay = jay;
         this.#policies = policies;
         this.#tools = options.tools ?? new ProtectedToolRegistry();
@@ -83,20 +95,58 @@ export class Vijay {
     }
     /** Admission before planning: authentication and root capability policy, without granting execution. */
     async validateTask(root: TaskContext, signal: BotSignal): Promise<void> {
+        const lease = await this.protectTask(root, signal);
+        lease?.close();
+    }
+    /** Retain this task lease until actual planner/bot/tool work has drained. */
+    protectTask(root: TaskContext, signal: BotSignal): Promise<ProtectedLease | undefined> {
+        return this.#openTask(root, signal, true);
+    }
+    async #openTask(
+        root: TaskContext,
+        signal: BotSignal,
+        protect: boolean
+    ): Promise<ProtectedLease | undefined> {
+        noteProtectedUse(this);
         let id = '';
+        let lease: ProtectedLease | undefined;
         try {
             await this.#jay.verify(root, signal);
             id = root.input.capability;
             const policy = this.#policies.get('capability', id);
             if (!policy) throw new SecurityError('policy-missing');
             this.#assert(root, policy, root.input.data, signal);
+            if (protect && hasBinding(this)) {
+                lease = await enterProtected(
+                    this,
+                    root,
+                    { kind: 'task', capability: id },
+                    root.input.data,
+                    signal
+                );
+                this.#assert(root, policy, root.input.data, signal);
+                lease?.check();
+            }
             this.#audit.record(this.#audit.begin(), {
                 kind: 'capability',
                 actionId: id,
                 decision: 'allow',
                 reason: 'authorized',
             });
+            if (!lease) return undefined;
+            const retained = lease;
+            return Object.freeze({
+                signal: retained.signal,
+                maxOutputBytes: retained.maxOutputBytes,
+                close: retained.close,
+                check: () => {
+                    retained.check();
+                    this.#assert(root, policy, root.input.data, retained.signal);
+                    retained.check();
+                },
+            });
         } catch (error) {
+            lease?.close();
             const failure = securityError(error, 'unauthenticated');
             this.#deny('capability', id, failure);
             throw failure;
@@ -126,6 +176,8 @@ export class Vijay {
             readonly tool?: import('./types.js').ProtectedTool;
         } = {}
     ): Promise<BotValue> {
+        const alreadyManaged =
+            hooks.checkExecution && isFirewallControl(this, hooks.checkExecution);
         const input = snapshotValue(raw, root.limits.maxInputBytes, 'invalid-input');
         const ensure = () => {
             hooks.checkExecution?.();
@@ -147,7 +199,16 @@ export class Vijay {
             capability,
             input,
             signal,
-            async (parent) => {
+            async (parent, _identity, protectedSignal, checkFirewall) => {
+                signal = protectedSignal;
+                const previous = hooks.checkExecution;
+                hooks = {
+                    ...hooks,
+                    checkExecution: () => {
+                        previous?.();
+                        checkFirewall();
+                    },
+                };
                 const lease = new ToolLease({
                     root,
                     signal,
@@ -168,12 +229,12 @@ export class Vijay {
                             name,
                             data,
                             childSignal,
-                            (policy, identity) => {
+                            (policy, identity, toolSignal, checkFirewall) => {
                                 hooks.onEffect?.(policy.effect);
                                 checkTool();
                                 ensure();
                                 this.#assert(root, policy, data, childSignal);
-                                return work(policy, identity);
+                                return work(policy, identity, toolSignal, checkFirewall);
                             },
                             () => {
                                 ensure();
@@ -184,7 +245,8 @@ export class Vijay {
                                 )
                                     throw new SecurityError('effect-denied');
                             },
-                            hooks.onApproval
+                            hooks.onApproval,
+                            alreadyManaged ? false : { kind: 'tool', capability, toolId: name }
                         ),
                 });
                 try {
@@ -194,7 +256,8 @@ export class Vijay {
                 }
             },
             ensure,
-            hooks.onApproval
+            hooks.onApproval,
+            alreadyManaged ? false : { kind: 'tool', capability, toolId: id }
         );
     }
 
@@ -204,11 +267,24 @@ export class Vijay {
         id: string,
         input: BotValue,
         signal: BotSignal,
-        work: (policy: PermissionPolicy, identity: AuthenticatedIdentity) => T | Promise<T>,
+        work: (
+            policy: PermissionPolicy,
+            identity: AuthenticatedIdentity,
+            signal: BotSignal,
+            checkpoint: () => void
+        ) => T | Promise<T>,
         ensure: () => void,
-        onApproval: (waiting: boolean) => void
+        onApproval: (waiting: boolean) => void,
+        request: ProtectedRequest | false = { kind: 'capability', capability: id }
     ): Promise<T> {
+        noteProtectedUse(this);
         const operation = this.#audit.begin();
+        let lease: ProtectedLease | undefined;
+        const baselineEnsure = ensure;
+        ensure = () => {
+            baselineEnsure();
+            lease?.check();
+        };
         let policy: PermissionPolicy | undefined,
             admitted = false;
         try {
@@ -216,6 +292,21 @@ export class Vijay {
             policy = this.#policies.get(kind, id);
             if (!policy) throw new SecurityError('policy-missing');
             let identity = this.#assert(root, policy, input, signal);
+            if (request && hasBinding(this))
+                lease = await enterProtected(
+                    this,
+                    root,
+                    {
+                        ...request,
+                        effect:
+                            kind === 'capability' && request.kind === 'tool'
+                                ? undefined
+                                : policy.effect,
+                    },
+                    input,
+                    signal
+                );
+            if (lease) signal = lease.signal;
             ensure();
             if (policy.requiresApproval) {
                 if (!this.#approve) throw new SecurityError('approval-required');
@@ -251,7 +342,21 @@ export class Vijay {
                 reason: 'authorized',
             });
             admitted = true;
-            return await work(policy, identity);
+            const value = await work(policy, identity, signal, () => {
+                lease?.check();
+            });
+            if (lease) {
+                ensure();
+                this.#assert(root, policy, input, signal);
+                if (kind === 'tool' || (request && request.kind === 'bot')) {
+                    try {
+                        snapshotValue(value, lease.maxOutputBytes, 'invalid-output');
+                    } catch {
+                        throw new SecurityError('invalid-output');
+                    }
+                }
+            }
+            return value;
         } catch (error) {
             const failure = securityError(error, 'tool-error');
             if (!admitted)
@@ -262,6 +367,8 @@ export class Vijay {
                     reason: failure.code,
                 });
             throw failure;
+        } finally {
+            lease?.close();
         }
     }
 
@@ -274,7 +381,7 @@ export class Vijay {
         raw: BotValue,
         signal: BotSignal,
         effect: PermissionPolicy['effect'],
-        work: (checkpoint: () => void) => T | Promise<T>,
+        work: (checkpoint: () => void, signal: BotSignal) => T | Promise<T>,
         checkExecution: () => void
     ): Promise<T> {
         const input = snapshotValue(raw, root.limits.maxInputBytes, 'invalid-input');
@@ -289,20 +396,23 @@ export class Vijay {
             capability,
             input,
             signal,
-            async (policy) => {
+            async (policy, _identity, protectedSignal, checkFirewall) => {
                 try {
                     const value = await work(() => {
+                        checkFirewall();
                         ensure();
-                        this.#assert(root, policy, input, signal);
+                        this.#assert(root, policy, input, protectedSignal);
                         ensure();
-                    });
+                        checkFirewall();
+                    }, protectedSignal);
                     return { ok: true as const, value };
                 } catch (error) {
                     return { ok: false as const, error };
                 }
             },
             ensure,
-            () => {}
+            () => {},
+            isFirewallControl(this, work) ? false : { kind: 'capability', capability }
         );
         // The callback belongs to the trusted host. Preserve its terminal error
         // classification; authorization failures above remain sanitized SecurityErrors.
@@ -324,71 +434,98 @@ export class Vijay {
             child.input.capability,
             data,
             child.signal,
-            async (parent) => {
+            async (parent, _identity, protectedSignal, checkFirewall) => {
+                const previous = hooks.checkExecution;
+                hooks = {
+                    ...hooks,
+                    checkExecution: () => {
+                        previous?.();
+                        checkFirewall();
+                    },
+                };
                 hooks.onEffect?.(parent.effect);
                 const secured: Bot = {
                     ...bot,
-                    execute: async (input, context) => {
-                        // BotExecutor runs validators after admission; recheck before invoking bot code.
-                        try {
-                            await this.#jay.verify(root, context.task.signal);
-                            this.#assert(root, parent, data, context.task.signal);
-                        } catch (error) {
-                            const failure = securityError(error, 'unauthenticated');
-                            this.#deny('capability', parent.id, failure);
-                            throw new BotError('tool-not-allowed');
-                        }
-                        const lease = new ToolLease({
-                            root,
-                            signal: context.task.signal,
-                            allowed: Object.freeze(
-                                toolsForCapability(bot, child.input.capability).map(
-                                    (tool) => tool.id
-                                )
-                            ),
-                            maxCalls: this.#maxToolCalls,
-                            checkExecution: hooks.checkExecution,
-                            getTool: (id) => this.#tools.get(id),
-                            track: hooks.trackTool,
-                            checkParent: () => {
-                                this.#assert(root, parent, data, context.task.signal);
-                            },
-                            deny: (id, error) => this.#deny('tool', id, error),
-                            authorize: (id, input, signal, work, ensure) =>
-                                this.#authorized(
+                    execute: (input, context) =>
+                        withProtectedSignal(
+                            context.task.signal,
+                            protectedSignal === child.signal ? undefined : protectedSignal,
+                            async (signal) => {
+                                // BotExecutor runs validators after admission; recheck before invoking bot code.
+                                if (signal !== context.task.signal)
+                                    context = Object.freeze({
+                                        ...context,
+                                        task: Object.freeze({ ...context.task, signal }),
+                                    });
+                                try {
+                                    hooks.checkExecution?.();
+                                    await this.#jay.verify(root, context.task.signal);
+                                    this.#assert(root, parent, data, context.task.signal);
+                                } catch (error) {
+                                    const failure = securityError(error, 'unauthenticated');
+                                    this.#deny('capability', parent.id, failure);
+                                    throw new BotError('tool-not-allowed');
+                                }
+                                const lease = new ToolLease({
                                     root,
-                                    'tool',
-                                    id,
-                                    input,
-                                    signal,
-                                    work,
-                                    () => {
-                                        ensure();
-                                        if (
-                                            parent.effect === 'read-only' &&
-                                            this.#policies.get('tool', id)?.effect ===
-                                                'state-changing'
+                                    signal: context.task.signal,
+                                    allowed: Object.freeze(
+                                        toolsForCapability(bot, child.input.capability).map(
+                                            (tool) => tool.id
                                         )
-                                            throw new SecurityError('effect-denied');
+                                    ),
+                                    maxCalls: this.#maxToolCalls,
+                                    checkExecution: hooks.checkExecution,
+                                    getTool: (id) => this.#tools.get(id),
+                                    track: hooks.trackTool,
+                                    checkParent: () => {
+                                        this.#assert(root, parent, data, context.task.signal);
                                     },
-                                    hooks.onApproval
-                                ),
-                        });
-                        try {
-                            const result = await bot.execute(
-                                input,
-                                Object.freeze({ ...context, tools: lease.client })
-                            );
-                            if (await lease.close()) throw new BotError('tool-not-allowed');
-                            return result;
-                        } catch (error) {
-                            await lease.close();
-                            // Security denials must not become retryable bot-error outcomes.
-                            if (error instanceof SecurityError)
-                                throw new BotError('tool-not-allowed');
-                            throw error;
-                        }
-                    },
+                                    deny: (id, error) => this.#deny('tool', id, error),
+                                    authorize: (id, input, signal, work, ensure) =>
+                                        this.#authorized(
+                                            root,
+                                            'tool',
+                                            id,
+                                            input,
+                                            signal,
+                                            work,
+                                            () => {
+                                                ensure();
+                                                if (
+                                                    parent.effect === 'read-only' &&
+                                                    this.#policies.get('tool', id)?.effect ===
+                                                        'state-changing'
+                                                )
+                                                    throw new SecurityError('effect-denied');
+                                            },
+                                            hooks.onApproval,
+                                            {
+                                                kind: 'tool',
+                                                capability: child.input.capability,
+                                                botId: bot.id,
+                                                toolId: id,
+                                            }
+                                        ),
+                                });
+                                try {
+                                    this.#assert(root, parent, data, context.task.signal);
+                                    hooks.checkExecution?.();
+                                    const result = await bot.execute(
+                                        input,
+                                        Object.freeze({ ...context, tools: lease.client })
+                                    );
+                                    if (await lease.close()) throw new BotError('tool-not-allowed');
+                                    return result;
+                                } catch (error) {
+                                    await lease.close();
+                                    // Security denials must not become retryable bot-error outcomes.
+                                    if (error instanceof SecurityError)
+                                        throw new BotError('tool-not-allowed');
+                                    throw error;
+                                }
+                            }
+                        ),
                 };
                 return execute(secured);
             },
@@ -400,7 +537,8 @@ export class Vijay {
                 )
                     throw new SecurityError('tool-denied');
             },
-            hooks.onApproval
+            hooks.onApproval,
+            { kind: 'bot', capability: child.input.capability, botId: bot.id }
         );
     }
 }

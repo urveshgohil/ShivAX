@@ -1,3 +1,6 @@
+import type { ShivaxFirewallRuntime } from '../security/firewall/types.js';
+import type { TaskContext } from '../agents/types.js';
+import type { ModelCapability } from './types.js';
 import type { BotValue } from '../agents/types.js';
 import { record } from '../agents/validation.js';
 import type { SpecialistProviderContext } from '../bots/types.js';
@@ -16,6 +19,17 @@ import type {
     ModelRoutingOptions,
     ModelUsage,
 } from './types.js';
+
+export interface GuardedModelRoute {
+    readonly capability: ModelCapability;
+    readonly operationIds: readonly string[];
+    readonly timeoutMs: number;
+    /** Separate from the controller's remote ID, locality and network grants. */
+    readonly allowRemote?: boolean;
+}
+export type GuardedModelOperation = (root: TaskContext, input: BotValue) => Promise<BotValue>;
+/** Internal issuer table. A structurally similar object cannot mint a guarded route. */
+export const guardedModelRoutes = new WeakMap<ShivaxFirewallRuntime, (route: GuardedModelRoute) => GuardedModelOperation>();
 
 /** One scope and one active operation per instance. Cancellation retains ownership until work settles. */
 export class ModelRouter {

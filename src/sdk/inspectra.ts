@@ -5,4 +5,5 @@ export {
 export type {
     InspectraAdapterOptions,
     InspectraPageLease,
+    InspectraPageSecurity,
 } from '../../adapters/inspectra/index.mjs';

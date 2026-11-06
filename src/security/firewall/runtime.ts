@@ -1,6 +1,7 @@
 import type { BotValue, TaskContext } from '../../agents/types.js';
 import { snapshotValue } from '../../agents/validation.js';
-import { ModelRouter } from '../../intelligence/router.js';
+import { resources, type BoundResources } from './resources.js';
+import { guardedModelRoutes, ModelRouter } from '../../intelligence/router.js';
 import { ModelProviderRegistry } from '../../intelligence/registry.js';
 import { ModelError } from '../../intelligence/errors.js';
 import { usageReport } from '../../intelligence/validation.js';
@@ -8,6 +9,8 @@ import { costUnits, costUSD } from '../../intelligence/cost.js';
 import type { ModelResult } from '../../intelligence/types.js';
 import { Jay } from '../jay.js';
 import { Vijay } from '../vijay.js';
+import { SecurityError } from '../errors.js';
+import { bindProtectedExecution, firewallControl, coreRootChecks, ownsBinding } from './binding.js';
 import { FirewallError, failure } from './errors.js';
 import { operations, modelReservation } from './operations.js';
 import { count, evaluate, id, object, policy, realm } from './policy.js';
@@ -52,6 +55,7 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
             'authorizeAdmin',
             'auditSink',
             'auditCapacity',
+            'protectExecution',
         ]);
         if (
             !(options.jay instanceof Jay) ||
@@ -59,6 +63,8 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
             typeof options.authorizeAdmin !== 'function' ||
             (options.auditSink !== undefined && typeof options.auditSink !== 'function')
         )
+            throw 0;
+        if (options.protectExecution !== undefined && typeof options.protectExecution !== 'boolean')
             throw 0;
         id(options.adminCapability);
         count(options.auditCapacity ?? 256, 1, 4096);
@@ -72,6 +78,7 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
     } catch {
         throw new FirewallError('invalid-configuration');
     }
+    const owner = Object.freeze({});
     const initial = policy(config.policy, registered);
     if (initial.mode !== 'enforce') throw new FirewallError('invalid-policy');
     let current: FirewallPolicySnapshot = Object.freeze({ version: 1, policy: initial });
@@ -179,6 +186,32 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
         state.authorization?.();
         baseCheck(state);
     };
+    const bindResources = (state: Active) => {
+        const denied = (): never => {
+            record('decision', state.operation.id, 'deny', 'denied');
+            throw new SecurityError('permission-denied');
+        };
+        resources.set(state.controller.signal, Object.freeze({
+            namespace(value: Parameters<BoundResources['namespace']>[0]) {
+                checkpoint(state);
+                const identity = config.jay.assertActive(state.root, state.controller.signal);
+                if (value.principalId !== identity.principal.id || value.issuer !== identity.principal.issuer ||
+                    value.sessionId !== identity.session.id || value.scopeKind !== identity.session.scope.kind ||
+                    value.scopeId !== identity.session.scope.id) denied();
+            },
+            network(value: string) {
+                checkpoint(state);
+                let url: URL;
+                try { url = new URL(value); } catch { return denied(); }
+                if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password ||
+                    !state.operation.networkOrigins.includes(url.origin)) denied();
+            },
+            file(value: string, mode: 'read' | 'write') {
+                checkpoint(state);
+                if (!state.operation.files[mode].includes(value.replace(/\\/g, '/'))) denied();
+            },
+        }));
+    };
     const acknowledge = async (
         event: FirewallAuditEvent,
         signal: Active['controller']['signal'],
@@ -263,6 +296,11 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
                         return provider.infer(
                             Object.freeze({
                                 ...request,
+                                checkNetworkAccess: (url: string) => {
+                                    request.checkExecution();
+                                    try { resources.get(state.controller.signal)!.network(url); }
+                                    catch { throw new ModelError('provider-denied'); }
+                                },
                                 checkExecution: () => {
                                     request.checkExecution();
                                     checkpoint(state);
@@ -289,7 +327,8 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
     async function execute(
         root: TaskContext,
         operationId: string,
-        raw: BotValue
+        raw: BotValue,
+        routeDeadline = Infinity
     ): Promise<BotValue> {
         let state: Active | undefined;
         let timer: ReturnType<typeof setTimeout> | undefined;
@@ -319,7 +358,8 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
                 reservedCost + reservation.cost > costUnits(cap.maxCostUSD)
             )
                 throw new FirewallError('resource-limit');
-            const time = Math.min(cap.timeoutMs, root.limits.timeoutMs);
+            const time = Math.min(cap.timeoutMs, root.limits.timeoutMs, routeDeadline - clock());
+            if (time <= 0) throw new FirewallError('timeout');
             const context: FirewallExecutionContext = Object.freeze({
                 signal: controller.signal,
                 policyVersion: current.version,
@@ -340,6 +380,7 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
                 checking: false,
             };
             const run = state;
+            bindResources(run);
             active.add(run);
             if (operation.kind === 'model') modelSlots.set(operation.id, run);
             cancel = () => revoke(run, 'cancelled');
@@ -356,7 +397,9 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
             const work = (async () => {
                 try {
                     checkpoint(run);
-                    await config.security.validateTask(root, controller.signal);
+                    if (ownsBinding(config.security, owner))
+                        await coreRootChecks.get(config.security)!(root, controller.signal);
+                    else await config.security.validateTask(root, controller.signal);
                     checkpoint(run);
                     const dispatch = async () => {
                         checkpoint(run);
@@ -435,7 +478,7 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
                                 {
                                     onApproval() {},
                                     trackTool: (work) => work(),
-                                    checkExecution: () => checkpoint(run),
+                                    checkExecution: firewallControl(owner, () => checkpoint(run)),
                                 },
                                 {
                                     effect: operation.effect,
@@ -457,7 +500,7 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
                             input,
                             controller.signal,
                             operation.effect,
-                            async (authorization) => {
+                            firewallControl(owner, async (authorization: () => void) => {
                                 run.authorization = authorization;
                                 try {
                                     result = await dispatch();
@@ -465,7 +508,7 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
                                     failed = true;
                                     error = caught;
                                 }
-                            },
+                            }),
                             () => baseCheck(run)
                         );
                     if (failed) throw error;
@@ -556,7 +599,7 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
                     },
                     controller.signal,
                     'state-changing',
-                    async (authorization) => {
+                    firewallControl(owner, async (authorization: () => void) => {
                         ensure();
                         authorization();
                         if (!candidate) {
@@ -593,7 +636,7 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
                         closed = false;
                         fence();
                         record('policy', null, 'allow', 'updated');
-                    },
+                    }),
                     ensure
                 );
                 return current;
@@ -623,9 +666,116 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
             updating = false;
         }
     }
-    return Object.freeze({
+    if (config.protectExecution) {
+        bindProtectedExecution(config.security, owner, async (root, request, raw, parentSignal) => {
+            const matches = [...registered.values()].filter((operation) => {
+                if (
+                    operation.capability !== request.capability ||
+                    (request.effect !== undefined && operation.effect !== request.effect)
+                )
+                    return false;
+                if (request.kind === 'task' || request.kind === 'capability')
+                    return operation.kind === 'workflow';
+                if (request.kind === 'bot')
+                    return operation.kind === 'bot' && operation.botId === request.botId;
+                return (
+                    operation.kind === 'tool' &&
+                    operation.toolId === request.toolId &&
+                    (operation.botId === undefined || operation.botId === request.botId)
+                );
+            });
+            if (matches.length !== 1) {
+                record('decision', null, 'deny', 'denied');
+                throw new SecurityError('permission-denied');
+            }
+            const operation = matches[0],
+                controller = new AbortController(),
+                cap = current.policy.limits;
+            let state: Active | undefined, timer: ReturnType<typeof setTimeout> | undefined;
+            const cancel = () => {
+                if (state) revoke(state, 'cancelled');
+            };
+            const close = () => {
+                if (!state?.open) return;
+                state.open = false;
+                clearTimeout(timer);
+                parentSignal.removeEventListener('abort', cancel);
+                active.delete(state);
+                state.controller.abort(new FirewallError('revoked'));
+                record('settled', operation.id, 'observe', 'completed');
+            };
+            try {
+                checkRoot(root, controller.signal);
+                if (closed) throw new FirewallError('policy-unavailable');
+                evaluate(current.policy, operation);
+                if (active.size >= cap.maxConcurrent || reservedOperations >= cap.maxOperations)
+                    throw new FirewallError('resource-limit');
+                const input = snapshotValue(
+                    raw,
+                    Math.min(cap.maxInputBytes, root.limits.maxInputBytes),
+                    'invalid-input'
+                );
+                const context: FirewallExecutionContext = Object.freeze({
+                    root,
+                    signal: controller.signal,
+                    policyVersion: current.version,
+                    checkExecution: () => checkpoint(state!),
+                });
+                const time = Math.min(cap.timeoutMs, root.limits.timeoutMs);
+                state = {
+                    operation,
+                    root,
+                    input,
+                    epoch,
+                    controller,
+                    deadline: clock() + time,
+                    pending: new Set(),
+                    context,
+                    reservation: { input: 0, output: 0, cost: 0n },
+                    open: true,
+                    checking: false,
+                };
+                bindResources(state);
+                active.add(state);
+                parentSignal.addEventListener('abort', cancel, { once: true });
+                if (parentSignal.aborted) cancel();
+                timer = setTimeout(() => revoke(state!, 'timeout'), time);
+                checkpoint(state);
+                if (evaluate(current.policy, operation))
+                    record('decision', operation.id, 'would-deny', 'optional-rule');
+                await acknowledge(
+                    record('decision', operation.id, 'allow', 'authorized'),
+                    controller.signal,
+                    current.policy.audit.required,
+                    time
+                );
+                await config.jay.verify(root, controller.signal);
+                checkpoint(state);
+                if (reservedOperations >= cap.maxOperations)
+                    throw new FirewallError('resource-limit');
+                reservedOperations++;
+                return Object.freeze({
+                    signal: controller.signal,
+                    maxOutputBytes: Math.min(cap.maxOutputBytes, root.limits.maxOutputBytes),
+                    check: () => {
+                        try {
+                            checkpoint(state!);
+                        } catch {
+                            throw new SecurityError('permission-denied');
+                        }
+                    },
+                    close,
+                });
+            } catch (error) {
+                record('decision', operation.id, 'deny', failure(error, 'denied').code);
+                close();
+                throw new SecurityError('permission-denied');
+            }
+        });
+    }
+    const firewall: ShivaxFirewall = Object.freeze({
         runtime: Object.freeze({
-            execute,
+            execute: (root: TaskContext, id: string, input: BotValue) => execute(root, id, input),
             snapshot: () => current,
             status: () =>
                 Object.freeze({
@@ -649,4 +799,35 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
             lockdown: (root: TaskContext, expected: number) => update(root, expected, 'lockdown'),
         }),
     });
+
+    guardedModelRoutes.set(firewall.runtime, (route) => {
+        const attempts = route.operationIds.map(id => {
+            const operation = registered.get(id);
+            if (operation?.kind !== 'model' || operation.modelCapability !== route.capability)
+                throw new FirewallError('invalid-configuration');
+            return operation;
+        });
+        return async (root, raw) => {
+            const version = epoch;
+            const deadline = clock() + route.timeoutMs;
+            checkRoot(root, new AbortController().signal);
+            const input = snapshotValue(raw, Math.min(current.policy.limits.maxInputBytes, root.limits.maxInputBytes), 'invalid-input');
+            for (const [index, operation] of attempts.entries()) {
+                const stop = epoch !== version ? 'revoked' : root.signal.aborted ? 'cancelled' :
+                    clock() >= deadline ? 'timeout' :
+                    operation.provider.locality === 'remote' && !route.allowRemote ? 'denied' : undefined;
+                if (stop) {
+                    record('decision', operation.id, 'deny', stop);
+                    throw new FirewallError(stop);
+                }
+                try { return await execute(root, operation.id, input, deadline); }
+                catch (error) {
+                    if (index === attempts.length - 1 || !(error instanceof ModelError) ||
+                        !['unavailable', 'provider-error', 'invalid-output'].includes(error.code)) throw error;
+                }
+            }
+            throw new FirewallError('invalid-configuration');
+        };
+    });
+    return firewall;
 }

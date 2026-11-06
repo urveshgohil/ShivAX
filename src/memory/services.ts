@@ -1,3 +1,4 @@
+import { resources } from '../security/firewall/resources.js';
 import type { BotSignal, BotValue } from '../agents/types.js';
 import { checkPredicate } from '../agents/validation.js';
 import type { AuthenticatedIdentity, ProtectedTool } from '../security/types.js';
@@ -58,6 +59,8 @@ export function registerMemoryServices(
                 addEventListener: context.signal.addEventListener.bind(context.signal),
                 removeEventListener: context.signal.removeEventListener.bind(context.signal),
             });
+            const boundary = resources.get(context.signal);
+            if (boundary) resources.set(signal, boundary);
             signal.throwIfAborted();
             const approval = (record: MemoryDraft | MemoryPatch) => {
                 signal.throwIfAborted();

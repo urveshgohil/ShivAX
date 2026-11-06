@@ -2,6 +2,7 @@ import { createTaskContext, snapshotContext } from '../context.js';
 import { BotExecutor } from '../execute.js';
 import { BotRegistry } from '../registry.js';
 import { BotError, errorDetails } from '../errors.js';
+import type { ProtectedLease } from '../../security/firewall/binding.js';
 import { SecurityError } from '../../security/errors.js';
 import { snapshotValue, toolsForCapability } from '../validation.js';
 import type { BotValue, Capability, TaskContext } from '../types.js';
@@ -121,29 +122,32 @@ export class RudraOrchestrator {
         this.occupied = true;
         const controller = new AbortController();
         this.controller = controller;
+        let firewallLease: ProtectedLease | undefined;
+        const revokeFirewall = () => controller.abort(new RudraError('security-denied'));
         let pending = 0,
             ended = false;
         const release = () => {
             if (ended && pending === 0 && this.controller === controller) {
+                firewallLease?.signal.removeEventListener('abort', revokeFirewall);
+                firewallLease?.close();
                 this.occupied = false;
                 this.controller = undefined;
             }
         };
         // Retain ownership until the actual callback settles, even after the public run times out.
-        const track = <T>(callback: () => T | Promise<T>): Promise<T> => {
+        const track = <T>(callback: () => T | Promise<T>, authorizedDispatch = false): Promise<T> => {
             pending++;
-            return Promise.resolve()
-                .then(() => {
-                    check();
-                    return callback();
-                })
-                .finally(() => {
+            const invoke = async () => { check(); return callback(); };
+            // Vijay just checked the selected bot. Dispatch synchronously in that same turn.
+            const work = authorizedDispatch ? invoke() : Promise.resolve().then(invoke);
+            return work.finally(() => {
                     pending--;
                     release();
                 });
         };
         const cancel = () => controller.abort(new RudraError('cancelled'));
         const check = () => {
+            try { firewallLease?.check(); } catch { revokeFirewall(); }
             if (!controller.signal.aborted && now() - startedAt >= task.limits.timeoutMs)
                 controller.abort(new RudraError('timeout'));
             if (controller.signal.aborted) throw controller.signal.reason;
@@ -188,7 +192,11 @@ export class RudraOrchestrator {
             state('running');
             check();
             if (this.security)
-                await bounded(track(() => this.security!.validateTask(context, controller.signal)));
+                await bounded(track(async () => {
+                    firewallLease = await this.security!.protectTask(context, controller.signal);
+                    firewallLease?.signal.addEventListener('abort', revokeFirewall, { once: true });
+                    if (firewallLease?.signal.aborted) revokeFirewall();
+                }));
             admitted = true;
             check();
             let memory: import('./types.js').PlanningContext['memory'];
@@ -350,7 +358,7 @@ export class RudraOrchestrator {
                                 )
                                     throw new BotError('tool-not-allowed');
                                 return bot.execute(input, botContext);
-                            }),
+                            }, !!firewallLease),
                     };
                     let retryAllowed = !this.security;
                     const result = await bounded(
@@ -389,7 +397,7 @@ export class RudraOrchestrator {
                         try {
                             outputs = snapshotValue(
                                 [...outputs, { stepId: step.id, botId: bot.id, data: result.data }],
-                                task.limits.maxOutputBytes,
+                                firewallLease?.maxOutputBytes ?? task.limits.maxOutputBytes,
                                 'invalid-output'
                             ) as unknown as readonly StepOutput[];
                         } catch {

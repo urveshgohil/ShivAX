@@ -31,6 +31,8 @@ export interface ModelRequest {
     readonly maxCostUSD: number;
     /** Check the absolute deadline immediately before an adapter starts another operation. */
     checkExecution(): void;
+    /** Present on a firewall-managed attempt. Check the actual transport destination before I/O. */
+    checkNetworkAccess?(url: string): void;
 }
 /** Null means unreported. Token-based providers must report both token counts; unknown cost retains its ceiling. */
 export interface ModelUsage {
@@ -90,6 +92,7 @@ export type ModelErrorCode =
     | 'missing-provider'
     | 'provider-error'
     | 'unavailable'
+    | 'provider-denied'
     | 'remote-disabled'
     | 'call-limit'
     | 'token-limit'

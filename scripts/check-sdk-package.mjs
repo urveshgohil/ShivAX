@@ -48,12 +48,24 @@ import { createShivaxFirewall, FirewallError, type FirewallMode, type ShivaxFire
 import type { TaskContext } from 'shivax';
 declare const firewallOptions: ShivaxFirewallOptions;
 declare const authenticatedRoot: TaskContext;
-const firewall = createShivaxFirewall(firewallOptions);
+const firewall = createShivaxFirewall({ ...firewallOptions, protectExecution: true });
 const snapshot: FirewallPolicySnapshot = firewall.runtime.snapshot();
 const mode: FirewallMode = snapshot.policy.mode;
 void firewall.runtime.execute(authenticatedRoot, 'operation', null);
 void firewall.admin.rollback(authenticatedRoot, snapshot.version, 1);
 void mode; void new FirewallError('denied');
+import { createGuardedModelGateway, type RemoteTransportPolicy } from 'shivax/models';
+const guardedModel = createGuardedModelGateway(firewall.runtime, {
+    capability: 'text-reasoning', operationIds: ['approved-model'], timeoutMs: 1000,
+});
+void guardedModel(authenticatedRoot, null);
+declare const transportPolicy: RemoteTransportPolicy;
+transportPolicy.checkDestination(transportPolicy.endpoint);
+import type { InspectraPageSecurity } from 'shivax/adapters/inspectra';
+declare const pageSecurity: InspectraPageSecurity;
+pageSecurity.checkDestination('https://approved.example/');
+// @ts-expect-error Guarded routes require an authenticated TaskContext, not a task payload.
+void guardedModel({ permissions: ['*'] }, null);
 // @ts-expect-error Runtime consumers cannot mutate the mode directly.
 firewall.runtime.setMode('monitor');
 // @ts-expect-error Unsupported modes are not accepted.
