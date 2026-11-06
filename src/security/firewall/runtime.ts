@@ -43,6 +43,21 @@ interface Active {
 
 /** Explicit managed boundary. Raw SDK instances and arbitrary host I/O remain host-owned. */
 export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFirewall {
+    return createFirewall(options);
+}
+
+/** Internal host lifecycle. Never exported through the SDK entrypoints. */
+export interface FirewallHostLifecycle {
+    readonly version: number;
+    readonly signal: import('../../agents/types.js').BotSignal;
+    check(): void;
+    failed(): void;
+    persist(root: TaskContext, next: FirewallPolicySnapshot, signal: import('../../agents/types.js').BotSignal, check: () => void): Promise<() => void>;
+}
+export function createManagedFirewall(options: ShivaxFirewallOptions, lifecycle: FirewallHostLifecycle): ShivaxFirewall {
+    return createFirewall(options, lifecycle);
+}
+function createFirewall(options: ShivaxFirewallOptions, lifecycle?: FirewallHostLifecycle): ShivaxFirewall {
     let config: ShivaxFirewallOptions, registered: ReadonlyMap<string, FirewallOperation>;
     try {
         object(options, [
@@ -80,8 +95,11 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
     }
     const owner = Object.freeze({});
     const initial = policy(config.policy, registered);
-    if (initial.mode !== 'enforce') throw new FirewallError('invalid-policy');
-    let current: FirewallPolicySnapshot = Object.freeze({ version: 1, policy: initial });
+    if (!lifecycle && initial.mode !== 'enforce') throw new FirewallError('invalid-policy');
+    const initialVersion = lifecycle?.version ?? 1;
+    count(initialVersion, 1, Number.MAX_SAFE_INTEGER);
+    lifecycle?.check();
+    let current: FirewallPolicySnapshot = Object.freeze({ version: initialVersion, policy: initial });
     let epoch = 1,
         closed = false,
         updating = false,
@@ -93,7 +111,7 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
         dropped = 0,
         observers = 0;
     const active = new Set<Active>();
-    const history = new Map<number, FirewallPolicy>([[1, initial]]);
+    const history = new Map<number, FirewallPolicy>([[initialVersion, initial]]);
     const events: FirewallAuditEvent[] = [];
     const modelSlots = new Map<string, Active>();
     const routers = new Map<string, ModelRouter>();
@@ -125,6 +143,7 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
         return event;
     };
     const checkRoot = (root: TaskContext, signal: Active['controller']['signal']) => {
+        lifecycle?.check();
         const identity = config.jay.assertActive(root, signal);
         if (
             identity.principal.issuer !== config.realm.issuer ||
@@ -150,6 +169,10 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
             state.controller.abort(new FirewallError(state.revoked!));
         }
     };
+    if (lifecycle) {
+        lifecycle.signal.addEventListener('abort', () => { closed = true; fence(); }, { once: true });
+        if (lifecycle.signal.aborted) throw new FirewallError('policy-unavailable');
+    }
     const baseCheck = (state: Active) => {
         if (!state.open || state.epoch !== epoch || state.revoked)
             throw new FirewallError(state.revoked ?? 'revoked');
@@ -627,10 +650,17 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
                         authorization();
                         if (current.version >= Number.MAX_SAFE_INTEGER)
                             throw new FirewallError('policy-unavailable');
-                        current = Object.freeze({
-                            version: current.version + 1,
-                            policy: candidate,
-                        });
+                        const next = Object.freeze({ version: current.version + 1, policy: candidate });
+                        if (lifecycle) {
+                            const confirm = await lifecycle.persist(root, next, controller.signal, () => { ensure(); authorization(); });
+                            if ((await config.authorizeAdmin(root, controller.signal)) !== true)
+                                throw new FirewallError('unauthorized');
+                            await config.jay.verify(root, controller.signal);
+                            ensure();
+                            authorization();
+                            confirm();
+                        }
+                        current = next;
                         history.set(current.version, candidate);
                         if (history.size > 32) history.delete(history.keys().next().value!);
                         closed = false;
@@ -651,6 +681,7 @@ export function createShivaxFirewall(options: ShivaxFirewallOptions): ShivaxFire
             });
             return await Promise.race([work, stopped]);
         } catch (error) {
+            if (closed) lifecycle?.failed();
             const safe = failure(error, 'unauthorized');
             record('policy', null, 'deny', safe.code);
             throw safe;

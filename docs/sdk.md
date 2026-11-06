@@ -409,3 +409,47 @@ DNS rebinding, redirect enforcement, filesystem aliasing and complete browser
 network isolation require the trusted transport, OS, proxy or sandbox.
 Cancellation cannot undo committed effects or preempt synchronous or
 non-cooperative work. No new unrestricted network or filesystem tool is exposed.
+
+### Authenticated host management (R07)
+
+`openShivaxFirewallManagement` from `shivax/security` creates a host-only
+management controller after loading and validating a persistent policy. It
+requires the existing Jay/Vijay configuration, an immutable catalog of approved
+policy profiles, transport authentication, action-specific administrator checks,
+a synchronous revocation fence, and a trusted exclusive persistent store.
+
+```ts
+import { openShivaxFirewallManagement } from 'shivax/security';
+
+const host = await openShivaxFirewallManagement(hostManagementOptions, hostSignal);
+const configuration = await host.management.readConfiguration(request, requestSignal);
+const current = await host.management.readPolicy(request, requestSignal);
+const next = await host.management.requestChange(request, {
+  expectedVersion: current.version,
+  profileId: configuration[0].id,
+}, requestSignal);
+```
+
+`readPolicy`, `readConfiguration`, `requestChange`, `lockdown` and `readAudit`
+authenticate and authorize each request. Changes select an approved profile ID;
+raw client policies and extra override fields are rejected. Changes retain Vijay
+approval requirements. Storage commits use compare-and-swap versions and a final
+authorization check. The runtime stays closed while the policy is being stored
+and rechecks authorization before publication. Missing or invalid saved policies
+prevent startup. Persistence failure closes admission. An ambiguous acknowledgement
+requires reloading the actual durable version, not assuming rollback.
+
+The store owns exclusive realm fencing, atomic policy/journal persistence and
+protected administrator references. Public audit results omit those references
+and identity data. The startup signal also controls the host lifetime; `close()`
+revokes work and waits for pending storage writes before releasing ownership.
+Policy versions survive restart. Model billing counters remain process-local.
+
+Retain the management controller at the trusted composition root. Never expose it
+as a bot tool, use a task payload as administrator identity, or forward LLM output
+as an administrative instruction. The existing VISYNQ loopback settings channel
+has no SHIVAX administrator identity binding, so R07 supplies a transport-neutral
+adapter and a persistent test host without adding production HTTP routes.
+The repository report `docs/audits/shivax-r07-management.md` documents host findings,
+the complete store contract, crash/revocation semantics and remaining production
+integration responsibilities.

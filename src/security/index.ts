@@ -23,6 +23,12 @@ export type {
 } from './types.js';
 export { createShivaxFirewall } from './firewall/runtime.js';
 export { FirewallError } from './firewall/errors.js';
+export { openShivaxFirewallManagement } from './firewall/management.js';
+export type {
+    FirewallManagementAction, FirewallPolicyProfile, FirewallAuthorizationRecord, FirewallStoredPolicy,
+    FirewallPolicyLease, FirewallPolicyStore, FirewallManagementOptions, FirewallChangeRequest,
+    FirewallLockdownRequest, FirewallManagement, ManagedShivaxFirewall,
+} from './firewall/management.js';
 export type {
     FirewallMode,
     FirewallOperationKind,

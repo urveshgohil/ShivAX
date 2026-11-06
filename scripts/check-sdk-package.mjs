@@ -66,6 +66,17 @@ declare const pageSecurity: InspectraPageSecurity;
 pageSecurity.checkDestination('https://approved.example/');
 // @ts-expect-error Guarded routes require an authenticated TaskContext, not a task payload.
 void guardedModel({ permissions: ['*'] }, null);
+import { openShivaxFirewallManagement, type FirewallManagementOptions, type FirewallPolicyStore } from 'shivax/security';
+declare const managementOptions: FirewallManagementOptions<{ session: string }>;
+declare const policyStore: FirewallPolicyStore;
+declare const managementSignal: import('shivax').BotSignal;
+void openShivaxFirewallManagement({ ...managementOptions, store: policyStore }, managementSignal).then(host => {
+    void host.management.requestChange({ session: 'host-session' }, { expectedVersion: 1, profileId: 'approved' }, managementSignal);
+    // @ts-expect-error Clients cannot submit arbitrary policies.
+    void host.management.requestChange({ session: 'host-session' }, { expectedVersion: 1, policy: snapshot.policy }, managementSignal);
+    // @ts-expect-error Management hosts do not expose the raw admin controller.
+    host.admin.lockdown(authenticatedRoot, 1);
+});
 // @ts-expect-error Runtime consumers cannot mutate the mode directly.
 firewall.runtime.setMode('monitor');
 // @ts-expect-error Unsupported modes are not accepted.
