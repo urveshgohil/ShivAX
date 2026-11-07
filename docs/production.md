@@ -160,10 +160,10 @@ into `dist/` are not supported.
 - **In-process state.** Budgets, workflow pause/resume, model rollback history and
   the in-memory audit ring are per process and lost on restart. Persistent firewall
   policies need a host store.
-- **Workflow model path (R03 G02, open).** `ToolRegistry.registerModel` in
-  `shivax/rudra` still accepts `null` token counts from token-based providers and
-  can retry a thrown hard budget error. Use `ModelRouter` or the guarded gateway
-  where strict usage enforcement matters.
+- **Workflow model tools are a separate ledger.** `ToolRegistry.registerModel`
+  enforces the same fail-closed usage rules as `ModelRouter` (Unreleased fix for
+  R03 G02), but its budget is the workflow's own `modelBudget`, not the firewall's
+  shared model budget. Use the guarded gateway where one shared budget matters.
 - **Permission refresh (R03 G04, open).** Jay snapshots permissions at
   authentication. Revoking a session works; changing a live session's grants
   does not.

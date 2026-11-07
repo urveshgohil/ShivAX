@@ -767,7 +767,7 @@ test('RUDRA timeout retains ownership until a pending scan actually settles', as
         },
     };
     const system = inspectionSystem(provider),
-        work = system.run(inspectionRequest(), { timeoutMs: 30 });
+        work = system.run(inspectionRequest(), { timeoutMs: 300 });
     await started;
     const result = await work;
     assert.equal(result.error.code, 'timeout');

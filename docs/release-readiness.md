@@ -40,14 +40,12 @@ included in the npm package.
    separate Visynq Workstation application, not in SHIVAX. As of 2026-11-07 its
    `start()` still awaits `jay.createContext` without publishing a terminal state,
    so cancelling during startup leaves the demo `queued`. Not changed in R09.
-2. **Workflow model path (R03 G02).** `ToolRegistry.registerModel` accepts `null`
-   token counts from token-based providers and can retry a thrown hard budget
-   error. Documented in `CHANGELOG.md` and `docs/production.md`. Not fixed.
+2. ~~**Workflow model path (R03 G02).**~~ **Fixed in the pre-R10 review**; see
+   *Pre-R10 code review* below.
 3. **Live permission refresh (R03 G04).** Session revocation works; changing a
    live session's grants does not. Documented as a limitation.
-4. **Intermittent test failure.** One full `pnpm test` run on 2026-11-07, before
-   R09 changes, reported 773/774. Fourteen further runs passed 774/774; the failing
-   test was not identified. Treat the suite as possibly flaky until found.
+4. ~~**Intermittent test failure.**~~ **Root-caused and fixed in the pre-R10
+   review** (test timing and temp-directory isolation; no product defect).
 5. **CI coverage.** The GitHub Actions workflow (Linux/Windows, Node 22/24/26)
    runs only on the GitHub mirror, whose default branch `Beta/0.1.0` was last pushed
    2026-11-01. No CI run exists for any post-0.1.3 change. R09 checks ran locally
@@ -105,6 +103,74 @@ The 774 tests include, counted per file on 2026-11-07 (each file runs its cases 
 both ESM and CommonJS): `firewall` 66, `firewall-integration` 58,
 `firewall-model-integration` 60, `firewall-management` 40, `model-safety` 42,
 `model-cost` 38 and `router-audit` 4 (the original R00 reproductions). Node 24/26 and Linux were not run in R09.
+
+## Pre-R10 code review (2026-11-07)
+
+Manual review of the security-critical source: firewall runtime, policy,
+operations, binding and management; Jay, Vijay and protected tool leases;
+`ModelRouter`, remote and Ollama adapters; the guarded model gateway; memory
+resource checks; the Inspectra adapter; and the workflow model path. Plus
+`pnpm audit` and a load test of the suite.
+
+### Fixed
+
+| # | Severity | Finding | Fix | Evidence |
+| --- | --- | --- | --- | --- |
+| 1 | Medium | **R03 G02, unverified usage.** `ToolRegistry.registerModel` accepted `null` or missing token counts from token-based providers, so usage limits could not be enforced on that path. | Usage is read with the R02 `usageReport` (no accessors invoked). Missing, `null` or malformed usage on a token-based provider fails the action with no retry. | `tests/workflows.test.mjs` "R03 G02: unverifiable token usage…" |
+| 2 | Medium | **R03 G02, terminal errors retried.** A thrown hard model failure (token/cost/usage limit, unverifiable usage, timeout, declared output failure) became a generic `tool-error` and was retried up to `maxRetries`, spending extra calls. | Only `provider-error`, `unavailable` and non-model errors stay retryable, matching `ModelRouter` fallback rules. | "R03 G02: thrown hard model failures are not retried…" |
+| 3 | Low | **Workflow cost arithmetic.** The reservation summed prices and token rates as floating-point numbers before rounding, unlike the exact R01 ledger. | Exact BigInt arithmetic; the provider receives a fully funded `maxCostUSD`, and a charge equal to that cap is accepted. | "model tools reserve exact funded cost…" |
+| 4 | Test | **Intermittent suite failure.** Under CPU load (four parallel suites), 30 of 40 runs failed. 29 failures were the package-process cleanup test, which checked the shared OS temp directory. The others were tests with 10–30 ms wall-clock windows in which work had to start or finish before the deadline; a second stress pass found one more. No product defect was involved: the router checks `busy` synchronously, and those timeouts were real. | The cleanup test uses a private temp directory. Six windows were widened to 250–300 ms. | Stress results below |
+
+All three G02 regressions fail against the previous `registry.ts` and pass with
+the fix. Existing workflow tests pass unchanged.
+
+### Reviewed, no change needed
+
+- Firewall: no await between final checks, budget reservation and dispatch; every
+  await before a policy commit is followed by an epoch/version/authorization
+  recheck; lockdown blocks every non-CPU kind; monitor relaxes only optional denies.
+- Protected-execution bypass tags use a closure-private owner object.
+- Management: commands are snapshotted before any await, a single mutation slot
+  has no await gap, and authorization is rechecked around the durable commit.
+- Jay/Vijay: identity comes only from minted contexts; permissions, policy identity
+  and input predicates are rechecked after approval and before dispatch.
+- File checks are exact matches that fail closed on case, alias and relative paths.
+
+### Not fixed, reported
+
+- **`pnpm audit`: 2 moderate advisories, development and optional-peer only.**
+  `minimatch` < 11.0.1 (GHSA-g3hv-75wg-m249) through `eslint`, and `glob` ≤ 14.0.1
+  (GHSA-3g3m-2fjr-6pw4) through `inspectra-engine` → `lighthouse` → `@sentry`.
+  Neither is in the SHIVAX package. The latest `eslint` (10.14.0) still requires
+  `minimatch ^10`, so there is no non-breaking upgrade yet. The `glob` path is in
+  the separate `inspectra-engine` package.
+- **Ollama `localhost`.** The adapter accepts `localhost` as well as `127.0.0.1` and
+  `[::1]`; `localhost` relies on the host resolver. Low severity; unchanged for
+  compatibility.
+- **R03 G04** (live permission refresh) remains a documented limitation.
+
+### Stress results
+
+Load test: four full suites in parallel, repeated, on Windows with Node v22.23.2.
+
+| Tree | Suite runs | Runs with a failure |
+| --- | ---: | ---: |
+| Before the review fixes | 40 | 30 |
+| After the first fixes | 40 | 1 (a sixth timing window, then widened) |
+| Final | 60 | **0** |
+
+Sequential runs before the fixes: 54 more passed, after one failure in the first
+`pnpm test` of the day.
+
+Final gate on the reviewed tree, same environment:
+
+| Command | Exit | Result |
+| --- | ---: | --- |
+| `pnpm lint` | 0 | Passed |
+| `pnpm test` | 0 | **778 tests: 778 pass, 0 fail**, 0 cancelled, 0 skipped; no build warnings (774 plus 4 new G02 regressions) |
+| `pnpm verify:package` | 0 | 12 entry points, 7 documented examples present, 5 offline examples ran, five declaration modes; 452 files |
+| `npm run verify:package` | 0 | Same checks with npm; 453 files |
+| `npm pack --dry-run` | 0 | `shivax@0.1.3`, 453 files, 418.5 kB; no tarball written |
 
 ## Historical record: Phase 10 report (2026-10-29, shivax 0.1.2)
 

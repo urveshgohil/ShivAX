@@ -329,7 +329,7 @@ for (const [format, { ModelRouter, ModelProviderRegistry }] of formats) {
                 const controller = new AbortController();
                 const r = router([provider('paid', () => pending.promise)], {
                     maxCostUSD: 0.1,
-                    timeoutMs: mode === 'timeout' ? 10 : 1000,
+                    timeoutMs: mode === 'timeout' ? 250 : 1000,
                 });
                 const first = r.infer(request(controller.signal));
                 if (mode === 'cancelled') controller.abort();

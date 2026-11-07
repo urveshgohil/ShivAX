@@ -381,7 +381,7 @@ test('approval binds to frozen input and cannot authorize a later mutated resour
 test('pending protected tool retains RUDRA ownership after a workflow timeout', async () => {
     const entered = deferred(), release = deferred();
     const f = fixture({ handler: async () => { entered.resolve(); await release.promise; return { value: 'late' }; } });
-    const running = f.rudra.run(await f.context(request(), { limits: { timeoutMs: 30 } }));
+    const running = f.rudra.run(await f.context(request(), { limits: { timeoutMs: 300 } }));
     await entered.promise; const result = await running;
     assert.equal(result.error.code, 'timeout'); assert.equal((await f.rudra.run(await f.context())).error.code, 'busy');
     const snapshot = JSON.stringify(result); release.resolve(); await flush(); await flush();

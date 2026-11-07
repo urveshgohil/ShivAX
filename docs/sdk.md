@@ -258,10 +258,10 @@ a trusted host, OS firewall, proxy or sandbox.
 
 With the default explicit-runtime configuration, other SDK instances require host integration. Host registrations must propagate the supplied signal and
 checkpoints and route nested effects through managed operations where needed.
-The existing workflow `registerModel` path is still distinct from this core's
-ModelRouter path; the R03 null-usage/error-classification findings remain tracked
-for that legacy path. An npm library cannot stop a malicious host from bypassing
-its own code.
+The workflow `registerModel` path is still distinct from this core's ModelRouter
+path and keeps its own workflow budget. It now applies the same fail-closed usage
+and terminal-error rules (the R03 G02 fix). An npm library cannot stop a malicious
+host from bypassing its own code.
 
 ### Binding the firewall to protected execution
 
@@ -309,9 +309,10 @@ mandatory rules, approvals and controller resource ceilings. An operation
 already admitted through the explicit R04 runtime keeps its own reservation.
 
 The binding covers calls through this Vijay. Direct host I/O and raw provider calls
-require their own managed boundary. The existing workflow model adapter retains
-the separate R03 G02 usage/error findings. Protected tool admission alone does
-not add ModelRouter accounting to a raw provider call.
+require their own managed boundary. The workflow model adapter enforces its own
+workflow budget with the R02 usage rules, not the firewall's shared ledger.
+Protected tool admission alone does not add ModelRouter accounting to a raw
+provider call.
 
 ### Guarded model and integration calls (R06)
 

@@ -346,7 +346,7 @@ for (const [
                         return report();
                     }),
                 ],
-                { timeoutMs: mode === 'timeout' ? 10 : 1000 }
+                { timeoutMs: mode === 'timeout' ? 250 : 1000 }
             );
             const first = r.infer(request(controller.signal), { allowFallback: true });
             if (mode === 'cancelled') controller.abort();

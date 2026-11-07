@@ -29,10 +29,9 @@ Changes in the source after the published 0.1.3 package. Not yet released to npm
 
 - Exact model cost accounting: three $0.10 calls now fit a $0.30 budget; previously floating-point addition rejected the third (R00-01, fixed in R01).
 - Malformed model output no longer hides a reported token overrun and lets a fallback provider run (R00-02, fixed in R02).
-
-### Known issues
-
-- The workflow `ToolRegistry.registerModel` path still accepts `null` token counts from token-based providers and can retry a thrown hard budget error (R03 finding G02).
+- **Breaking:** workflow model tools (`ToolRegistry.registerModel`) now follow the R02 usage rules (R03 finding G02). A token-based provider that reports `null` or missing token counts, or malformed usage, fails the action with no retry. A thrown hard model failure (token, cost or usage limit, unverifiable usage, timeout or declared output failure) is no longer retried as a generic tool error; ordinary `provider-error` and `unavailable` failures still retry within `maxRetries`. Usage is read without invoking accessors.
+- Workflow model tool cost reservations use the exact R01 arithmetic instead of a floating-point sum. The provider receives a fully funded `maxCostUSD` cap, and a reported charge equal to that cap is accepted.
+- Test reliability: six timing-sensitive tests no longer fail when the CPU is busy, and the package-process cleanup test uses a private temporary directory so a concurrent `verify:package` cannot fail it.
 
 ## [0.1.3] - 2026-11-01
 

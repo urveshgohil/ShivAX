@@ -4,8 +4,14 @@ import { ProtectedToolRegistry } from '../security/registry.js';
 import { SecurityError } from '../security/errors.js';
 import type { ProtectedTool } from '../security/types.js';
 import { ModelProviderRegistry } from '../intelligence/registry.js';
-import { response, schema } from '../intelligence/validation.js';
-import { integer, moneyUnits } from './validation.js';
+import { ModelError } from '../intelligence/errors.js';
+import { costUnits as exactUnits, reservationUSD } from '../intelligence/cost.js';
+import { response, schema, usageReport } from '../intelligence/validation.js';
+import { integer } from './validation.js';
+import { WorkflowError } from './errors.js';
+
+// R01 exact cost units are 10^-324 USD; workflow budgets count 10^-9 USD.
+const NANODOLLAR_UNITS = 10n ** 315n;
 import type { WorkflowModelTool, WorkflowTool, WorkflowToolBinding } from './types.js';
 
 export interface RegisteredWorkflowTool {
@@ -137,10 +143,18 @@ export class ToolRegistry {
         integer(config.maxOutputTokens, 0, 100_000_000);
         const inputTokens = provider.tokenBased ? config.maxInputTokens : 0;
         const outputTokens = provider.tokenBased ? config.maxOutputTokens : 0;
-        const costUnits = moneyUnits(
-            provider.pricing.callUSD +
-                provider.pricing.inputTokenUSD * inputTokens +
-                provider.pricing.outputTokenUSD * outputTokens
+        // Exact R01 arithmetic: no floating-point sum decides the reservation.
+        const exactCost =
+            exactUnits(provider.pricing.callUSD) +
+            exactUnits(provider.pricing.inputTokenUSD) * BigInt(inputTokens) +
+            exactUnits(provider.pricing.outputTokenUSD) * BigInt(outputTokens);
+        if (exactCost > exactUnits(1_000_000)) throw new WorkflowError('invalid-options');
+        // The Number cap given to the provider is funded in full, as in ModelRouter.
+        const providerCapUSD = reservationUSD(exactCost);
+        const fundedCost = exactUnits(providerCapUSD);
+        // Workflow budgets use whole nanodollars; round the funded amount up.
+        const costUnits = Number(
+            (fundedCost + NANODOLLAR_UNITS - 1n) / NANODOLLAR_UNITS
         );
         const outputSchema = schema(config.output.schema),
             validate = config.output.validate?.bind(config.output);
@@ -159,40 +173,53 @@ export class ToolRegistry {
                         context.signal.throwIfAborted();
                     };
                     checkExecution();
-                    const raw = await provider.infer(
-                        Object.freeze({
-                            capability: modelCapability,
-                            input,
-                            schema: outputSchema,
-                            context: Object.freeze({
-                                taskId: context.taskId!,
-                                sessionId: context.session.id,
-                                scope: context.session.scope,
-                                signal: context.signal,
-                            }),
-                            maxInputTokens: inputTokens,
-                            maxOutputTokens: outputTokens,
-                            maxCostUSD: costUnits / 1e9,
-                            checkExecution,
-                        })
-                    );
-                    checkExecution();
+                    let raw: unknown;
                     try {
-                        // Inspect usage before output validation. Invalid output never masks an overrun.
-                        const envelope = record(raw, ['data', 'usage'], 'invalid-output');
-                        const usage = record(
-                            envelope.usage,
-                            ['inputTokens', 'outputTokens', 'costUSD'],
-                            'invalid-output'
+                        raw = await provider.infer(
+                            Object.freeze({
+                                capability: modelCapability,
+                                input,
+                                schema: outputSchema,
+                                context: Object.freeze({
+                                    taskId: context.taskId!,
+                                    sessionId: context.session.id,
+                                    scope: context.session.scope,
+                                    signal: context.signal,
+                                }),
+                                maxInputTokens: inputTokens,
+                                maxOutputTokens: outputTokens,
+                                maxCostUSD: providerCapUSD,
+                                checkExecution,
+                            })
                         );
-                        for (const [field, max] of [
-                            ['inputTokens', inputTokens],
-                            ['outputTokens', outputTokens],
-                        ] as const)
-                            if (usage[field] !== null) integer(usage[field], 0, max);
-                        if (usage.costUSD !== null && moneyUnits(usage.costUSD) > costUnits)
+                    } catch (error) {
+                        checkExecution();
+                        // Match ModelRouter: only ordinary provider/transport failures stay
+                        // retryable. Hard limits, unverifiable usage, timeouts and declared
+                        // output failures are terminal (invalid-output is never retried).
+                        if (
+                            error instanceof ModelError &&
+                            !['provider-error', 'unavailable'].includes(error.code)
+                        )
                             throw new SecurityError('invalid-output');
-                        const result = response(raw, outputSchema, validate, 1_048_576);
+                        throw error;
+                    }
+                    checkExecution();
+                    // Inspect usage before output validation, without invoking accessors.
+                    // Invalid output never masks an overrun; unverifiable usage fails closed (R02).
+                    const report = usageReport(raw);
+                    const usage = report.usage;
+                    if (
+                        !report.valid ||
+                        (provider.tokenBased &&
+                            (usage.inputTokens === null || usage.outputTokens === null)) ||
+                        (usage.inputTokens !== null && usage.inputTokens > inputTokens) ||
+                        (usage.outputTokens !== null && usage.outputTokens > outputTokens) ||
+                        (usage.costUSD !== null && exactUnits(usage.costUSD) > fundedCost)
+                    )
+                        throw new SecurityError('invalid-output');
+                    try {
+                        const result = response(raw, outputSchema, validate, 1_048_576, usage);
                         checkExecution();
                         return result.data;
                     } catch {

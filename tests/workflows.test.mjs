@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { Jay, Vijay, ToolRegistry, ProtectedToolRegistry, PermissionPolicyRegistry, SecurityAuditLog, RudraWorkflowEngine, WorkflowError } from 'shivax';
+import { Jay, Vijay, ToolRegistry, ProtectedToolRegistry, PermissionPolicyRegistry, SecurityAuditLog, RudraWorkflowEngine, WorkflowError, ModelError } from 'shivax';
 import { createMockIdentityProvider } from './fixtures/mock-identity.mjs';
 import { createAutonomousDemo } from '../examples/autonomous-workflow.mjs';
 
@@ -151,7 +151,7 @@ test('blocking approval cannot commit after the absolute deadline', async () => 
 test('async approval deadline cannot revive a late approved operation', async () => {
     let calls = 0; const gate = deferred();
     const f = await fixture([definition('write', () => ++calls, { effect: 'state-changing', parallelSafe: false })], {
-        limits: { timeoutMs: 30 }, approve: () => gate.promise,
+        limits: { timeoutMs: 300 }, approve: () => gate.promise,
     });
     const run = f.run(plan(action('a', 'write')));
     assert.equal((await run.result).error.code, 'timeout');
@@ -318,8 +318,8 @@ test('dispose cancels work and permanently closes admission', async () => {
 
 function modelRegistry(infer, options = {}) {
     return new ToolRegistry().registerModel({ id: 'fixture.model', capability: 'reason',
-        provider: { id: 'fixture-provider', capabilities: ['text-reasoning'], locality: options.locality ?? 'in-process', tokenBased: true,
-            pricing: { inputTokenUSD: 0, outputTokenUSD: 0, callUSD: options.cost ?? 0.1 }, infer },
+        provider: { id: 'fixture-provider', capabilities: ['text-reasoning'], locality: options.locality ?? 'in-process', tokenBased: options.tokenBased ?? true,
+            pricing: options.pricing ?? { inputTokenUSD: 0, outputTokenUSD: 0, callUSD: options.cost ?? 0.1 }, infer },
         modelCapability: 'text-reasoning', output: { schema: { type: 'number' } }, maxInputTokens: 2, maxOutputTokens: 3,
         validateInput: input => typeof input === 'number', ...(options.allowRemote === undefined ? {} : { allowRemote: options.allowRemote }) });
 }
@@ -351,6 +351,66 @@ test('failed inference and retries retain model reservations; invalid output can
     const bad = await fixture([], { tools: modelRegistry(() => ({ data: 'invalid', usage: { inputTokens: 2, outputTokens: 30, costUSD: 1 } })) });
     const badResult = await bad.run(plan(action('a', 'reason')), { maxRetries: 3, modelBudget }).result;
     assert.equal(badResult.status, 'failed'); assert.equal(badResult.usage.modelCalls, 1);
+});
+
+test('R03 G02: unverifiable token usage from a token-based model tool is terminal and never retried', async () => {
+    for (const response of [
+        { data: 1, usage: { inputTokens: null, outputTokens: null, costUSD: 0.1 } },
+        { data: 1, usage: { inputTokens: 2, outputTokens: null, costUSD: 0.1 } },
+        { data: 1, usage: { inputTokens: 2, outputTokens: 3 } },
+        { data: 1 },
+        { data: 1, usage: { inputTokens: 2, outputTokens: 3, costUSD: 0.1, extra: 1 } },
+    ]) {
+        let calls = 0;
+        const f = await fixture([], { tools: modelRegistry(() => { calls++; return response; }) });
+        const result = await f.run(plan(action('a', 'reason')), { modelBudget, maxRetries: 2 }).result;
+        assert.equal(result.status, 'failed'); assert.equal(calls, 1); assert.equal(result.usage.modelCalls, 1);
+        assert.equal(result.outputs.length, 0);
+    }
+    // Usage is read without invoking accessors.
+    let read = 0;
+    const getter = { data: 1, get usage() { read++; return { inputTokens: 2, outputTokens: 3, costUSD: 0.1 }; } };
+    const f = await fixture([], { tools: modelRegistry(() => getter) });
+    assert.equal((await f.run(plan(action('a', 'reason')), { modelBudget, maxRetries: 2 }).result).status, 'failed');
+    assert.equal(read, 0);
+});
+
+test('R03 G02: thrown hard model failures are not retried; ordinary provider errors still are', async () => {
+    for (const reason of ['token-limit-exceeded', 'cost-limit-exceeded', 'usage-unverifiable', 'provider-timeout', 'invalid-provider-output', 'usage-limit']) {
+        let calls = 0;
+        const f = await fixture([], { tools: modelRegistry(() => { calls++; throw new ModelError(reason); }) });
+        const result = await f.run(plan(action('a', 'reason')), { modelBudget, maxRetries: 2 }).result;
+        assert.equal(result.status, 'failed', reason); assert.equal(calls, 1, reason);
+        assert.equal(result.usage.modelCalls, 1, reason);
+    }
+    for (const thrown of [() => new ModelError('provider-error'), () => new ModelError('unavailable'), () => new Error('transport')]) {
+        let calls = 0;
+        const f = await fixture([], { tools: modelRegistry(() => { if (++calls < 3) throw thrown(); return modelOutput(5); }) });
+        const result = await f.run(plan(action('a', 'reason')), { modelBudget, maxRetries: 2 }).result;
+        assert.equal(result.status, 'completed'); assert.equal(calls, 3); assert.equal(result.usage.modelCalls, 3);
+    }
+});
+
+test('model tools: token-free providers may report null tokens, never positive ones', async () => {
+    const ok = await fixture([], { tools: modelRegistry(() => ({ data: 1, usage: { inputTokens: null, outputTokens: null, costUSD: 0.1 } }), { tokenBased: false }) });
+    const done = await ok.run(plan(action('a', 'reason')), { modelBudget }).result;
+    assert.equal(done.status, 'completed'); assert.equal(done.usage.modelTokens, 0);
+    let calls = 0;
+    const over = await fixture([], { tools: modelRegistry(() => { calls++; return { data: 1, usage: { inputTokens: 1, outputTokens: 0, costUSD: 0.1 } }; }, { tokenBased: false }) });
+    assert.equal((await over.run(plan(action('a', 'reason')), { modelBudget, maxRetries: 2 }).result).status, 'failed');
+    assert.equal(calls, 1);
+});
+
+test('model tools reserve exact funded cost and accept a charge equal to the provider cap', async () => {
+    // 0.1 + 2 * 1e-17 is not a representable Number; the funded cap rounds up to the next one.
+    const pricing = { callUSD: 0.1, inputTokenUSD: 1e-17, outputTokenUSD: 0 };
+    let cap;
+    const exact = await fixture([], { tools: modelRegistry(request => { cap = request.maxCostUSD; return { data: 1, usage: { inputTokens: 2, outputTokens: 3, costUSD: request.maxCostUSD } }; }, { pricing }) });
+    const result = await exact.run(plan(action('a', 'reason')), { modelBudget }).result;
+    assert.equal(result.status, 'completed'); assert.equal(cap, 0.10000000000000002);
+    const above = 0.10000000000000003;
+    const over = await fixture([], { tools: modelRegistry(() => ({ data: 1, usage: { inputTokens: 2, outputTokens: 3, costUSD: above } }), { pricing }) });
+    assert.equal((await over.run(plan(action('a', 'reason')), { modelBudget }).result).status, 'failed');
 });
 
 test('remote model tools require host opt-in and model cancellation retains pending ownership', async () => {

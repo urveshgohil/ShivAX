@@ -79,15 +79,17 @@ test('failed package command preserves diagnostics and cleans the temporary cons
     const cli = join(directory, 'npm-cli.js');
     writeFileSync(cli, 'console.log("PACK_OUT");console.error("PACK_ERR");process.exit(9)');
     const root = fileURLToPath(new URL('../', import.meta.url));
-    const temporary = () => readdirSync(tmpdir()).filter(name => name.startsWith('.shivax-sdk-pack-')).sort();
-    const before = temporary();
+    // Private temp root: a concurrent verify:package or test run cannot affect this check.
+    const isolated = join(directory, 'tmp');
+    mkdirSync(isolated);
+    const temporary = () => readdirSync(isolated).filter(name => name.startsWith('.shivax-sdk-pack-')).sort();
     const result = spawnSync(process.execPath, ['scripts/check-sdk-package.mjs'], {
         cwd: root, encoding: 'utf8', windowsHide: true,
-        env: { ...process.env, SHIVAX_NPM_CLI: cli },
+        env: { ...process.env, SHIVAX_NPM_CLI: cli, TMPDIR: isolated, TEMP: isolated, TMP: isolated },
     });
     assert.equal(result.status, 1);
     assert.match(result.stderr, /Exit status: 9/);
     assert.match(result.stderr, /PACK_OUT/);
     assert.match(result.stderr, /PACK_ERR/);
-    assert.deepEqual(temporary(), before);
+    assert.deepEqual(temporary(), []);
 }));

@@ -305,7 +305,7 @@ test('deadline bounds the caller wait; late results cannot complete or free a bu
     }, validateOutput(data) { outputChecks++; return typeof data === 'string'; } };
     const executor = new BotExecutor(), completed = [];
     executor.events.on('bot:completed', event => completed.push(event));
-    const pending = executor.execute(bot, context('x', { limits: { timeoutMs: 15 } }));
+    const pending = executor.execute(bot, context('x', { limits: { timeoutMs: 300 } }));
     await entered.promise;
     assert.equal((await pending).status, 'timed-out');
     assert.equal((await executor.execute(bot, context())).error.code, 'busy');
