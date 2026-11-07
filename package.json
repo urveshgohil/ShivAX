@@ -137,7 +137,17 @@
     "adapters/inspectra/index.d.mts",
     "adapters/inspectra/README.md",
     "docs/sdk.md",
-    "docs/release-readiness.md"
+    "docs/production.md",
+    "docs/release-readiness.md",
+    "examples/autonomous-workflow.mjs",
+    "examples/sdk/README.md",
+    "examples/sdk/registry.mjs",
+    "examples/sdk/local-model.mjs",
+    "examples/sdk/ollama.mjs",
+    "examples/sdk/rudra.mjs",
+    "examples/sdk/memory-persistence.mjs",
+    "examples/sdk/firewall.mjs",
+    "examples/sdk/inspectra.mjs"
   ],
   "scripts": {
     "example:core": "pnpm build && node --experimental-strip-types examples/core.ts",
@@ -195,6 +205,14 @@
   ],
   "author": "Urvesh Gohil",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/urveshgohil/ShivAX.git"
+  },
+  "bugs": {
+    "url": "https://github.com/urveshgohil/ShivAX/issues"
+  },
+  "homepage": "https://github.com/urveshgohil/ShivAX#readme",
   "sideEffects": false,
   "engines": {
     "node": ">=22"

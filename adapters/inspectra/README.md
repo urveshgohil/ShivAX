@@ -75,6 +75,9 @@ included; hidden/clipped nodes are omitted. No hidden DOM inventory is claimed.
 
 ## Verification
 
+These are maintainer checks. The test files, fixtures and scripts they use are in
+the SHIVAX source repository and are not included in the npm package.
+
 From the SHIVAX repository root, after building:
 
 ```sh

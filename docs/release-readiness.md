@@ -1,11 +1,127 @@
-# Phase 10 release-readiness report
+# Release readiness
+
+## Current status: R09 (2026-11-07, Asia/Calcutta)
+
+**Decision: R09 documentation and SDK packaging work is complete. Nothing was
+published.** Releasing the `Unreleased` changes still needs a version decision
+and the open items below.
+
+### Version and registry state
+
+- `package.json`, `VERSION` in `src/index.ts`, README, SDK guide and SECURITY.md
+  all state 0.1.3.
+- npm registry, checked 2026-11-07: published versions `0.0.0-stage`, `0.1.2` and
+  `0.1.3`; `latest` is 0.1.3, published 2026-11-01T18:24Z with `gitHead`
+  `551aa45`. Version 0.1.1 was never published. Version 0.1.0 has a registry
+  timestamp but is no longer listed.
+- The published 0.1.3 tarball was downloaded and inspected. It contains no
+  `createShivaxFirewall`, no `usage-unverifiable` code and no internal cost module.
+  The R01, R02 and firewall (R04–R07) work in this source is therefore **unreleased**
+  and is recorded under `Unreleased` in `CHANGELOG.md`.
+- The unreleased changes include a breaking behaviour change (R02 fail-closed token
+  usage). Under 0.x semantic versioning, `^0.1.3` ranges would pick up a 0.1.x patch
+  automatically, so the next release should be a minor version.
+
+### Historical findings now resolved
+
+| Finding (Phase 10, 2026-10-29) | Status | Evidence |
+| --- | --- | --- |
+| P1: malformed output masks reported usage overrun (`ModelRouter`) | **Resolved in R02.** The overrun now fails with `usage-limit` (reason `token-limit-exceeded`), fallback never runs, and later calls are blocked. The original R00 reproduction passes 4/4 in the standard test gate. Unreleased. | [`docs/audits/shivax-r02.md`](audits/shivax-r02.md), `tests/model-safety.test.mjs`, `tests/router-audit.test.mjs` |
+| P2: fractional USD accumulation rejects an affordable call (`ModelRouter`) | **Resolved in R01.** Exact integer cost accounting: three $0.10 calls fit $0.30, the fourth is rejected; ten fit $1. Unreleased. | [`docs/audits/shivax-r01.md`](audits/shivax-r01.md), `tests/model-cost.test.mjs` |
+| P2: CommonJS TypeScript consumers fail with TS1479 | **Resolved in 0.1.3** (published). Conditional CommonJS declaration graph; checked in five consumer modes by `verify:package`. | [`docs/audits/build-stabilization-final.md`](audits/build-stabilization-final.md) |
+| Rollup private-field helper and unresolved optional Inspectra warnings | **Resolved in 0.1.3** (published). No build warnings in the R09 build. | `CHANGELOG.md` 0.1.3 |
+
+The audit reports linked above are in the source repository; they are not
+included in the npm package.
+
+### Open items
+
+1. **Visynq demo startup cancellation (Phase 10 review item 2).** This is in the
+   separate Visynq Workstation application, not in SHIVAX. As of 2026-11-07 its
+   `start()` still awaits `jay.createContext` without publishing a terminal state,
+   so cancelling during startup leaves the demo `queued`. Not changed in R09.
+2. **Workflow model path (R03 G02).** `ToolRegistry.registerModel` accepts `null`
+   token counts from token-based providers and can retry a thrown hard budget
+   error. Documented in `CHANGELOG.md` and `docs/production.md`. Not fixed.
+3. **Live permission refresh (R03 G04).** Session revocation works; changing a
+   live session's grants does not. Documented as a limitation.
+4. **Intermittent test failure.** One full `pnpm test` run on 2026-11-07, before
+   R09 changes, reported 773/774. Fourteen further runs passed 774/774; the failing
+   test was not identified. Treat the suite as possibly flaky until found.
+5. **CI coverage.** The GitHub Actions workflow (Linux/Windows, Node 22/24/26)
+   runs only on the GitHub mirror, whose default branch `Beta/0.1.0` was last pushed
+   2026-11-01. No CI run exists for any post-0.1.3 change. R09 checks ran locally
+   on Windows with Node 22 only.
+6. **Lockfile.** `pnpm-lock.yaml` is in `.gitignore` and not committed; CI uses
+   `--no-frozen-lockfile`.
+7. **Security reporting.** GitHub private vulnerability reporting is disabled on
+   the public repository. The GitLab project previously named in SECURITY.md
+   returns 404 to anonymous users. SECURITY.md now directs reporters to request a
+   private channel through a detail-free GitHub issue.
+8. **Audit records.** R05 and R06 have no standalone audit reports; their
+   behaviour is documented in `docs/sdk.md` and covered by
+   `tests/firewall-integration.test.mjs` and `tests/firewall-model-integration.test.mjs`.
+
+### R09 changes
+
+- SDK examples now ship in the package (option A): `examples/sdk/*.mjs`,
+  `examples/sdk/README.md` and `examples/autonomous-workflow.mjs`, which
+  `rudra.mjs` imports. Added `examples/sdk/firewall.mjs`. The React demo is no
+  longer described as package content. The repository's recorded inspection
+  fixture JSON is used only by that separate application and stays out of the package.
+- `scripts/check-sdk-package.mjs` now checks that every example named in shipped
+  documentation is in the tarball and runs the five offline examples from the
+  installed copy.
+- `package.json`: added `repository`, `bugs` and `homepage` for the public GitHub
+  repository; added `docs/production.md` and the examples to `files`.
+- New `docs/production.md`. Updated README, `docs/sdk.md`, SECURITY.md,
+  CHANGELOG (`Unreleased`), `examples/README.md` and the Inspectra adapter README.
+
+Package metadata checked: Apache-2.0 license with `LICENSE` and `NOTICE` packed;
+`engines.node` `>=22` (the Inspectra adapter needs 22.15+, as documented);
+optional peer `inspectra-engine` pinned to 1.0.4, which exists on npm under
+Apache-2.0 with `engines.node >=22.15`; 12 conditional ESM/CommonJS export entries.
+No license or distribution terms were changed.
+
+### R09 verification
+
+Executed on Windows, Node v22.23.2, pnpm 12.8.1, from the repository root. No paid
+model API, Ollama server, browser or network service was used. Nothing was published.
+
+| Command | Exit | Actual result |
+| --- | ---: | --- |
+| `pnpm lint` | 0 | TypeScript no-emit and ESLint passed |
+| `pnpm test` | 0 | Clean build, then **774 tests: 774 pass, 0 fail**, 0 cancelled, 0 skipped, 0 todo; no build warnings |
+| `pnpm verify:package` | 0 | Packed install outside the repository; 12 ESM/CommonJS entry points; 7 documented examples present; 5 offline examples ran from the installed copy; declarations in five consumer modes; 452 packaged files |
+| `npm run verify:package` | 0 | Same checks with npm; 453 packaged files (npm also packs `examples/README.md`) |
+| `npm pack --dry-run` | 0 | `shivax@0.1.3`, 453 files, 415.1 kB packed, 2.0 MB unpacked; no tarball written |
+
+The first R09 `verify:package` run failed as intended: the new documented-example
+check found a shipped document naming an example path that is not packed. That
+wording was corrected, and the final runs above passed. `pnpm lint` and `pnpm test`
+ran before that one-line documentation correction.
+
+The 774 tests include, counted per file on 2026-11-07 (each file runs its cases in
+both ESM and CommonJS): `firewall` 66, `firewall-integration` 58,
+`firewall-model-integration` 60, `firewall-management` 40, `model-safety` 42,
+`model-cost` 38 and `router-audit` 4 (the original R00 reproductions). Node 24/26 and Linux were not run in R09.
+
+## Historical record: Phase 10 report (2026-10-29, shivax 0.1.2)
+
+The text below is preserved as written on 2026-10-29. Statuses above supersede
+its blocker and review findings. References to Visynq describe the author's
+separate application, which is not distributed with SHIVAX.
 
 Date: 2026-10-29 (Asia/Calcutta). Package: shivax 0.1.2.
 
-**Decision: Phase 10 SDK/demo implemented; review fixes pending; publication blocked.**
+**Decision (2026-10-29): Phase 10 SDK/demo implemented; review fixes pending; publication blocked.**
 No package publication, production operation or deployment was performed.
 
-## Phase 10 review and retest
+### Phase 10 review and retest
+
+> **Status (2026-11-07):** issue 1 was resolved in 0.1.3
+> ([evidence](audits/build-stabilization-final.md)). Issue 2 is in the separate
+> Visynq application and remains open; see *Open items* above.
 
 Review date: 2026-10-29. Two additional reproducible Phase 10 issues need fixes:
 
@@ -44,7 +160,12 @@ The clean SDK build also emits an unresolved external warning for the optional
 `inspectra-engine/node` import, in addition to the private-field-helper warnings.
 It remains lazy in the output and the injected live adapter test passes.
 
-## Release blockers reconfirmed
+### Release blockers reconfirmed
+
+> **Status (2026-11-07): both blockers below are resolved in unreleased source.**
+> Blocker 1 was fixed in R02 ([evidence](audits/shivax-r02.md)); blocker 2 was
+> fixed in R01 ([evidence](audits/shivax-r01.md)). The line numbers below refer to
+> the 2026-10-29 source.
 
 Two previously documented Phase 05 defects remain in ModelRouter. They were
 reproduced again during this phase and were not hidden by passing regression tests:
@@ -65,7 +186,7 @@ The Phase 08 workflow model-tool path has separate conservative nanodollar
 accounting and does not fix these earlier ModelRouter defects. Core CPU/rules
 examples in this phase do not rely on the affected paid/fallback paths.
 
-## Delivered architecture
+### Delivered architecture
 
 - Existing package name/version and compatible root exports retained. VERSION now
   matches package.json at 0.1.2; the stale 0.1.0 runtime constant was detected and fixed.
@@ -82,7 +203,7 @@ examples in this phase do not rely on the affected paid/fallback paths.
   It uses recorded Inspectra evidence and a labelled local mock identity. Actual
   capture stays in the separate adapter; the existing live runner remains separate.
 
-## Acceptance evidence
+### Acceptance evidence
 
 | Check | Result |
 | --- | --- |
@@ -108,7 +229,7 @@ Inspectra live check emits its existing module-type warning. No dependency insta
 or lockfile change was needed for either workspace; the packed consumer install
 was offline and ignored lifecycle scripts.
 
-## Reproduction commands
+### Reproduction commands
 
 Build with installed local tsc/Rollup or the existing build script, then:
 
@@ -123,7 +244,7 @@ Build with installed local tsc/Rollup or the existing build script, then:
 - With PLAYWRIGHT_BROWSERS_PATH set to the existing cache:
   `node adapters/inspectra/test-live.mjs`
 
-## Changed files
+### Changed files
 
 SHIVAX:
 - package.json, rollup.config.mjs, src/index.ts.
@@ -142,7 +263,7 @@ Visynq Workstation:
 - src/test/shivax-demo.test.tsx and docs/shivax-sdk.md.
 - vite.config.ts and tsconfig.json (SDK mapping and legacy Inspectra type aliases).
 
-## Practical limits
+### Practical limits
 
 The generic license gate is host code, not browser security or a billing provider
 implementation. Real authentication and secrets stay on the server/desktop host;
@@ -153,3 +274,4 @@ Pause/resume, rollback and the demo's results remain in-process; cancellation is
 cooperative. Consumer code must keep generated shared chunks. ESM and CJS do not
 share runtime identities across formats. The known budget blockers above must be
 resolved before a release decision. No subsequent phase was started.
+(2026-11-07: those budget blockers are now resolved; see the current status above.)

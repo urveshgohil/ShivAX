@@ -9,7 +9,11 @@ for Node.js and browser applications. It combines CPU neural networks, agent
 orchestration, model-provider integration, scoped memory, UI inspection, and AI
 evaluation. RUDRA coordinates tasks; Jay and Vijay enforce host-configured security.
 
-**Version:** 0.1.3 · **Runtime:** Node.js 22+ and browser bundles · **License:** Apache-2.0
+**Latest npm release:** 0.1.3 · **Runtime:** Node.js 22+ and browser bundles · **License:** Apache-2.0
+
+This source also contains changes that are not yet released, including the managed
+firewall. They are listed under `Unreleased` in [CHANGELOG.md](CHANGELOG.md) and
+are not in the published 0.1.3 package.
 
 The core has zero runtime dependencies. Browser automation, storage, authentication,
 and model backends use optional host-configured adapters.
@@ -32,8 +36,9 @@ and model backends use optional host-configured adapters.
 - **Memory:** scoped records, retention, lexical retrieval, optional embeddings, explicit export/deletion, and in-memory, Node file, or IndexedDB adapters.
 - **UI inspection:** semantic matching, measured visual/layout comparison, structured findings, and a separate Inspectra browser adapter.
 - **Security:** trusted host identities, expiring sessions, deny-by-default policies, protected tools, explicit approvals, and audit records.
+- **Managed firewall (unreleased):** opt-in enforce/monitor/lockdown policy over registered operations, exact shared model budgets, guarded model calls, and approval-gated persistent policy management.
 - **Learning and evaluation:** accept/reject/correct feedback, curated datasets, repeatable evaluations, isolated numeric training, evaluation-gated model updates, and rollback.
-- **Digit playground:** browser-based handwritten digit training and inference using the existing neural engine.
+- **Digit playground (source repository only):** browser-based handwritten digit training and inference using the existing neural engine.
 
 ## Specialist bots
 
@@ -158,7 +163,24 @@ Use `shivax/core`, `shivax/rudra`, `shivax/bots`, `shivax/security`, `shivax/mod
 `shivax/memory`, `shivax/integrations`, or `shivax/learning` for focused imports.
 Optional adapters are available at `shivax/adapters/inspectra`; server entitlement
 contracts at `shivax/licensing/server`. Existing root imports remain supported.
-See the [SDK guide](docs/sdk.md) for examples and the Visynq `/shivax` demo.
+See the [SDK guide](docs/sdk.md) for API details. Runnable examples ship in the
+package under [`examples/sdk/`](examples/sdk/README.md); for example,
+`node node_modules/shivax/examples/sdk/registry.mjs`.
+
+## Production use
+
+Read [docs/production.md](docs/production.md) before deploying. It covers what the
+ML core implements, what each bot does, what needs Ollama or a remote model, how to
+configure the firewall, which code must stay on a trusted host rather than in a
+browser, and known limitations. SHIVAX is pre-1.0 and has no published benchmarks
+against other ML or agent frameworks. Current verification results are in
+[docs/release-readiness.md](docs/release-readiness.md).
+
+## Support and security
+
+Report bugs and ask questions at
+[github.com/urveshgohil/ShivAX/issues](https://github.com/urveshgohil/ShivAX/issues).
+Do not post vulnerability details in a public issue; follow [SECURITY.md](SECURITY.md).
 
 ## Changelog
 

@@ -1,6 +1,6 @@
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { isAbsolute, join, resolve, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { packageManager, runCommand } from './package-process.mjs';
@@ -36,6 +36,25 @@ assert.throws(() => api.createShivaxFirewall(), error => error.code === 'invalid
 }
 console.log('Packed ESM/CJS SDK imports passed.');`);
     process.stdout.write(command(process.execPath, ['verify.mjs'], consumer));
+    // Every example named by shipped documentation must be present in the installed package.
+    const installed = join(consumer, 'node_modules', 'shivax');
+    const referenced = new Set();
+    for (const doc of ['README.md', 'docs/sdk.md', 'docs/production.md', 'docs/release-readiness.md', 'examples/sdk/README.md']) {
+        const text = readFileSync(join(installed, doc), 'utf8');
+        for (const [, file] of text.matchAll(/examples\/sdk\/([\w.-]+\.(?:mjs|json))/g)) referenced.add(file);
+        if (doc === 'examples/sdk/README.md') for (const [, file] of text.matchAll(/^\| `([\w.-]+\.mjs)` \|/gm)) referenced.add(file);
+    }
+    for (const file of referenced)
+        if (!existsSync(join(installed, 'examples', 'sdk', file))) throw new Error(`Documented example is missing from the package: examples/sdk/${file}`);
+    // Offline examples run from the installed copy and resolve shivax through package self-reference.
+    for (const file of ['registry.mjs', 'local-model.mjs', 'rudra.mjs', 'memory-persistence.mjs', 'firewall.mjs'])
+        command(process.execPath, [join(installed, 'examples', 'sdk', file)], consumer);
+    command(process.execPath, ['--check', join(installed, 'examples', 'sdk', 'ollama.mjs')], consumer);
+    writeFileSync(join(consumer, 'examples.mjs'), `import assert from 'node:assert/strict';
+const { connectInspectra } = await import(${JSON.stringify(pathToFileURL(join(installed, 'examples', 'sdk', 'inspectra.mjs')).href)});
+assert.equal(typeof connectInspectra, 'function');`);
+    command(process.execPath, ['examples.mjs'], consumer);
+    console.log(`Packed examples passed: ${referenced.size} documented files present; 5 offline examples ran.`);
     const compiler = join(require.resolve('typescript/package.json'), '..', 'bin', 'tsc');
     const source = entries.map((entry, i) => `import * as entry${i} from '${entry}'; void entry${i};`).join('\n') + `
 import { ModelError, type ModelFailureReason, type ModelErrorDetails } from 'shivax/models';

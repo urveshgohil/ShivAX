@@ -1,5 +1,9 @@
 # CPU examples
 
+The SDK examples in [`sdk/`](sdk/README.md) ship in the npm package. The CPU
+examples and digit playground described below are run from a source checkout;
+their files are not included in the npm package.
+
 The digit demo is now a responsive local ML playground with live/manual
 recognition, loss/accuracy charts, inspectable evaluation metrics, and explicit
 IndexedDB save/load plus model JSON export/import. It never restores models
@@ -7,8 +11,7 @@ automatically. Discard deletes active and saved models. See
 [Phase 4 guide](../docs/digit-phase4.md) for usage and verified testing.
 
 Run examples from the repository after `pnpm install --frozen-lockfile`.
-The `pnpm example:*` commands rebuild automatically. These examples are not
-included in the npm tarball.
+The `pnpm example:*` commands rebuild automatically.
 
 - `pnpm example:xor`: a 2 → 8 → 1 binary network learns XOR.
 - `pnpm example:core`: a typed example of Adam/Leaky ReLU, momentum regression,

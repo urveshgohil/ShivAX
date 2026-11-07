@@ -1,7 +1,13 @@
 # SHIVAX SDK
 
-Version 0.1.3. Existing `shivax` root imports remain supported. All 12 public entry
-points provide ESM, CommonJS and portable ES2020 declarations.
+This guide describes the current source. Its `package.json` version is 0.1.3, which
+is also the latest version published on npm (checked 2026-11-07). Sections marked
+**Unreleased** describe source changes that are not in the published 0.1.3 package;
+see the `Unreleased` section of `CHANGELOG.md`. For an overview of scope, trust
+boundaries and limitations, read `docs/production.md` first.
+
+Existing `shivax` root imports remain supported. All 12 public entry points provide
+ESM, CommonJS and portable ES2020 declarations.
 
 | Entry point | API |
 | --- | --- |
@@ -9,8 +15,8 @@ points provide ESM, CommonJS and portable ES2020 declarations.
 | `shivax/core` | Tensor, math, NeuralNet, text and evaluation metrics |
 | `shivax/rudra` | Bot contracts, registry, executor, RUDRA and controlled workflows |
 | `shivax/bots` | Seven specialists and composition helpers |
-| `shivax/security` | Jay, Vijay, policies, tools and audit |
-| `shivax/models` | Model providers, neural/rules/Ollama/remote adapters and SLM |
+| `shivax/security` | Jay, Vijay, policies, tools and audit; managed firewall and management (Unreleased) |
+| `shivax/models` | Model providers, neural/rules/Ollama/remote adapters and SLM; guarded model gateway (Unreleased) |
 | `shivax/memory` | Memory engine, persistence and lifecycle integration |
 | `shivax/integrations` | Portable inspection contracts, service and planner |
 | `shivax/adapters/inspectra` | Optional lazy Inspectra adapter |
@@ -48,34 +54,34 @@ console.log(registry.findByCapability('code.patch').map(bot => bot.id));
 
 ## Examples
 
-Build SHIVAX first, then run these from the package directory:
+These examples ship in the npm package under `examples/sdk/`. From an application
+that has installed `shivax`, run them as `node node_modules/shivax/examples/sdk/<file>`;
+they resolve `shivax/*` imports through package self-reference. From a source
+checkout, run `pnpm build` first, then `node examples/sdk/<file>`.
+`examples/sdk/README.md` lists what each one needs.
 
-- `node examples/sdk/registry.mjs`: specialist registration and discovery.
-- `node examples/sdk/local-model.mjs`: actual CPU training and local inference.
-- `node examples/sdk/ollama.mjs`: opt-in Ollama inference; set SHIVAX_OLLAMA_MODEL
+- `examples/sdk/registry.mjs`: specialist registration and discovery.
+- `examples/sdk/local-model.mjs`: actual CPU training and local inference.
+- `examples/sdk/ollama.mjs`: opt-in Ollama inference; set SHIVAX_OLLAMA_MODEL
   to a model already installed on your approved loopback Ollama server.
-- `node examples/sdk/rudra.mjs`: bounded workflow and explicit fixture approval.
-- `node examples/sdk/memory-persistence.mjs`: file save/reopen in an exclusive
+- `examples/sdk/rudra.mjs`: bounded workflow and explicit fixture approval.
+- `examples/sdk/memory-persistence.mjs`: file save/reopen in an exclusive
   temporary directory, with cleanup.
-- `examples/sdk/inspectra.mjs`: actual adapter composition using host page leases
-  and URL policy. No implicit navigation or unrestricted resource permissions.
+- `examples/sdk/firewall.mjs` (Unreleased API): managed firewall with one CPU
+  registration, default deny and an approved lockdown, using a labelled mock identity.
+- `examples/sdk/inspectra.mjs`: a module (not a script) showing adapter composition
+  with host page leases and URL policy. No implicit navigation or unrestricted
+  resource permissions.
 
-The React example lives in the actual sibling Visynq application:
-`../visynq-workstation/src/lib/shivax-demo.ts` and
-`../visynq-workstation/src/pages/ShivaxDemoPage.tsx`.
-Build SHIVAX, run Visynq's `npm run dev`, then open `/shivax`.
-The local workspace maps public SHIVAX imports to this checkout's built entry
-points. Installed consumers instead declare their chosen `shivax` dependency.
+`pnpm verify:package` checks that every example named here is in the packed
+tarball and runs the offline ones from an installed copy.
 
-The page uses recorded Inspectra/Chromium evidence from
-`examples/sdk/inspection-fixture.json` and a clearly labelled browser-local mock
-identity. Text labels a fixed task; it is not an LLM prompt. Real RUDRA routing
-selects Narad for capture/comparison and Yudhishthir for deterministic review.
-It displays requests, selections, progress, results, pending approval, measured
-issues and the final response. Cancellation/unmount/scope changes revoke approval
-and dispose the local host. Results are session-local and untrusted. Real account
-verification and live capture remain host integrations. Existing live scanning
-is separate. React is not a SHIVAX dependency.
+No React example ships with SHIVAX, and React is not a dependency. A React
+demonstration exists in the author's separate Visynq Workstation application,
+which is not distributed with this package. In a browser user interface, keep
+identity verification, approvals, provider credentials and firewall
+administration on a trusted host and send the page only results and approval
+prompts; see `docs/production.md`.
 
 ## Diagnostics
 
@@ -96,7 +102,7 @@ LicenseError. There is no credential, fetch client, permissive fallback or cache
 import { ServerLicenseGate, type ServerLicenseVerifier } from 'shivax/licensing/server';
 // Supply a real verified server adapter; never pass browser license claims.
 declare const serverVerifier: ServerLicenseVerifier;
-const gate = new ServerLicenseGate(jay, serverVerifier, 'visynq-workstation');
+const gate = new ServerLicenseGate(jay, serverVerifier, 'your-product-id');
 await gate.require(authenticatedContext, 'inspection');
 // Continue through Vijay authorization and approval for the protected operation.
 ```
@@ -111,18 +117,24 @@ applicable. Entitlement does not replace authentication or grant tool permission
 ## Verification
 
 `npm run verify:package` packs without lifecycle scripts, installs the tarball
-offline into an exclusive temporary consumer, checks all 12 ESM/CJS entries and
-compiles all public declarations with ES2020 alone. It cleans up and never publishes.
+offline into an exclusive temporary consumer, checks all 12 ESM/CJS entries,
+checks and runs the packaged examples, and compiles all public declarations with
+ES2020 alone in five consumer configurations. It cleans up and never publishes.
 
-For the optional browser check, start Visynq at http://127.0.0.1:4185, set
-PLAYWRIGHT_BROWSERS_PATH to the installed browser cache, and run
-`node scripts/check-workstation-browser.mjs`. It blocks external requests.
-`node adapters/inspectra/test-live.mjs` separately tests actual capture, screenshot
-metadata, review and page cleanup using local fixtures.
+The following checks exist only in the source repository, not in the npm package.
+`node adapters/inspectra/test-live.mjs` tests actual capture, screenshot metadata,
+review and page cleanup using local fixtures and an installed browser.
+`node scripts/check-workstation-browser.mjs` drives the separate Visynq Workstation
+application, which is not distributed with SHIVAX.
 
-See `docs/release-readiness.md` for acceptance evidence and release blockers.
+See `docs/release-readiness.md` for acceptance evidence and open release items.
 
 ## Managed firewall core
+
+**Unreleased.** This section and the firewall sections that follow (protected
+execution binding, guarded model calls and host management) describe source that
+is not in the published 0.1.3 package. A runnable example is
+`examples/sdk/firewall.mjs`.
 
 `createShivaxFirewall` is exported from `shivax/security` and the root entrypoint.
 It adds a managed boundary around trusted host registrations while retaining Jay
@@ -447,9 +459,10 @@ Policy versions survive restart. Model billing counters remain process-local.
 
 Retain the management controller at the trusted composition root. Never expose it
 as a bot tool, use a task payload as administrator identity, or forward LLM output
-as an administrative instruction. The existing VISYNQ loopback settings channel
-has no SHIVAX administrator identity binding, so R07 supplies a transport-neutral
-adapter and a persistent test host without adding production HTTP routes.
-The repository report `docs/audits/shivax-r07-management.md` documents host findings,
+as an administrative instruction. SHIVAX supplies a transport-neutral adapter
+and, in its test suite, a persistent file-backed test host. It does not ship
+production HTTP or IPC routes, an administrator identity provider or a production
+policy store; the host must provide and secure those. The source repository report
+`docs/audits/shivax-r07-management.md` (not included in the npm package) documents
 the complete store contract, crash/revocation semantics and remaining production
 integration responsibilities.

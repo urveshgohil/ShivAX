@@ -1,28 +1,44 @@
 # Security policy
 
-ShivAX implements local CPU tensors, dense-network training/inference, and text
-features. Optional host-configured model, memory and inspection adapters can make network requests. It does not host an
-API. There are no production dependencies or consumer installation scripts. Dependency audits
-cover known published advisories; they are not a security certification.
+SHIVAX is a library. Its core implements CPU tensors, dense neural networks, text
+features, bot contracts, RUDRA orchestration, Jay/Vijay authentication and
+authorization checks, scoped memory and model routing. The core makes no network
+requests on import or by default. Optional host-configured adapters can: the
+loopback Ollama adapter, remote model clients, embedding and persistence adapters,
+and Inspectra page capture. SHIVAX does not host an API or service. There are no
+production dependencies or consumer installation scripts. Dependency audits cover
+known published advisories; they are not a security certification.
+
+See `docs/production.md` for trusted host versus browser boundaries.
+
+## Supported versions
+
+The latest version published on npm is 0.1.3. Source changes listed under
+`Unreleased` in `CHANGELOG.md`, including the managed firewall, are not in any
+published version. No support window or backport policy is currently established.
 
 ## Reporting a vulnerability
 
-Use a confidential issue at
-https://gitlab.com/urveshgohil.developer/shivax/-/issues/new and mark the issue
-confidential before submitting. If confidential reporting is unavailable, ask
-the maintainer for a private channel without including exploit details or secrets.
-Include the affected version, reproduction steps, and impact.
-No response-time guarantee is currently established.
+Do not put vulnerability details, exploit code or secrets in a public issue.
+Open an issue at https://github.com/urveshgohil/ShivAX/issues titled
+"Security contact request", with no technical details, and the maintainer will
+arrange a private channel. Then send the affected version, reproduction steps and
+impact through that channel. No response-time guarantee is currently established.
 
 ## Development and releases
 
-- Commit pnpm-lock.yaml and install with `pnpm install --frozen-lockfile`.
+- `pnpm-lock.yaml` is currently not committed (it is listed in `.gitignore`), and
+  CI installs with `--no-frozen-lockfile`. Builds are therefore not pinned to a
+  reviewed lockfile. Committing the lockfile and installing with
+  `pnpm install --frozen-lockfile` is recommended before a stable release.
 - Run `pnpm lint`, `pnpm test`, and `pnpm audit` before release. Audit includes
   development dependencies because they execute during the build.
 - Review dependency upgrades and installation scripts before allowing them.
   Do not enable build scripts globally to suppress an installation warning.
 - Run `npm pack --dry-run --ignore-scripts` after building and inspect the file
   list. The publish allowlist excludes source, tests, credentials, and tool caches.
+  It includes `dist/`, the Inspectra adapter, selected documentation and the
+  runnable examples under `examples/sdk/`.
 - Keep registry tokens in CI secrets, use least privilege and registry MFA, and
   never log credentials. Only authorized maintainers should publish releases.
 
@@ -61,7 +77,7 @@ executing inside your own process. Do not execute untrusted code in-process.
   and other development tools are not required by consumers at runtime.
 
 
-## Managed firewall boundary
+## Managed firewall boundary (Unreleased)
 
 The additive firewall core starts in enforce mode and retains mandatory Jay/Vijay,
 approval, tenant, sandbox and budget checks in monitor mode. Lockdown blocks new

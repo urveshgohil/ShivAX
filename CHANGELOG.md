@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+Changes in the source after the published 0.1.3 package. Not yet released to npm.
+
+### Added
+
+- Managed firewall in `shivax/security` (R04): `createShivaxFirewall` with `enforce`, `monitor` and `lockdown` modes, default-deny registered operations, exact shared model budgets, versioned policy replacement and rollback, cancellation leases and sanitized bounded audit events.
+- Protected execution binding (R05): `protectExecution: true` binds the firewall to one Vijay instance, so RUDRA, workflows and protected tools using it pass firewall admission. Vijay gains an additive `runOperation` method.
+- Guarded model and integration calls (R06): `createGuardedModelGateway` in `shivax/models`; live `checkNetworkAccess` and `checkFileAccess` callbacks for protected tools; destination checks for remote models, Ollama, memory embeddings and persistence, and Inspectra page acquisition.
+- Firewall management (R07): `openShivaxFirewallManagement` with authenticated, approval-gated changes to host-approved policy profiles, compare-and-swap persistence, lockdown and audit reads.
+- `ModelFailureReason` type, additive `error.reason` classification on model errors, and `ModelError` constructor aliases (R02).
+- Runnable SDK examples now ship in the package under `examples/sdk/`, including a new `firewall.mjs`. Package verification checks every documented example is packed and runs the offline ones from an installed copy.
+- `docs/production.md`: scope, bot capabilities, model requirements, firewall setup, trust boundaries and known limitations.
+- `repository`, `bugs` and `homepage` package metadata pointing to the public GitHub repository.
+
+### Changed
+
+- **Breaking:** token-based model providers must report verifiable token counts. Missing, `null`, fractional, negative or oversized counts, and missing or malformed cost, now fail with the new terminal code `usage-unverifiable`, with no fallback and no further use of that router (R02). Providers that do not bill by token must declare `tokenBased: false`. An explicit `null` cost is still accepted.
+- Reported model cost is reconciled as the larger of the reservation and the reported charge. A verified token or cost overrun latches `usage-limit`, stops fallback and blocks later calls on that router, including overruns reported late after cancellation or timeout (R01, R02).
+- The Ollama adapter keeps reported token usage when generated JSON fails to parse, so an overrun is still enforced (R02).
+- In protected use, `RemoteModelAdapter` loaders must provide `inferGuarded`; legacy-only transports are denied there. Unprotected use is unchanged (R06).
+- SECURITY.md now describes the actual network scope, supported versions and a publicly reachable reporting route. Shipped documentation no longer refers to private sibling applications as package content.
+
+### Fixed
+
+- Exact model cost accounting: three $0.10 calls now fit a $0.30 budget; previously floating-point addition rejected the third (R00-01, fixed in R01).
+- Malformed model output no longer hides a reported token overrun and lets a fallback provider run (R00-02, fixed in R02).
+
+### Known issues
+
+- The workflow `ToolRegistry.registerModel` path still accepts `null` token counts from token-based providers and can retry a thrown hard budget error (R03 finding G02).
+
 ## [0.1.3] - 2026-11-01
 
 ### Added
