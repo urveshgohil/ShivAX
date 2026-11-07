@@ -1,0 +1,237 @@
+{
+  "name": "shivax",
+  "version": "0.2.0",
+  "description": "SHIVAX AI - Narasimha Release",
+  "main": "dist/index.cjs",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/index.d.ts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./core": {
+      "import": {
+        "types": "./dist/sdk/core.d.ts",
+        "default": "./dist/sdk/core.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/core.d.ts",
+        "default": "./dist/sdk/core.cjs"
+      }
+    },
+    "./rudra": {
+      "import": {
+        "types": "./dist/sdk/rudra.d.ts",
+        "default": "./dist/sdk/rudra.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/rudra.d.ts",
+        "default": "./dist/sdk/rudra.cjs"
+      }
+    },
+    "./bots": {
+      "import": {
+        "types": "./dist/sdk/bots.d.ts",
+        "default": "./dist/sdk/bots.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/bots.d.ts",
+        "default": "./dist/sdk/bots.cjs"
+      }
+    },
+    "./security": {
+      "import": {
+        "types": "./dist/sdk/security.d.ts",
+        "default": "./dist/sdk/security.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/security.d.ts",
+        "default": "./dist/sdk/security.cjs"
+      }
+    },
+    "./models": {
+      "import": {
+        "types": "./dist/sdk/models.d.ts",
+        "default": "./dist/sdk/models.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/models.d.ts",
+        "default": "./dist/sdk/models.cjs"
+      }
+    },
+    "./memory": {
+      "import": {
+        "types": "./dist/sdk/memory.d.ts",
+        "default": "./dist/sdk/memory.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/memory.d.ts",
+        "default": "./dist/sdk/memory.cjs"
+      }
+    },
+    "./integrations": {
+      "import": {
+        "types": "./dist/sdk/integrations.d.ts",
+        "default": "./dist/sdk/integrations.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/integrations.d.ts",
+        "default": "./dist/sdk/integrations.cjs"
+      }
+    },
+    "./learning": {
+      "import": {
+        "types": "./dist/sdk/learning.d.ts",
+        "default": "./dist/sdk/learning.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/learning.d.ts",
+        "default": "./dist/sdk/learning.cjs"
+      }
+    },
+    "./diagnostics": {
+      "import": {
+        "types": "./dist/sdk/diagnostics.d.ts",
+        "default": "./dist/sdk/diagnostics.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/diagnostics.d.ts",
+        "default": "./dist/sdk/diagnostics.cjs"
+      }
+    },
+    "./licensing/server": {
+      "import": {
+        "types": "./dist/licensing/index.d.ts",
+        "default": "./dist/licensing/index.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/licensing/index.d.ts",
+        "default": "./dist/licensing/index.cjs"
+      }
+    },
+    "./adapters/inspectra": {
+      "import": {
+        "types": "./dist/sdk/inspectra.d.ts",
+        "default": "./dist/sdk/inspectra.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/inspectra.d.ts",
+        "default": "./dist/sdk/inspectra.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "NOTICE",
+    "SECURITY.md",
+    "CHANGELOG.md",
+    "README.md",
+    "adapters/inspectra/index.mjs",
+    "adapters/inspectra/index.d.mts",
+    "adapters/inspectra/README.md",
+    "docs/sdk.md",
+    "docs/production.md",
+    "docs/release-readiness.md",
+    "examples/autonomous-workflow.mjs",
+    "examples/sdk/README.md",
+    "examples/sdk/registry.mjs",
+    "examples/sdk/local-model.mjs",
+    "examples/sdk/ollama.mjs",
+    "examples/sdk/rudra.mjs",
+    "examples/sdk/memory-persistence.mjs",
+    "examples/sdk/firewall.mjs",
+    "examples/sdk/inspectra.mjs"
+  ],
+  "scripts": {
+    "example:core": "pnpm build && node --experimental-strip-types examples/core.ts",
+    "example:xor": "pnpm build && node examples/xor.mjs",
+    "example:regression": "pnpm build && node examples/regression.mjs",
+    "example:text": "pnpm build && node examples/text-classifier.mjs",
+    "example:digits": "pnpm build && node --watch scripts/serve-examples.mjs",
+    "build": "node scripts/clean.mjs && tsc && node scripts/build-cjs-declarations.mjs && rollup -c rollup.config.mjs",
+    "dev": "tsc --watch",
+    "test": "pnpm build && node --test tests/*.test.mjs",
+    "test:watch": "node --test --watch tests/*.test.mjs",
+    "lint": "tsc --noEmit && eslint .",
+    "format": "prettier --write src/**/*.ts",
+    "audit": "pnpm audit --audit-level=low",
+    "prepack": "pnpm lint && pnpm test",
+    "verify:package": "node scripts/check-sdk-package.mjs"
+  },
+  "keywords": [
+    "shivax",
+    "ai",
+    "ml",
+    "javascript",
+    "typescript",
+    "nodejs",
+    "browser",
+    "artificial-intelligence",
+    "machine-learning",
+    "neural-network",
+    "deep-learning",
+    "tensor",
+    "classification",
+    "regression",
+    "multi-agent",
+    "ai-agents",
+    "agent-framework",
+    "agent-orchestration",
+    "workflow-engine",
+    "human-in-the-loop",
+    "tool-calling",
+    "capability-routing",
+    "model-provider",
+    "hybrid-ai",
+    "local-ai",
+    "ollama",
+    "llm-integration",
+    "scoped-memory",
+    "semantic-search",
+    "ui-inspection",
+    "visual-comparison",
+    "browser-automation-adapter",
+    "authorization",
+    "ai-evaluation",
+    "feedback",
+    "offline-training"
+  ],
+  "author": "Urvesh Gohil",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/urveshgohil/ShivAX.git"
+  },
+  "bugs": {
+    "url": "https://github.com/urveshgohil/ShivAX/issues"
+  },
+  "homepage": "https://github.com/urveshgohil/ShivAX#readme",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@12.8.1",
+  "type": "module",
+  "peerDependencies": {
+    "inspectra-engine": "1.0.4"
+  },
+  "peerDependenciesMeta": {
+    "inspectra-engine": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@changesets/cli": "^3.0.3",
+    "eslint": "^10.11.0",
+    "prettier": "^3.9.9",
+    "rollup": "^4.63.6",
+    "typescript": "^7.0.2"
+  }
+}

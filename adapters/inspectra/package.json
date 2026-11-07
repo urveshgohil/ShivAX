@@ -1,0 +1,11 @@
+{
+  "name": "@shivax/inspectra-adapter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": { "types": "./index.d.mts", "import": "./index.mjs" } },
+  "files": ["index.mjs", "index.d.mts", "README.md"],
+  "peerDependencies": { "shivax": "^0.1.0", "inspectra-engine": "1.0.4" },
+  "peerDependenciesMeta": { "inspectra-engine": { "optional": true } },
+  "engines": { "node": ">=22.15" }
+}

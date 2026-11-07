@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; worker-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>ShivAX · Digit playground</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <a class="skip-link" href="#playground">Skip to playground</a>
+  <main id="playground">
+    <header class="masthead">
+      <div><p class="eyebrow">SHIVAX / LOCAL MACHINE LEARNING</p><h1>Digit playground<span class="accent">.</span></h1><p>Train. Draw. Inspect. A small neural network, entirely in your browser.</p></div>
+      <span class="local-badge">Local only · no uploads</span>
+    </header>
+    <nav aria-label="Playground sections"><a href="#setup">Dataset & training</a><a href="#studio">Handwriting</a><a href="#evaluation">Evaluation</a><a href="#models">Models</a></nav>
+    <p id="status" class="status" role="status" aria-live="polite">Loading the demo… If this remains, restart pnpm example:digits and reload its printed URL.</p>
+    <noscript>JavaScript is required to train and recognize digits.</noscript>
+    <div class="setup-grid" id="setup">
+      <section class="panel" aria-labelledby="dataset-title">
+        <p class="eyebrow">01 / DATA</p><h2 id="dataset-title">Your training set</h2>
+        <label class="file-zone" for="dataset">Choose digit dataset<span>JSON · 50–500 samples · up to 5 MB</span><input id="dataset" type="file" accept=".json,application/json" aria-describedby="dataset-help"></label>
+        <p id="dataset-note">No dataset selected. The network starts untrained.</p>
+        <details><summary>Dataset format & preparation</summary><p id="dataset-help">Use <code>{"images":[[784 pixels]],"labels":[0]}</code> with all digits 0–9, grayscale [0,1], white ink on black. Validation runs in the worker. Prepare original MNIST locally using the repository's prepare-mnist script; no datasets are downloaded.</p></details>
+      </section>
+      <section class="panel" aria-labelledby="config-title">
+        <p class="eyebrow">02 / CONFIGURE</p><h2 id="config-title">Training recipe</h2>
+        <fieldset id="training-settings"><legend class="sr-only">Training configuration</legend>
+          <div class="settings-grid">
+            <label>Epochs<input id="epochs" type="number" min="1" max="100" value="30" required></label>
+            <label>Batch size<input id="batch-size" type="number" min="1" max="128" value="16" required></label>
+            <label>Learning rate<input id="learning-rate" type="number" min="0.0001" max="1" step="any" value="0.1" required></label>
+            <label>Seed<input id="seed" type="number" min="0" max="4294967295" value="42" required></label>
+            <label>Early-stop patience<input id="patience" type="number" min="0" max="20" value="5" required></label>
+          </div>
+          <label class="toggle"><input id="augmentation" type="checkbox" checked> Training-only augmentation</label>
+          <details><summary>Advanced augmentation limits</summary><div class="settings-grid">
+            <label>Rotation ±degrees<input id="rotation" type="number" min="0" max="10" step="any" value="8" required></label>
+            <label>Translation ±pixels<input id="translation" type="number" min="0" max="2" step="any" value="1.5" required></label>
+            <label>Scale ±fraction<input id="scale" type="number" min="0" max="0.1" step="any" value="0.08" required></label>
+            <label>Stroke blend<input id="thickness" type="number" min="0" max="0.2" step="any" value="0.15" required></label>
+            <label>Intensity ±fraction<input id="intensity" type="number" min="0" max="0.15" step="any" value="0.1" required></label>
+          </div><p>Patience 0 disables early stopping. Validation and test samples are never augmented.</p></details>
+        </fieldset>
+        <div class="actions"><button id="train" disabled>Train model</button><button id="stop" class="secondary" disabled>Stop & discard</button></div>
+      </section>
+    </div>
+    <section class="panel dashboard" aria-labelledby="progress-title">
+      <div class="section-heading"><div><p class="eyebrow">03 / LEARN</p><h2 id="progress-title">Training dashboard</h2></div><span id="training-state" class="tag">Idle</span></div>
+      <div class="progress-line"><label for="training-progress">Epoch <span id="epoch-count">0 / 30</span></label><span id="elapsed">00:00 elapsed</span></div>
+      <progress id="training-progress" max="30" value="0">0%</progress>
+      <dl class="metric-grid">
+        <div><dt>Training loss</dt><dd id="train-loss">—</dd></div><div><dt>Validation loss</dt><dd id="val-loss">—</dd></div>
+        <div><dt>Training accuracy</dt><dd id="train-accuracy">—</dd></div><div><dt>Validation accuracy</dt><dd id="val-accuracy">—</dd></div>
+      </dl>
+      <p id="training-metrics">Start training to see epoch metrics.</p>
+      <div class="chart-grid">
+        <figure><figcaption>Cross-entropy loss</figcaption><svg id="loss-chart" role="img" aria-label="Training and validation loss by epoch"></svg></figure>
+        <figure><figcaption>Classification accuracy</figcaption><svg id="accuracy-chart" role="img" aria-label="Training and validation accuracy by epoch"></svg></figure>
+      </div>
+      <p class="legend"><span class="mint-key">Training</span><span class="gold-key">Validation</span> · Charts have equivalent current values above.</p>
+    </section>
+    <section class="panel" id="studio" aria-labelledby="studio-title">
+      <div class="section-heading"><div><p class="eyebrow">04 / EXPERIMENT</p><h2 id="studio-title">Write a digit</h2></div><label class="toggle"><input id="live-recognition" type="checkbox" checked> Live recognition</label></div>
+      <div class="studio-grid">
+        <div class="drawing-area">
+          <label for="stroke-width">Stroke width</label><select id="stroke-width"><option value="12">Thin</option><option value="22" selected>Medium</option><option value="32">Thick</option></select>
+          <figure><canvas id="drawing" width="280" height="280" aria-label="Draw a digit using mouse, pen or touch. Pointer input is required."></canvas><figcaption>Original drawing · preserved</figcaption></figure>
+          <div class="actions"><button id="clear" class="secondary">Clear</button><button id="predict" disabled>Recognize</button></div>
+          <p>Mouse, touch & stylus supported. Drawing itself requires a pointer.</p>
+        </div>
+        <figure class="preview-area"><h3>What the model sees</h3><canvas id="input-preview" width="28" height="28" aria-label="Normalized 28 by 28 grayscale input"></canvas><figcaption id="preview-caption">Blank input — nothing submitted.</figcaption><p>784 grayscale values · aspect-preserving resize · pixel-mass centering</p></figure>
+        <div class="prediction-area">
+          <h3>Prediction</h3><p id="result" class="prediction-number">—</p><p id="prediction-note">Train or load a model to begin.</p>
+          <ol id="top-predictions" aria-label="Top three predicted digits"></ol>
+          <p id="feedback"></p>
+        </div>
+      </div>
+      <h3>All ten model probabilities</h3><div id="probabilities" class="probability-grid" aria-label="Digit probabilities"></div>
+      <p>Softmax probabilities are not calibrated confidence. Uncertainty uses a top score below 65% or a top-two gap below 15 points. A high score can still be wrong.</p>
+      <p id="prediction-announcement" class="sr-only" role="status" aria-live="polite"></p>
+    </section>
+    <section class="panel" id="evaluation" aria-labelledby="evaluation-title">
+      <p class="eyebrow">05 / EVALUATE</p><h2 id="evaluation-title">Untouched test set</h2>
+      <p id="evaluation-summary">Train a model to evaluate it. Imported models have no verified test metrics here.</p>
+      <dl class="metric-grid"><div><dt>Test accuracy</dt><dd id="test-accuracy">—</dd></div><div><dt>Correct</dt><dd id="test-correct">—</dd></div><div><dt>Incorrect</dt><dd id="test-incorrect">—</dd></div><div><dt>Train / validation / test</dt><dd id="split-counts">—</dd></div></dl>
+      <div class="evaluation-grid">
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Per-digit test accuracy"><table id="digit-metrics"><caption>Accuracy and errors by digit</caption><thead><tr><th scope="col">Digit</th><th scope="col">Samples</th><th scope="col">Accuracy</th><th scope="col">Incorrect</th></tr></thead><tbody></tbody></table></div>
+        <div><div class="table-scroll" tabindex="0" role="region" aria-label="Confusion matrix"><table id="confusion"><caption>Rows: true digit · columns: prediction</caption></table></div><p id="matrix-detail">Select a populated confusion cell to inspect the pair.</p><h3>Most confused pairs</h3><ol id="confused-pairs"></ol></div>
+      </div>
+      <p>Test metrics describe uploaded data, not necessarily your canvas handwriting. Small test sets produce noisy per-digit estimates.</p>
+    </section>
+    <section class="panel" id="models" aria-labelledby="models-title">
+      <p class="eyebrow">06 / KEEP YOUR WORK</p><h2 id="models-title">Model management</h2>
+      <div class="actions"><button id="save-model" disabled>Save in browser</button><button id="load-model" class="secondary">Load saved model</button><button id="export-model" class="secondary" disabled>Export JSON</button><button id="discard-model" class="danger">Discard model & saved copy</button></div>
+      <label class="file-zone" for="import-model">Import model JSON<span>Versioned ShivAX digit model · up to 32 MB</span><input id="import-model" type="file" accept=".json,application/json"></label>
+      <p id="model-status" role="status" aria-live="polite">Nothing is restored automatically. Save/load use this browser's IndexedDB.</p>
+      <p>Export stores inference weights/configuration, not optimizer state or evaluation history. No data is sent to a server. Discard also deletes the saved copy.</p>
+    </section>
+    <footer>SHIVAX · Framework-free, dependency-free at runtime. Built for learning and inspection.</footer>
+  </main>
+  <script type="module" src="./app.mjs"></script>
+</body>
+</html>

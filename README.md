@@ -1,93 +1,176 @@
-# BrahmAX
+# SHIVAX AI — JavaScript & TypeScript Multi-Agent AI Framework
 
+**Synthetic Hybrid Intelligence with Versatile Autonomous eXperts**
 
+*One Intelligence. Many Specialized Minds.*
 
-## Getting started
+SHIVAX (`shivax` on npm) is a JavaScript and TypeScript multi-agent AI framework
+for Node.js and browser applications. It combines CPU neural networks, agent
+orchestration, model-provider integration, scoped memory, UI inspection and AI
+evaluation. RUDRA coordinates tasks; Jay and Vijay enforce host-configured
+security; the managed firewall governs what registered operations may do.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+**Version:** 0.2.0 NARASIMHA · **Runtime:** Node.js 22+ and browser bundles · **License:** Apache-2.0
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+The core has zero runtime dependencies. Browser automation, storage, authentication
+and model backends use optional host-configured adapters.
 
-## Add your files
+## What's new in 0.2.0 NARASIMHA
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+- **Managed firewall:** opt-in `enforce`, `monitor` and `lockdown` modes over
+  registered operations, with default deny, exact file and network allowlists,
+  shared budgets, cancellation and redacted audit events.
+- **Guarded model calls:** `createGuardedModelGateway` routes model requests
+  through the firewall, with fixed provider routes and destination checks.
+- **Policy management:** `openShivaxFirewallManagement` for authenticated,
+  approval-gated policy changes with versioned persistent storage.
+- **Exact model budgets:** cost limits use exact decimal arithmetic, so three
+  $0.10 calls fit a $0.30 budget.
+- **Stricter usage checks:** a reported token or cost overrun stops the router,
+  even when the model output is malformed.
+- **Runnable examples in the package** under `examples/sdk/`.
 
-```
-cd existing_repo
-git remote add origin https://gitlab.com/urveshgohil.developer/brahmax.git
-git branch -M main
-git push -uf origin main
-```
+### Upgrading from 0.1.x
 
-## Integrate with your tools
+Two behaviour changes can affect existing integrations:
 
-* [Set up project integrations](https://gitlab.com/urveshgohil.developer/brahmax/-/settings/integrations)
+1. Token-based model providers must report numeric `inputTokens` and
+   `outputTokens`. Missing, `null` or malformed usage now fails with
+   `usage-unverifiable` and blocks further calls on that router. Providers that do
+   not bill by token should declare `tokenBased: false`.
+2. Workflow model tools (`ToolRegistry.registerModel`) follow the same rule, and
+   hard model failures (limits, timeouts, unverifiable usage) are no longer retried.
 
-## Collaborate with your team
+Existing imports and entry points are unchanged. See [CHANGELOG.md](CHANGELOG.md).
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+## Features
 
-## Test and Deploy
+- **Machine learning:** tensors, dense neural networks, classification and regression, SGD/momentum/Adam, evaluation metrics and JSON model serialization.
+- **Specialist bots and RUDRA:** capability routing, dependent tasks, approvals, pause/resume, retries, cancellation, execution limits and traces.
+- **Hybrid models:** neural and rules providers, optional local Ollama and host-configured remote providers.
+- **Memory:** scoped records, retention, retrieval, optional embeddings, and in-memory, Node file or IndexedDB storage.
+- **UI inspection:** measured visual and layout comparison with structured findings, plus an optional Inspectra browser adapter.
+- **Security:** trusted host identities, expiring sessions, deny-by-default policies, protected tools, approvals and audit records.
+- **Learning and evaluation:** verified feedback, curated datasets, repeatable evaluations, evaluation-gated model updates and rollback.
 
-Use the built-in continuous integration in GitLab.
+## Specialist bots
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+| Bot | Role |
+| --- | --- |
+| Sanjay | Vision through an optional model adapter |
+| Brihaspati | Structured plans and reasoning decisions |
+| Vishwakarm | Source summaries and code patch proposals |
+| Chitragupt | Scoped memory and retrieval |
+| Narad | UI inspection and comparison |
+| Yudhishthir | Deterministic checks and optional model review |
+| Ekalavy | Feedback, evaluation and controlled learning |
 
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+Jay handles authentication and Vijay handles authorization at protected execution boundaries.
 
 ## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+```sh
+npm install shivax
+```
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+## Quick start
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+```js
+import { NeuralNet, BotRegistry, createSpecialistBots } from 'shivax';
+// CommonJS: const { NeuralNet } = require('shivax');
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+const model = new NeuralNet({ layers: [2, 8, 1], task: 'binary', seed: 42 });
+model.train(
+  [[0, 0], [0, 1], [1, 0], [1, 1]],
+  [[0], [1], [1], [0]],
+  { epochs: 2000, learningRate: 0.5, batchSize: 4 },
+);
+console.log(model.predictClass([0, 1])); // 1
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+const restored = NeuralNet.fromJSON(JSON.stringify(model.toJSON()));
+console.log(restored.predictClass([0, 1])); // 1
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+const registry = new BotRegistry();
+createSpecialistBots().forEach(bot => registry.register(bot));
+console.log(registry.findByCapability('code.patch').map(bot => bot.id)); // ['vishwakarm']
+```
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+Model-backed capabilities need a configured provider. Protected operations need
+host authentication, permissions and approval.
+
+## Managed firewall
+
+```js
+import { createShivaxFirewall } from 'shivax/security';
+```
+
+The firewall starts in `enforce` mode and denies anything not explicitly allowed.
+`monitor` relaxes only rules marked optional; authentication, approvals, tenant
+checks and budgets still apply. `lockdown` blocks every operation except
+explicitly allowed CPU work. Policy changes need an administrator, a host role
+check and human approval.
+
+A complete runnable example ships with the package:
+
+```sh
+node node_modules/shivax/examples/sdk/firewall.mjs
+```
+
+Setup steps are in [docs/production.md](docs/production.md#configuring-the-firewall-new-in-020);
+every option is in the [SDK guide](docs/sdk.md#managed-firewall-core).
+
+## SDK entry points
+
+| Import | Contents |
+| --- | --- |
+| `shivax` | Aggregate API |
+| `shivax/core` | Tensor, NeuralNet, text features, metrics |
+| `shivax/rudra` | Bot contracts, registry, RUDRA, workflows |
+| `shivax/bots` | Seven specialists |
+| `shivax/security` | Jay, Vijay, policies, tools, audit, firewall |
+| `shivax/models` | Model router, providers, Ollama/remote adapters, guarded gateway |
+| `shivax/memory` | Memory engine and storage adapters |
+| `shivax/integrations` | Inspection contracts and services |
+| `shivax/learning` | Feedback, evaluation, training, rollback |
+| `shivax/diagnostics` | Safe error diagnostics |
+| `shivax/adapters/inspectra` | Optional Inspectra adapter (`inspectra-engine@1.0.4`) |
+| `shivax/licensing/server` | Server-side license gate |
+
+Every entry point ships ESM, CommonJS and TypeScript declarations. More examples
+are in [`examples/sdk/`](examples/sdk/README.md).
+
+## Frequently asked questions
+
+**Does SHIVAX work with Node.js and browsers?** Yes: Node.js 22+ and modern
+browsers (ES2022), with ESM, CommonJS and TypeScript declarations. Keep identity,
+approvals, credentials and firewall administration on a trusted host, not in the browser.
+
+**Does it need an API key or a cloud LLM?** No. Neural networks, deterministic bot
+capabilities, RUDRA, memory and the firewall run locally. Ollama and remote
+providers are optional.
+
+**Can it run autonomous agent workflows?** RUDRA runs bounded workflows with tool
+proposals, approval gates, retries and cancellation. Protected actions require
+host-supplied Jay/Vijay policies.
+
+**Does user feedback train a model automatically?** No. Feedback is stored for
+review and evaluation; training is explicit and model updates require approval.
+
+## Production use
+
+Read [docs/production.md](docs/production.md) before deploying. It covers what the
+ML core implements, what each bot does, what needs a model, trusted host versus
+browser boundaries and known limitations. SHIVAX is pre-1.0 and has no published
+benchmarks against other ML or agent frameworks. Verification results are in
+[docs/release-readiness.md](docs/release-readiness.md).
+
+## Support and security
+
+Report bugs and ask questions at
+[github.com/urveshgohil/ShivAX/issues](https://github.com/urveshgohil/ShivAX/issues).
+Do not post vulnerability details in a public issue; follow [SECURITY.md](SECURITY.md).
 
 ## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Copyright 2025–2026 Urvesh Gohil. Licensed under [Apache License 2.0](LICENSE).
+See [NOTICE](NOTICE) for attribution.
