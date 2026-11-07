@@ -1,4 +1,4 @@
-# SHIVAX R03 - Firewall architecture audit and design
+# ShivAX R03 - Firewall architecture audit and design
 
 Date: 2026-11-03 (Asia/Calcutta)  
 Repository baseline: `464c5b6`  
@@ -126,7 +126,7 @@ Registries and the bounded audit log do not supply a durable policy source, admi
 
 ### G08 - Documentation overstates network limitations
 
-`SECURITY.md` contains broad wording that SHIVAX does not make network requests. Current optional remote providers, host transports, embeddings and page acquisition require more precise coverage language. Update it in the implementation/documentation phase to distinguish defaults, explicit host opt-in and enforceable host controls. This audit does not modify that file.
+`SECURITY.md` contains broad wording that ShivAX does not make network requests. Current optional remote providers, host transports, embeddings and page acquisition require more precise coverage language. Update it in the implementation/documentation phase to distinguish defaults, explicit host opt-in and enforceable host controls. This audit does not modify that file.
 
 ## 4. Proposed additive firewall contract
 
@@ -359,7 +359,7 @@ Audit sinks must not execute policy or block emergency lockdown/cleanup. If a de
 
 **An npm JavaScript SDK cannot prevent a malicious host from bypassing, replacing or directly invoking its own code.** This design provides enforcement for cooperating managed SDK paths under a trusted host, not an OS security perimeter.
 
-| SHIVAX can enforce inside managed paths | Requires trusted host or external isolation |
+| ShivAX can enforce inside managed paths | Requires trusted host or external isolation |
 | --- | --- |
 | Refuse invalid/unproven contexts and disallowed registered actions | Authenticate users, protect credentials and grant/admin authority |
 | Enforce existing approvals, schemas, scoped tools and bounded budgets | Isolate hostile plugins/native modules and raw handlers from privileged references |

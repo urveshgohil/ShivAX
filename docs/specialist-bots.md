@@ -1,4 +1,4 @@
-# Phase 04 — SHIVAX specialist bot system
+# Phase 04 — ShivAX specialist bot system
 
 Seven specialists implement the shared `Bot` contract and register explicitly
 with RUDRA through `createSpecialistSystem()`. They use the existing foundation,

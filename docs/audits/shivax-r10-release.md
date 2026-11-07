@@ -1,4 +1,4 @@
-# SHIVAX R10 - Security and release verification
+# ShivAX R10 - Security and release verification
 
 Date: 2026-11-07 (Asia/Calcutta)
 Status: **R10 complete. Recommendation: conditional GO** (no P0 issues; two

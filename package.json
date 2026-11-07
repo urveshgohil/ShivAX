@@ -1,7 +1,7 @@
 {
   "name": "shivax",
   "version": "0.2.0",
-  "description": "SHIVAX AI - Narasimha Release",
+  "description": "ShivAX AI - Narasimha Release",
   "main": "dist/index.cjs",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",

@@ -1,4 +1,4 @@
-# SHIVAX R04 - Firewall core implementation
+# ShivAX R04 - Firewall core implementation
 
 Date: 2026-11-04 (Asia/Calcutta)  
 Package: shivax@0.1.3  

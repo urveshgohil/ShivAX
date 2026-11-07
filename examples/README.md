@@ -1,83 +1,84 @@
 # CPU examples
 
 The SDK examples in [`sdk/`](sdk/README.md) ship in the npm package. The CPU
-examples and digit playground described below are run from a source checkout;
-their files are not included in the npm package.
+examples and the digit playground below run from a source checkout. Their files
+are not in the npm package.
 
-The digit demo is now a responsive local ML playground with live/manual
-recognition, loss/accuracy charts, inspectable evaluation metrics, and explicit
-IndexedDB save/load plus model JSON export/import. It never restores models
-automatically. Discard deletes active and saved models. See
-[Phase 4 guide](../docs/digit-phase4.md) for usage and verified testing.
+The digit demo is a local ML playground. It recognizes digits live or on demand,
+draws loss and accuracy charts, and shows its evaluation scores. You can save and
+load models in IndexedDB, and export or import them as JSON. It never restores a
+model unless you ask. Discard deletes both the active model and saved models. See
+the [Phase 4 guide](../docs/digit-phase4.md) for how to use it and how it was tested.
 
-Run examples from the repository after `pnpm install --frozen-lockfile`.
-The `pnpm example:*` commands rebuild automatically.
+Run the examples from the repository after `pnpm install --frozen-lockfile`. The
+`pnpm example:*` commands rebuild first.
 
 - `pnpm example:xor`: a 2 → 8 → 1 binary network learns XOR.
-- `pnpm example:core`: a typed example of Adam/Leaky ReLU, momentum regression,
-  versioned inference serialization, and reusable evaluation utilities.
-- `pnpm example:regression`: a one-input linear dense layer predicts synthetic
-  house prices after feature/target normalization. This is not a real valuation model.
-- `pnpm example:text`: a fitted bag-of-words vocabulary feeds an 8-unit hidden
-  layer and binary spam output. Replace the toy corpus with independent training,
-  validation, and test data for meaningful evaluation. Sentiment uses the same
-  pipeline with positive/negative labels.
-- `pnpm example:digits`: serves the drawing demo at http://127.0.0.1:4173.
-  If 4173 is occupied, the launcher tries ports through 4182 and prints the
-  actual URL. Open that printed URL. Stop the local server with Ctrl+C.
-  It binds only to localhost; changing Node versions does not free an occupied port.
-  The launcher watches server code and restarts when routes change. If a page has
-  disabled controls after an update, stop older demo servers, restart this command,
-  and reload the printed URL. Startup failures now show recovery instructions.
+- `pnpm example:core`: a typed example of Adam with Leaky ReLU, momentum
+  regression, versioned model saving and the evaluation helpers.
+- `pnpm example:regression`: a one-input linear layer predicts made-up house
+  prices after it normalizes the inputs and targets. It is not a real pricing model.
+- `pnpm example:text`: a bag-of-words vocabulary feeds an 8-unit hidden layer that
+  flags spam. The corpus is a toy. For a real test, use separate training,
+  validation and test data. Sentiment works the same way with positive and
+  negative labels.
+- `pnpm example:digits`: serves the drawing demo at http://127.0.0.1:4173. If
+  port 4173 is busy, it tries ports up to 4182 and prints the URL it used. Open
+  that URL, and press Ctrl+C to stop the server. It listens only on localhost.
+  Switching Node versions does not free a busy port. The launcher watches the
+  server code and restarts when routes change. If the page shows disabled
+  controls after an update, stop any older demo servers, run this command again
+  and reload the printed URL. If startup fails, it prints steps to recover.
 
 ## Digit data
 
-Supply a JSON file with exactly this structure (the abbreviated array below is
-illustrative, not a complete image):
+Supply a JSON file with this exact structure. The short array below is only a
+sample, not a full image:
 
 ```json
 {"images": [[0, 0, 0.5, 1, 0]], "labels": [3]}
 ```
 
-Each actual image must contain **784 values** in row-major order: 28 rows × 28
-columns, grayscale in [0, 1], white ink on black. Convert byte-valued MNIST pixels
-by dividing by 255. Labels are integers 0–9. The demo accepts 50–500 samples,
-requires all ten classes, and rejects files larger than 5 MB. Prepare a balanced
-subset from a dataset you have permission to use; no dataset is downloaded or
-included automatically. Raw IDX MNIST files must be converted to this JSON first.
+Each real image must have **784 values** in row order: 28 rows × 28 columns,
+grayscale from 0 to 1, white ink on black. To convert MNIST byte pixels, divide
+by 255. Labels are whole numbers from 0 to 9. The demo takes 50 to 500 samples,
+needs all ten digits, and rejects files over 5 MB. Build a balanced subset from a
+dataset you have the right to use. The demo does not download or include any
+dataset. Convert raw IDX MNIST files to this JSON first.
 
-The worker deduplicates exact images and splits originals by digit with a seed.
-For 500 balanced unique images it uses 360 training, 70 validation, and 70 test
-samples. Scarce classes trigger documented fallback or rejection. Training uses
-the same 784 → 32 → 10 network; epochs, batch size, learning rate, seed,
-training-only augmentation and early stopping are configurable. Epoch progress
-includes training/validation loss and accuracy; final evaluation reports per-digit
-errors and a confusion matrix on untouched test samples. A small sample may
-generalize poorly to handwriting. Displayed model
-scores are uncalibrated probabilities, not a reliability guarantee. There is no
-pretrained model or model persistence: reloading discards training.
+The worker removes exact duplicate images and splits the rest by digit, using a
+seed. For 500 balanced, unique images, it uses 360 for training, 70 for
+validation and 70 for testing. If a digit has too few samples, it falls back to a
+documented split or rejects the file. Training uses the same 784 → 32 → 10
+network. You can set the epochs, batch size, learning rate, seed, training-only
+augmentation and early stopping. Each epoch reports training and validation loss
+and accuracy. The final report shows errors per digit and a confusion matrix on
+test samples the model never saw. A small sample may not handle new handwriting
+well. The scores shown are raw model probabilities, not a promise of accuracy.
+There is no pretrained model, and reloading the page discards training.
 
-The drawing input accepts mouse, pen, or touch, with thin/medium/thick strokes.
-Before inference, a pure preprocessing module composites RGBA over black, detects
-ink, and area-averages an aspect-preserving crop into a 20 × 20 region. It shifts
-the image to center its intensity-weighted mass in a black 28 × 28 image, clamping
-the shift if needed to avoid clipping. It does not thicken, thin, binarize, or
-deskew the digit. Blank input is not submitted. The original drawing is preserved.
+You can draw with a mouse, pen or touch, using thin, medium or thick strokes.
+Before the model sees the drawing, a preprocessing step lays it over black, finds
+the ink, and scales it into a 20 × 20 box without changing its shape. It then
+moves the image so its weight sits at the center of a black 28 × 28 image,
+limiting the move so nothing is cut off. It does not thicken, thin, threshold or
+straighten the digit. A blank canvas is not sent. Your original drawing is kept.
 
-The live preview becomes the exact submitted image when Recognize is pressed.
-The same quantized grayscale values (784 row-major values in [0,1]) are used for
-the preview and worker message. Results show the top three model probabilities.
-A top probability below 65% or top-two gap below 15 percentage points triggers
-heuristic uncertainty feedback, not calibrated confidence. Clear or a new stroke
-invalidates outstanding predictions so old responses cannot label a new drawing.
+When you press Recognize, the live preview becomes the exact image sent to the
+model. The preview and the worker get the same 784 grayscale values. Results
+show the top three probabilities. If the top one is below 65%, or the top two are
+less than 15 points apart, the demo marks the result as uncertain. This is a rule
+of thumb, not a measured confidence. Clear or a new stroke cancels pending
+predictions, so an old answer cannot label a new drawing.
 
-Uploaded training images remain unchanged. They should already use the same
-white-on-black polarity, roughly 20-pixel digit extent, mass centering, and
-representative handwriting/stroke widths. The held-out score measures uploaded
-images, not canvas drawings. A preprocessing fix alone cannot guarantee recognition
-accuracy. See [Phase 1 validation](../docs/digit-phase1.md) for evidence and limits.
-The Stop button terminates the worker immediately and discards the model.
+Uploaded training images are used as they are. They should already be white on
+black, about 20 pixels tall, centered by weight, and drawn with a mix of
+handwriting and stroke widths. The test score measures uploaded images, not
+canvas drawings. Better preprocessing alone cannot promise better recognition.
+See [Phase 1 validation](../docs/digit-phase1.md) for test results and limits.
+The Stop button ends the worker at once and discards the model.
 
-See [Phase 2 training guide](../docs/digit-phase2.md) for local original-MNIST IDX
-preparation, augmentation ranges, split rules, validation-based early stopping,
-and the reproducible local 500-sample A/B comparison command. Nothing is downloaded.
+See the [Phase 2 training guide](../docs/digit-phase2.md) for preparing local
+MNIST IDX files, augmentation ranges, split rules, early stopping on validation
+results, and the command for a repeatable local 500-sample A/B test. Nothing is
+downloaded.

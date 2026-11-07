@@ -1,4 +1,4 @@
-# SHIVAX B00 — Build baseline audit
+# ShivAX B00 — Build baseline audit
 
 Date: 2026-11-01 (Asia/Calcutta). Package: `shivax@0.1.2`.
 Audited commit: `551aa45fda54a3e5d169252fd5356017b046a4b9`.
@@ -109,7 +109,7 @@ top-level `this` is undefined. Rollup rewrites the guard accordingly and warns f
 both output configurations. Generated chunks contain
 `(undefined && undefined.__classPrivateFieldGet) || function ...`.
 
-This is a generated helper guard, not evidence of broken instance `this` in SHIVAX
+This is a generated helper guard, not evidence of broken instance `this` in ShivAX
 methods. The fallback helper remains selected and the baseline tests pass.
 Changing global Rollup context to fabricate a top-level receiver would change
 semantics and would not address the compiler/target mismatch.
@@ -126,12 +126,12 @@ suppressed or compiler setting changed in B00.
 `import('inspectra-engine/node')`. Rollup's explicit external array contains
 `'shivax'` and `'inspectra-engine'`, but not the imported `/node` subpath. The
 unmatched bare specifier is unresolved; the config has no resolver plugin and the
-dependency is absent from SHIVAX's installed resolution tree. Rollup warns and
+dependency is absent from ShivAX's installed resolution tree. Rollup warns and
 leaves it external rather than failing the build. Both bundles retain the lazy
 dynamic import, including CJS output; it is not converted into an eager `require`.
 
 The sibling checkout existing at `../inspectra` does not make the package
-resolvable from SHIVAX. A direct `require.resolve('inspectra-engine/node')` probe
+resolvable from ShivAX. A direct `require.resolve('inspectra-engine/node')` probe
 reports `MODULE_NOT_FOUND`. Its manifest does export `./node`, so the observed
 warning does not establish that the provider has a missing export.
 
@@ -188,7 +188,7 @@ agree with the root conditional exports. No advertised runtime target is missing
 The root package has no production dependencies, optional dependencies, or peer
 dependencies. Importing its root or adapter entrypoint succeeds without Inspectra.
 Only capture using the default loader requires `inspectra-engine/node`; callers
-can inject `load`. The adapter uses SHIVAX's root validator through an external
+can inject `load`. The adapter uses ShivAX's root validator through an external
 self-reference, and expects a host-provided page lease and cleanup implementation.
 It does not launch a browser itself. Loader failures are sanitized to
 `Inspectra capture failed.`, which limits installation diagnostics at capture time.
@@ -206,7 +206,7 @@ core runtime dependency. Any future peer declaration must preserve zero automati
 provider installation and consider the dependency relationship described below.
 
 `adapters/inspectra/README.md` still says the adapter is not bundled into the
-SHIVAX npm artifact and demonstrates `@shivax/inspectra-adapter`. Both conflict
+ShivAX npm artifact and demonstrates `@shivax/inspectra-adapter`. Both conflict
 with the root export map and observed package file list. The current public
 distribution is `shivax/adapters/inspectra`.
 
@@ -215,7 +215,7 @@ by adapter comments/docs and historical capture fixtures. It declares Node
 `>=22.15`, an ESM `./node` export, and dependencies on Playwright, axe-core,
 cspell, Lighthouse, and `shivax: ^0.1.2`. Its version satisfies the adapter's
 `^1.0.1` peer range, but B00 did not validate live API compatibility against 1.0.4.
-Making Inspectra an eager SHIVAX dependency would introduce a dependency cycle
+Making Inspectra an eager ShivAX dependency would introduce a dependency cycle
 and heavy browser/tooling dependencies; optional host integration should remain
 an explicit design constraint.
 
@@ -271,7 +271,7 @@ The audit file itself is not selected by the current package `files` list.
 
 | Surface | Declared/observed requirement | Verification limit |
 | --- | --- | --- |
-| SHIVAX runtime package | Node `>=22` | Tested here only on Node 26.13.0; Node 22.0 floor not executed |
+| ShivAX runtime package | Node `>=22` | Tested here only on Node 26.13.0; Node 22.0 floor not executed |
 | Actual Inspectra capture | Node `>=22.15`, per adapter and sibling provider manifests, plus host browser/page environment | Not live-tested in B00; root engine field cannot express the higher optional-feature floor |
 | TypeScript-emitted core | ES2020 syntax target, ESNext modules; ES2020 + DOM compile libs | Target is not a polyfill or a browser support matrix |
 | Raw adapter input | Native private/public class fields, dynamic import, `structuredClone`, `AbortSignal.throwIfAborted` | Bypasses TypeScript lowering, so adapter bundles are not restricted to ES2020 syntax/API support |

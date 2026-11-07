@@ -29,7 +29,7 @@ export interface InspectraAdapterOptions {
         context: InspectionProviderContext,
         security?: InspectraPageSecurity
     ): Promise<InspectraPageLease>;
-    /** unknown avoids binding SHIVAX consumers to Playwright's Page type. Runtime checks the real API. */
+    /** unknown avoids binding ShivAX consumers to Playwright's Page type. Runtime checks the real API. */
     load?(): Promise<unknown>;
     maxNodes?: number;
     timeout?: number;

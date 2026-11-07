@@ -1,4 +1,4 @@
-# SHIVAX R00 - Model router and security audit
+# ShivAX R00 - Model router and security audit
 
 Date: 2026-11-02 (Asia/Calcutta)
 

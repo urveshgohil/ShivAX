@@ -1,9 +1,9 @@
 # Phase 07 — Vision and UI inspection
 
-Implemented 2026-10-27 (Asia/Calcutta). SHIVAX remains dependency-free and keeps
+Implemented 2026-10-27 (Asia/Calcutta). ShivAX remains dependency-free and keeps
 its existing neural, tensor, MNIST, visual and package APIs. New integration
 code composes the existing specialist and security layers; it does not replace
-Inspectra's browser engine or SHIVAX's visual matcher.
+Inspectra's browser engine or ShivAX's visual matcher.
 
 ## Verified Inspectra API
 
@@ -11,7 +11,7 @@ Inspected the sibling repository's `package.json`, `node/index.mjs`,
 `node/index.d.mts`, `scanner/browser-snapshot.js`, `ui-check.js` and extraction
 tests. Actual package: `inspectra-engine` **1.0.1**. Published Node exports include
 `captureUISnapshot`, `captureUIPage`, `captureUISnapshotPair`, `compare`,
-`capturePNGBaseline` and Figma capture functions. SHIVAX does not assume APIs from
+`capturePNGBaseline` and Figma capture functions. ShivAX does not assume APIs from
 the historical `inspectra-automation` name.
 
 The separately versioned [adapter package](../adapters/inspectra/README.md) uses

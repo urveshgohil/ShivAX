@@ -44,7 +44,7 @@ included in the npm package.
 ### Open items
 
 1. **Visynq demo startup cancellation (Phase 10 review item 2).** This is in the
-   separate Visynq Workstation application, not in SHIVAX. As of 2026-11-07 its
+   separate Visynq Workstation application, not in ShivAX. As of 2026-11-07 its
    `start()` still awaits `jay.createContext` without publishing a terminal state,
    so cancelling during startup leaves the demo `queued`. Not changed in R09.
 2. ~~**Workflow model path (R03 G02).**~~ **Fixed in the pre-R10 review**; see
@@ -148,7 +148,7 @@ the fix. Existing workflow tests pass unchanged.
 - **`pnpm audit`: 2 moderate advisories, development and optional-peer only.**
   `minimatch` < 11.0.1 (GHSA-g3hv-75wg-m249) through `eslint`, and `glob` ≤ 14.0.1
   (GHSA-3g3m-2fjr-6pw4) through `inspectra-engine` → `lighthouse` → `@sentry`.
-  Neither is in the SHIVAX package. The latest `eslint` (10.14.0) still requires
+  Neither is in the ShivAX package. The latest `eslint` (10.14.0) still requires
   `minimatch ^10`, so there is no non-breaking upgrade yet. The `glob` path is in
   the separate `inspectra-engine` package.
 - **Ollama `localhost`.** The adapter accepts `localhost` as well as `127.0.0.1` and
@@ -183,7 +183,7 @@ Final gate on the reviewed tree, same environment:
 
 The text below is preserved as written on 2026-10-29. Statuses above supersede
 its blocker and review findings. References to Visynq describe the author's
-separate application, which is not distributed with SHIVAX.
+separate application, which is not distributed with ShivAX.
 
 Date: 2026-10-29 (Asia/Calcutta). Package: shivax 0.1.2.
 
@@ -218,11 +218,11 @@ Review date: 2026-10-29. Two additional reproducible Phase 10 issues need fixes:
    cancellation/failure state for startup errors and verify the user can start
    another task. Existing cancellation tests wait until approval and miss this.
 
-The existing suites again passed: **445 SHIVAX tests and 214 Visynq tests**.
+The existing suites again passed: **445 ShivAX tests and 214 Visynq tests**.
 The additional cancellation regression probe failed as described above; the two
 CommonJS compile probes produced TS1479. Temporary probes were removed after
 recording their results. No implementation code was changed during this review.
-Both builds, SHIVAX type checking/lint, all 12 packed runtime imports and the
+Both builds, ShivAX type checking/lint, all 12 packed runtime imports and the
 existing ES2020/bundler declaration check passed. Registry, CPU inference, RUDRA
 and file persistence examples passed. Chromium approval/denial and the actual
 Inspectra capture/review workflow passed, including page cleanup. The two older
@@ -280,8 +280,8 @@ examples in this phase do not rely on the affected paid/fallback paths.
 
 | Check | Result |
 | --- | --- |
-| Clean SHIVAX TypeScript/Rollup build | Passed, ESM/CJS shared chunks and declarations |
-| Full SHIVAX regression suite | 445 passed, zero failed/cancelled/skipped; includes security/ML/package checks and four new SDK tests |
+| Clean ShivAX TypeScript/Rollup build | Passed, ESM/CJS shared chunks and declarations |
+| Full ShivAX regression suite | 445 passed, zero failed/cancelled/skipped; includes security/ML/package checks and four new SDK tests |
 | TypeScript --noEmit and ESLint | Passed |
 | Public root/subpath identity | All supported shared ESM/CJS exports retain identity within their format |
 | Packed offline consumer | All 12 ESM/CJS imports and ES2020-only declarations passed; 299 packaged files |
@@ -319,7 +319,7 @@ Build with installed local tsc/Rollup or the existing build script, then:
 
 ### Changed files
 
-SHIVAX:
+ShivAX:
 - package.json, rollup.config.mjs, src/index.ts.
 - src/sdk/core.ts, rudra.ts, bots.ts, security.ts, models.ts, memory.ts,
   integrations.ts, inspectra.ts, learning.ts, diagnostics.ts.

@@ -1,4 +1,4 @@
-# SHIVAX implementation phases
+# ShivAX implementation phases
 
 **Synthetic Hybrid Intelligence with Versatile Autonomous eXperts**  
 **One Intelligence. Many Specialized Minds.**
@@ -361,10 +361,10 @@ contracts, host configuration, file inventory and limitations.
 
 Inspected the actual sibling package: `inspectra-engine` 1.0.1. A separately
 versioned private adapter in `adapters/inspectra/` calls its public
-`captureUIPage` API. SHIVAX adds portable `InspectionProvider` and normalized
+`captureUIPage` API. ShivAX adds portable `InspectionProvider` and normalized
 observation contracts plus a protected capture service. Host page leases own
 navigation/redirect/subresource policy, isolated contexts and artifact paths;
-Inspectra owns extraction and screenshots. SHIVAX adds no browser dependency.
+Inspectra owns extraction and screenshots. ShivAX adds no browser dependency.
 
 The fixed workflow routes URL references directly to Narad capture; screenshot
 references first use Sanjay's configured vision adapter. Narad reuses the
@@ -458,7 +458,7 @@ declarations, diagnostics and server licensing contracts. The actual sibling
 Visynq application adds a lazy `/shivax` route with real RUDRA/Narad/Yudhishthir
 execution, approval and recorded inspection evidence. Its mock identity is labelled.
 
-Acceptance: 445 SHIVAX tests and 214 Visynq tests pass, both builds pass, packed
+Acceptance: 445 ShivAX tests and 214 Visynq tests pass, both builds pass, packed
 ES2020 consumer checks pass for all 12 entries, and Chromium approval/denial plus
 actual Inspectra capture/cleanup passed. See [SDK guide](sdk.md) and
 [release-readiness report](release-readiness.md) for evidence, changed files,
@@ -469,7 +469,7 @@ workflow; inspect the current Workstation repository before changing it.
 
 Compose RUDRA, selected bots, trusted identity/policy, optional models, memory
 and inspection services at the application boundary. React remains in Visynq;
-SHIVAX owns portable intelligence/contracts and Inspectra owns automation.
+ShivAX owns portable intelligence/contracts and Inspectra owns automation.
 Expose actual task events, evidence and errors; account/workspace switching
 must cancel and isolate prior work. Package missing capabilities honestly.
 
