@@ -1,6 +1,13 @@
 # Release readiness
 
-## Current status: R09 (2026-11-07, Asia/Calcutta)
+> **Latest (2026-11-07): version bumped to 0.2.0 after R10.** 792/792 tests pass on
+> Node 22.23.2, 24.22.2 and 26.13.0 (Windows); `npm pack --dry-run` produces
+> `shivax-0.2.0.tgz` with 453 files. 0.2.0 is not published. Remaining pre-publish
+> step: a passing Linux/Windows CI run. The full report is
+> `docs/audits/shivax-r10-release.md` in the source repository (not included in the
+> npm package). Sections below are the R09 and earlier records.
+
+## Status at R09 (2026-11-07, Asia/Calcutta)
 
 **Decision: R09 documentation and SDK packaging work is complete. Nothing was
 published.** Releasing the `Unreleased` changes still needs a version decision

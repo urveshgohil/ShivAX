@@ -26,4 +26,4 @@ export * from './learning/training.js';
 export { toSDKDiagnostic } from './sdk/diagnostics.js';
 export type { SDKDiagnostic } from './sdk/diagnostics.js';
 
-export const VERSION = '0.1.3';
+export const VERSION = '0.2.0';

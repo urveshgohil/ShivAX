@@ -13,9 +13,9 @@ See `docs/production.md` for trusted host versus browser boundaries.
 
 ## Supported versions
 
-The latest version published on npm is 0.1.3. Source changes listed under
-`Unreleased` in `CHANGELOG.md`, including the managed firewall, are not in any
-published version. No support window or backport policy is currently established.
+This document describes version 0.2.0 NARASIMHA. The managed firewall and the fail-closed
+model usage checks are new in 0.2.0 and are not in 0.1.3 or earlier. No support
+window or backport policy is currently established.
 
 ## Reporting a vulnerability
 
@@ -77,7 +77,7 @@ executing inside your own process. Do not execute untrusted code in-process.
   and other development tools are not required by consumers at runtime.
 
 
-## Managed firewall boundary (Unreleased)
+## Managed firewall boundary (new in 0.2.0)
 
 The additive firewall core starts in enforce mode and retains mandatory Jay/Vijay,
 approval, tenant, sandbox and budget checks in monitor mode. Lockdown blocks new

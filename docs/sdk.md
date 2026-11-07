@@ -1,10 +1,8 @@
 # SHIVAX SDK
 
-This guide describes the current source. Its `package.json` version is 0.1.3, which
-is also the latest version published on npm (checked 2026-11-07). Sections marked
-**Unreleased** describe source changes that are not in the published 0.1.3 package;
-see the `Unreleased` section of `CHANGELOG.md`. For an overview of scope, trust
-boundaries and limitations, read `docs/production.md` first.
+This guide describes version 0.2.0 NARASIMHA. Sections marked **New in 0.2.0** describe APIs
+that are not in 0.1.3 or earlier; see `CHANGELOG.md`. For an overview of scope,
+trust boundaries and limitations, read `docs/production.md` first.
 
 Existing `shivax` root imports remain supported. All 12 public entry points provide
 ESM, CommonJS and portable ES2020 declarations.
@@ -15,8 +13,8 @@ ESM, CommonJS and portable ES2020 declarations.
 | `shivax/core` | Tensor, math, NeuralNet, text and evaluation metrics |
 | `shivax/rudra` | Bot contracts, registry, executor, RUDRA and controlled workflows |
 | `shivax/bots` | Seven specialists and composition helpers |
-| `shivax/security` | Jay, Vijay, policies, tools and audit; managed firewall and management (Unreleased) |
-| `shivax/models` | Model providers, neural/rules/Ollama/remote adapters and SLM; guarded model gateway (Unreleased) |
+| `shivax/security` | Jay, Vijay, policies, tools and audit; managed firewall and management (new in 0.2.0) |
+| `shivax/models` | Model providers, neural/rules/Ollama/remote adapters and SLM; guarded model gateway (new in 0.2.0) |
 | `shivax/memory` | Memory engine, persistence and lifecycle integration |
 | `shivax/integrations` | Portable inspection contracts, service and planner |
 | `shivax/adapters/inspectra` | Optional lazy Inspectra adapter |
@@ -67,7 +65,7 @@ checkout, run `pnpm build` first, then `node examples/sdk/<file>`.
 - `examples/sdk/rudra.mjs`: bounded workflow and explicit fixture approval.
 - `examples/sdk/memory-persistence.mjs`: file save/reopen in an exclusive
   temporary directory, with cleanup.
-- `examples/sdk/firewall.mjs` (Unreleased API): managed firewall with one CPU
+- `examples/sdk/firewall.mjs` (new in 0.2.0): managed firewall with one CPU
   registration, default deny and an approved lockdown, using a labelled mock identity.
 - `examples/sdk/inspectra.mjs`: a module (not a script) showing adapter composition
   with host page leases and URL policy. No implicit navigation or unrestricted
@@ -131,10 +129,9 @@ See `docs/release-readiness.md` for acceptance evidence and open release items.
 
 ## Managed firewall core
 
-**Unreleased.** This section and the firewall sections that follow (protected
-execution binding, guarded model calls and host management) describe source that
-is not in the published 0.1.3 package. A runnable example is
-`examples/sdk/firewall.mjs`.
+**New in 0.2.0.** This section and the firewall sections that follow (protected
+execution binding, guarded model calls and host management) describe APIs that are
+not in 0.1.3 or earlier. A runnable example is `examples/sdk/firewall.mjs`.
 
 `createShivaxFirewall` is exported from `shivax/security` and the root entrypoint.
 It adds a managed boundary around trusted host registrations while retaining Jay

@@ -1,7 +1,7 @@
 {
   "name": "shivax",
-  "version": "0.1.3",
-  "description": "JavaScript and TypeScript multi-agent AI framework with neural networks, controlled workflows, model adapters, scoped memory, UI inspection and evaluation.",
+  "version": "0.2.0",
+  "description": "SHIVAX AI - Narasimha Release",
   "main": "dist/index.cjs",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",

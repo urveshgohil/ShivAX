@@ -6,12 +6,11 @@ what has been tested. Use it together with the [SDK guide](sdk.md) and
 
 ## Status and version
 
-- The latest version published on npm is **0.1.3** (2026-11-01, checked against the
-  registry on 2026-11-07). `package.json` in this source still reads 0.1.3.
-- This source also contains **unreleased** work that is *not* in the published 0.1.3
-  package: exact model cost accounting (R01), fail-closed token usage checks (R02),
-  and the managed firewall (R04–R07). See the `Unreleased` section of
-  [CHANGELOG.md](../CHANGELOG.md). Sections below mark these features *Unreleased*.
+- This guide describes version **0.2.0 NARASIMHA**.
+- New in 0.2.0, and not in 0.1.3 or earlier: exact model cost accounting,
+  fail-closed token usage checks (a breaking change for providers that report
+  `null` token counts), and the managed firewall. Sections below mark these
+  *new in 0.2.0*. See [CHANGELOG.md](../CHANGELOG.md).
 - SHIVAX is pre-1.0 software maintained by one author. There are no published
   benchmarks comparing it with established ML or agent frameworks, and this guide
   makes no such comparison. Evaluate it against your own workloads.
@@ -92,7 +91,7 @@ task text, page content or model output as identity, approval or administrator
 intent. A browser user interface for administration must call a trusted host
 endpoint; the browser must never hold the `admin` or `management` objects.
 
-## Configuring the firewall (Unreleased)
+## Configuring the firewall (new in 0.2.0)
 
 The managed firewall is in `shivax/security`. It is opt-in: existing raw APIs keep
 working and are *not* covered unless you route them through it.
@@ -136,8 +135,8 @@ gateway, protected-execution binding, the management API and audit behaviour.
 | `shivax/core` | Tensor, math, NeuralNet, BagOfWords, metrics |
 | `shivax/rudra` | Bot contracts, registry, executor, RUDRA, workflows |
 | `shivax/bots` | Seven specialists and composition helpers |
-| `shivax/security` | Jay, Vijay, policies, protected tools, audit; firewall and management (Unreleased) |
-| `shivax/models` | Model registry/router, neural, rules, Ollama and remote adapters; guarded gateway (Unreleased) |
+| `shivax/security` | Jay, Vijay, policies, protected tools, audit; firewall and management (new in 0.2.0) |
+| `shivax/models` | Model registry/router, neural, rules, Ollama and remote adapters; guarded gateway (new in 0.2.0) |
 | `shivax/memory` | Memory engine and in-memory, Node file and IndexedDB persistence |
 | `shivax/integrations` | Inspection contracts, service and planner |
 | `shivax/adapters/inspectra` | Optional adapter; needs the optional peer `inspectra-engine@1.0.4` and Node 22.15+ |
@@ -161,7 +160,7 @@ into `dist/` are not supported.
   the in-memory audit ring are per process and lost on restart. Persistent firewall
   policies need a host store.
 - **Workflow model tools are a separate ledger.** `ToolRegistry.registerModel`
-  enforces the same fail-closed usage rules as `ModelRouter` (Unreleased fix for
+  enforces the same fail-closed usage rules as `ModelRouter` (0.2.0 fix for
   R03 G02), but its budget is the workflow's own `modelBudget`, not the firewall's
   shared model budget. Use the guarded gateway where one shared budget matters.
 - **Permission refresh (R03 G04, open).** Jay snapshots permissions at

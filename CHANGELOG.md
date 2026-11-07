@@ -2,9 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+Each minor release line (`0.x.0`) has a release name. Patch releases keep their
+line's name. The npm version stays plain semantic versioning.
+
+| Release line | Name |
+| --- | --- |
+| 0.1.x | BRAHMA |
+| 0.2.x | NARASIMHA |
+
 ## [Unreleased]
 
-Changes in the source after the published 0.1.3 package. Not yet released to npm.
+## [0.2.0] NARASIMHA - 2026-11-07
+
+Version prepared 2026-11-07 after R10 verification. It has not been published to
+npm at the time of writing; the latest published version is 0.1.3. Contains two
+breaking behaviour changes, marked below.
 
 ### Added
 
@@ -16,6 +28,7 @@ Changes in the source after the published 0.1.3 package. Not yet released to npm
 - Runnable SDK examples now ship in the package under `examples/sdk/`, including a new `firewall.mjs`. Package verification checks every documented example is packed and runs the offline ones from an installed copy.
 - `docs/production.md`: scope, bot capabilities, model requirements, firewall setup, trust boundaries and known limitations.
 - `repository`, `bugs` and `homepage` package metadata pointing to the public GitHub repository.
+- R10 adversarial release tests: lockdown during in-flight remote inference and during Inspectra capture, invalid provider and policy URLs, direct gateway bypass attempts, concurrent mode changes, stale approvals and audit redaction of injected input.
 
 ### Changed
 
@@ -74,7 +87,7 @@ Changes in the source after the published 0.1.3 package. Not yet released to npm
 - Expand npm discovery keywords and describe SHIVAX as a JavaScript/TypeScript multi-agent AI framework.
 - Add feature-based use cases and concise README answers about platforms, model providers, controlled workflows, UI inspection, and learning.
 
-## [0.1.0] - 2026-10-03
+## [0.1.0] BRAHMA - 2026-10-03
 
 This entry records the current development baseline. The date is the documentation
 baseline date and does not assert that a package release was published or tagged.
