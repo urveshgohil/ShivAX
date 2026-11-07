@@ -1,4 +1,4 @@
-# SHIVAX B02 — TypeScript helper warnings
+# ShivAX B02 — TypeScript helper warnings
 
 Date: 2026-11-01 (Asia/Calcutta). Package: `shivax@0.1.2`.
 Prior results: [B00](build-baseline.md), [B01](optional-inspectra-b01.md).
@@ -35,7 +35,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 With ES2020 output, TypeScript lowered private state into WeakMap/WeakSet storage
 and inline helpers. Their module-level `this` reuse guards caused Rollup's
 `THIS_IS_UNDEFINED` warnings because the input files are ES modules. The guard
-was the cause, rather than an incorrect receiver inside the SHIVAX methods.
+was the cause, rather than an incorrect receiver inside the ShivAX methods.
 
 After the change, licensing emits `#verify` and directly calls `this.#verify`;
 ToolLease emits its native private controller, state, and methods. A scan of all
@@ -89,7 +89,7 @@ changing the selected/global Node installation. Its SHA256 matched the
 db174445b3d28314772bc3918e39d8543cfbd18d542cf2a662f431f5cdc259ea
 ```
 
-**Browsers:** SHIVAX documents browser bundles but had no minimum-browser version
+**Browsers:** ShivAX documents browser bundles but had no minimum-browser version
 matrix. The emitted code now requires native private class fields/methods unless
 the application transpiles dependency code. Modern-browser support for these
 features is documented by [MDN private elements](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_elements)
@@ -102,7 +102,7 @@ chunks over localhost, loaded all 12 public runtime entrypoints through their
 ESM output paths, and ran Tensor matrix multiplication, deterministic XOR
 training/classification, specialist construction, and ModelRouter construction
 and disposal. All passed. The adapter entry used an import map for its lazy
-SHIVAX self-reference; Inspectra was not loaded in the browser.
+ShivAX self-reference; Inspectra was not loaded in the browser.
 
 This is not a claim that every old browser is supported: the syntax floor rises
 from ES2020 to ES2022. ES2020-only browsers need the application's transpilation

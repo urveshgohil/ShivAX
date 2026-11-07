@@ -19,7 +19,7 @@ const codes: readonly FirewallErrorCode[] = [
 export class FirewallError extends Error {
     constructor(public readonly code: FirewallErrorCode) {
         if (!codes.includes(code)) throw new TypeError('Invalid firewall error code.');
-        super('SHIVAX firewall: ' + code + '.');
+        super('ShivAX firewall: ' + code + '.');
         this.name = 'FirewallError';
         Object.freeze(this);
     }

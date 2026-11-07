@@ -27,7 +27,7 @@ export interface InspectionObservation {
               readonly width: number;
               readonly height: number;
               readonly mimeType: 'image/png' | 'image/jpeg' | 'image/webp';
-              /** Opaque host artifact handle. Never opened by SHIVAX. */
+              /** Opaque host artifact handle. Never opened by ShivAX. */
               readonly reference: string;
           };
 }

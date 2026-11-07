@@ -1,6 +1,6 @@
 # Optional local SLM reasoning (Phase 9)
 
-Shivax exports `SLMProvider`, `SLMClient`, `OllamaProvider` and
+ShivAX exports `SLMProvider`, `SLMClient`, `OllamaProvider` and
 `analyzeUIWithSLM`. Existing `NeuralNet`, matching and `analyzeUI` APIs are
 unchanged. No runtime dependencies, model weights, downloads, UI or scanner
 backend are added. Use a trusted local Node.js runner with Node 22+ and an
@@ -89,7 +89,7 @@ resolve deterministic uncertainty or create additional measured issues.
 Output is a strict JSON object with `semanticMatches`, `relationships` and
 `issues` arrays (at most 128 entries each). Unexpected fields, duplicate or
 conflicting selections, invented IDs, unsupported relationships, malformed
-JSON and supplied values/prose are rejected atomically. Shivax validates both
+JSON and supplied values/prose are rejected atomically. ShivAX validates both
 shape and evidence references; an Ollama JSON schema alone is insufficient.
 
 Descriptions use deterministic templates selected by the model. CSS suggestions
@@ -111,7 +111,7 @@ Snapshot/options validation errors still throw, as with `analyzeUI`.
 
 Each client belongs to one immutable company or personal scope; cross-scope
 snapshots fail before provider access, and a client refuses a different scope.
-Use one provider/client per scope. Shivax stores no history, page-data cache or
+Use one provider/client per scope. ShivAX stores no history, page-data cache or
 logs. External providers require both `enabled: true` and `allowExternal: true`;
 the built-in Ollama adapter only accepts loopback origins, forbids redirects,
 and rejects cloud names or remote model metadata. It checks model metadata

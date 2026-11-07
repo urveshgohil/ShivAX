@@ -1,6 +1,6 @@
 # R07 — Firewall management host adapter
 
-Date: 2026-11-06. Scope: SHIVAX 0.1.3 and read-only inspection of the adjacent VISYNQ hosts. No package version change or publication.
+Date: 2026-11-06. Scope: ShivAX 0.1.3 and read-only inspection of the adjacent VISYNQ hosts. No package version change or publication.
 
 ## Host inspection
 
@@ -11,18 +11,18 @@ VISYNQ also contains an Electron main process and preload.
 
 Inspected the two package manifests, their `scripts/local-runner.mjs`,
 VISYNQ's `scripts/settings-channel.mjs` and `electron/main.cjs`, the source
-file inventory, and SHIVAX's existing firewall implementation. No applicable
+file inventory, and ShivAX's existing firewall implementation. No applicable
 AGENTS.md was found in these inspected roots or the workspace ancestors.
 
 The existing settings channel is a loopback HTTP service. It checks host/origin,
 manages the Inspectra runner token and accepts host Figma configuration. Those
 checks do not establish a named application administrator or an action-specific
-administrator role. Neither host manifest depends on SHIVAX. No SHIVAX firewall
+administrator role. Neither host manifest depends on ShivAX. No ShivAX firewall
 composition root, persistent firewall policy store or authenticated firewall
 management backend was found.
 
 R07 therefore adds a documented transport-neutral adapter and persistent test
-host in SHIVAX. It does not add production routes, invent a backend framework,
+host in ShivAX. It does not add production routes, invent a backend framework,
 reuse the runner token as administrator authority, or modify either host project.
 Production VISYNQ wiring needs its own trusted administrator identity provider
 and persistent store implementation.

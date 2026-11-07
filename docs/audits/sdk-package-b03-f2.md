@@ -1,4 +1,4 @@
-# SHIVAX B03-F2 — Actual SDK package verification
+# ShivAX B03-F2 — Actual SDK package verification
 
 Date: 2026-11-01 (Asia/Calcutta). Package: shivax@0.1.2.
 Environment: Windows, Node 22.23.2, pnpm 12.8.1, TypeScript 7.0.2.
@@ -39,7 +39,7 @@ development checkout. This is the installed-tree state described in B01: pnpm
 prepared the package's own development peers. It is not a mandatory dependency
 declaration in the published manifest.
 
-Both source and npm-installed SHIVAX manifests have no `dependencies` or
+Both source and npm-installed ShivAX manifests have no `dependencies` or
 `optionalDependencies` field. They declare:
 
 ```json
@@ -51,7 +51,7 @@ Both source and npm-installed SHIVAX manifests have no `dependencies` or
 
 The fresh external npm consumer contains no inspectra-engine installation, and
 dynamic import of `inspectra-engine/node` rejects with `ERR_MODULE_NOT_FOUND`.
-Root SHIVAX and every SDK entry still import successfully in both formats.
+Root ShivAX and every SDK entry still import successfully in both formats.
 Constructing and attempting capture through the installed adapter returns fixed
 installation guidance without acquiring a page. The separate live integration
 script then tests the installed compatible provider in an isolated package

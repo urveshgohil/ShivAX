@@ -1,4 +1,4 @@
-# SHIVAX architecture
+# ShivAX architecture
 
 **Synthetic Hybrid Intelligence with Versatile Autonomous eXperts**  
 **One Intelligence. Many Specialized Minds.**
@@ -35,10 +35,10 @@ See [implementation phases](SHIVAX_PHASES.md) and the
 
 ## 1. Findings first
 
-1. SHIVAX already has a real CPU ML engine: bounded tensors, dense-network
+1. ShivAX already has a real CPU ML engine: bounded tensors, dense-network
    backpropagation, three optimizers, evaluation and inference serialization.
    The digit pipeline and browser playground build on that engine.
-2. SHIVAX also has deterministic visual scene validation, matching/comparison
+2. ShivAX also has deterministic visual scene validation, matching/comparison
    and an optional injectable SLM integration. These are useful specialist
    capabilities, but do not constitute RUDRA or a multi-bot runtime.
 3. Phase 01 adds a bot registry, shared contracts, task context, typed events and
@@ -118,7 +118,7 @@ Supplied UISnapshots -> validation/normalization -> matching -> analyzeUI
 ```
 
 Measurements, model output and deterministic computations remain distinct.
-SHIVAX does not extract DOM data, capture browsers, fetch Figma designs or decode
+ShivAX does not extract DOM data, capture browsers, fetch Figma designs or decode
 PNG pixels through the visual API. Input source labels describe supplied data.
 
 ## 3. Existing public API inventory
@@ -227,7 +227,7 @@ The root additionally exports `toSDKDiagnostic` and the type `SDKDiagnostic`.
 | `BotContext.tools` | Optional secured invocation client exposing only `execute(id,input)`; invalidated at bot completion |
 | Specialist classes | Shared `Bot` interface, seven fixed IDs and 28 schema-validated capabilities: original 16, eight Phase 06 memory actions and four Phase 07 inspection actions |
 | `InspectionPlanner` / `registerInspectionService` | Fixed capture/compare/review workflow with optional screenshot interpretation; protected host capture and explicit URL/reference admission |
-| `validateInspectionObservation` / `createInspectionVisionAdapter` | Bounded normalized untrusted observations and optional structured image-capable model routing; no browser/model runtime imported by SHIVAX |
+| `validateInspectionObservation` / `createInspectionVisionAdapter` | Bounded normalized untrusted observations and optional structured image-capable model routing; no browser/model runtime imported by ShivAX |
 | `createSpecialistBots` / `registerSpecialistBots` | Create or explicitly register all seven instances; duplicate preflight prevents partial registration |
 | `createSpecialistSystem` | Compose the registry, bots, optional protected services/security and RUDRA instance without global state |
 | `registerSpecialistServices` | Install explicitly supplied memory/feedback handlers; grants no policies or permissions |
@@ -311,7 +311,7 @@ Visynq Workstation React UI (requests; cannot grant host permissions)
   -> RUDRA: explicit registered capability routing and execution budget
   -> authorization (Vijay) before protected resource/service access
   -> selected specialist(s), each with narrow injected services
-       -> existing SHIVAX ML / visual / optional SLM APIs
+       -> existing ShivAX ML / visual / optional SLM APIs
        -> bounded memory / inspection / model / execution host adapters
   -> validated result + provenance + actual lifecycle events -> Workstation
 ```
@@ -364,7 +364,7 @@ is to preserve the current source layout and connect these responsibilities
 through the existing contracts and additive adapters.
 
 ```text
-SHIVAX/
+ShivAX/
   src/
     core/
       rudra/
@@ -415,7 +415,7 @@ SHIVAX/
 | `intelligence/routing` | `src/intelligence/router.ts` selects compatible model providers with bounded, explicitly permitted fallback. Distinct from RUDRA selecting specialist tasks. |
 | `memory` | `src/memory/` implements the Phase 06 record engine and persistence/lifecycle adapters. Legacy session stores remain in `src/bots/storage.ts`. Digit model persistence stays separate in `examples/digits/`. |
 | `tools` | Host-owned protected registry/leases in `src/security/`, Phase 08 capability bindings in `src/workflows/registry.ts` and explicit service adapters; no unrestricted I/O handlers. |
-| `integrations` | Phase 07 contracts/composition in `src/inspection/`, separate `adapters/inspectra/` package. Actual browser extraction remains in `inspectra-engine`, React in Visynq; no mandatory platform runtime enters SHIVAX. |
+| `integrations` | Phase 07 contracts/composition in `src/inspection/`, separate `adapters/inspectra/` package. Actual browser extraction remains in `inspectra-engine`, React in Visynq; no mandatory platform runtime enters ShivAX. |
 | Root entry / examples / tests / docs | Retain `src/index.ts`, dual ESM/CJS/declarations, existing examples/digit assets and current test discovery. New test entry files must still match `tests/*.test.mjs`. |
 
 The current physical `src/core/` contains numeric utilities. The logical name

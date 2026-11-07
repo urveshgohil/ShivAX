@@ -1,6 +1,6 @@
 # Phase 01 — Multi-bot foundation
 
-SHIVAX provides portable bot contracts, explicit registration, typed lifecycle
+ShivAX provides portable bot contracts, explicit registration, typed lifecycle
 events, host-created task contexts and execution of one caller-selected bot.
 This phase adds no RUDRA, automatic routing, workflow planner, real specialist
 or LLM dependency. Existing neural-network, MNIST, visual and SLM APIs retain

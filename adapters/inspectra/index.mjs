@@ -4,7 +4,7 @@ import { validateInspectionObservation } from 'shivax';
 export function normalizeInspectraCapture(raw, { scope, screenshotReference } = {}) {
     if (!raw || raw.snapshot?.sourceType !== 'url' || !raw.metadata?.nodes)
         throw new TypeError('Invalid Inspectra capture.');
-    // Inspectra output is trusted adapter data; SHIVAX's validator snapshots and bounds the result.
+    // Inspectra output is trusted adapter data; ShivAX's validator snapshots and bounds the result.
     const snapshot = structuredClone(raw.snapshot);
     const details = raw.metadata.nodes;
     const elements = snapshot.nodes.map((node) => {

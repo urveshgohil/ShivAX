@@ -1,71 +1,81 @@
-# SHIVAX AI — JavaScript & TypeScript Multi-Agent AI Framework
+# ShivAX AI - JavaScript & TypeScript Multi-Agent AI Framework
 
 **Synthetic Hybrid Intelligence with Versatile Autonomous eXperts**
 
 *One Intelligence. Many Specialized Minds.*
 
-SHIVAX (`shivax` on npm) is a JavaScript and TypeScript multi-agent AI framework
-for Node.js and browser applications. It combines CPU neural networks, agent
-orchestration, model-provider integration, scoped memory, UI inspection and AI
-evaluation. RUDRA coordinates tasks; Jay and Vijay enforce host-configured
-security; the managed firewall governs what registered operations may do.
+ShivAX (`shivax` on npm) is a multi-agent AI framework for Node.js and the
+browser. It gives you small neural networks that run on the CPU, a team of task
+bots, a task runner, memory, model routing, UI checks and a firewall. RUDRA hands
+each task to the right bot. Jay checks who is calling, and Vijay checks what they
+may do. The firewall decides which actions can run.
 
-**Version:** 0.2.0 NARASIMHA · **Runtime:** Node.js 22+ and browser bundles · **License:** Apache-2.0
+**Version:** 0.2.0 NARASIMHA · **Runs on:** Node.js 22+ and modern browsers · **License:** Apache-2.0
 
-The core has zero runtime dependencies. Browser automation, storage, authentication
-and model backends use optional host-configured adapters.
+The core has no runtime dependencies. You plug in your own browser automation,
+storage, sign-in and model backends when you need them.
 
 ## What's new in 0.2.0 NARASIMHA
 
-- **Managed firewall:** opt-in `enforce`, `monitor` and `lockdown` modes over
-  registered operations, with default deny, exact file and network allowlists,
-  shared budgets, cancellation and redacted audit events.
-- **Guarded model calls:** `createGuardedModelGateway` routes model requests
-  through the firewall, with fixed provider routes and destination checks.
-- **Policy management:** `openShivaxFirewallManagement` for authenticated,
-  approval-gated policy changes with versioned persistent storage.
-- **Exact model budgets:** cost limits use exact decimal arithmetic, so three
-  $0.10 calls fit a $0.30 budget.
-- **Stricter usage checks:** a reported token or cost overrun stops the router,
-  even when the model output is malformed.
-- **Runnable examples in the package** under `examples/sdk/`.
+- **Firewall:** pick `enforce`, `monitor` or `lockdown` mode. It blocks any
+  action you have not allowed. You list the exact files and web addresses each
+  action may use. Actions share one budget, can be stopped, and leave audit
+  records with secrets removed.
+- **Guarded model calls:** `createGuardedModelGateway` sends model requests
+  through the firewall. Each provider has a fixed route, and each address is
+  checked before the call.
+- **Policy changes:** `openShivaxFirewallManagement` lets a signed-in admin change
+  the policy once a person approves. Each change gets a version number and is saved.
+- **Exact budgets:** costs add up with exact decimal math, so three $0.10 calls
+  fit in a $0.30 budget.
+- **Usage checks:** if a model reports more tokens or cost than you allowed, the
+  router stops. This holds even when the model sends back broken output.
+- **Examples in the package:** run them from `examples/sdk/`.
 
 ### Upgrading from 0.1.x
 
-Two behaviour changes can affect existing integrations:
+Two changes may affect your code:
 
-1. Token-based model providers must report numeric `inputTokens` and
-   `outputTokens`. Missing, `null` or malformed usage now fails with
-   `usage-unverifiable` and blocks further calls on that router. Providers that do
-   not bill by token should declare `tokenBased: false`.
-2. Workflow model tools (`ToolRegistry.registerModel`) follow the same rule, and
-   hard model failures (limits, timeouts, unverifiable usage) are no longer retried.
+1. Providers that bill by token must report `inputTokens` and `outputTokens` as
+   numbers. If a count is missing, `null` or not a valid number, the call fails
+   with `usage-unverifiable` and that router takes no more calls. If your provider
+   does not bill by token, set `tokenBased: false`.
+2. Workflow model tools (`ToolRegistry.registerModel`) follow the same rule. They
+   no longer retry hard failures such as limits, timeouts and missing usage.
 
-Existing imports and entry points are unchanged. See [CHANGELOG.md](CHANGELOG.md).
+Imports and entry points have not changed. See [CHANGELOG.md](CHANGELOG.md).
 
 ## Features
 
-- **Machine learning:** tensors, dense neural networks, classification and regression, SGD/momentum/Adam, evaluation metrics and JSON model serialization.
-- **Specialist bots and RUDRA:** capability routing, dependent tasks, approvals, pause/resume, retries, cancellation, execution limits and traces.
-- **Hybrid models:** neural and rules providers, optional local Ollama and host-configured remote providers.
-- **Memory:** scoped records, retention, retrieval, optional embeddings, and in-memory, Node file or IndexedDB storage.
-- **UI inspection:** measured visual and layout comparison with structured findings, plus an optional Inspectra browser adapter.
-- **Security:** trusted host identities, expiring sessions, deny-by-default policies, protected tools, approvals and audit records.
-- **Learning and evaluation:** verified feedback, curated datasets, repeatable evaluations, evaluation-gated model updates and rollback.
+- **Machine learning:** tensors, dense neural networks, classification and
+  regression, SGD, momentum and Adam, metrics, and saving models as JSON.
+- **Bots and RUDRA:** RUDRA picks a bot by what it can do. It runs tasks in order,
+  asks for approval, pauses and resumes, retries, cancels, sets limits and keeps a trace.
+- **Hybrid models:** neural and rule-based providers, plus local Ollama and remote
+  providers that you set up.
+- **Memory:** records grouped by scope, with retention rules, search and optional
+  embeddings. Keep them in memory, in Node files or in IndexedDB.
+- **UI checks:** compare two screens by look and layout, and get a list of
+  findings. An optional Inspectra adapter captures live pages.
+- **Security:** identities from your host, sessions that expire, deny-by-default
+  policies, protected tools, approvals and audit records.
+- **Learning and evaluation:** store checked feedback, build curated datasets,
+  run repeatable tests, and update or roll back a model only after it passes.
 
 ## Specialist bots
 
-| Bot | Role |
+| Bot | What it does |
 | --- | --- |
-| Sanjay | Vision through an optional model adapter |
-| Brihaspati | Structured plans and reasoning decisions |
-| Vishwakarm | Source summaries and code patch proposals |
-| Chitragupt | Scoped memory and retrieval |
-| Narad | UI inspection and comparison |
-| Yudhishthir | Deterministic checks and optional model review |
-| Ekalavy | Feedback, evaluation and controlled learning |
+| Sanjay | Reads images through an optional model adapter |
+| Brihaspati | Builds plans and makes choices |
+| Vishwakarm | Sums up source code and proposes patches |
+| Chitragupt | Saves and finds memory records |
+| Narad | Inspects and compares UIs |
+| Yudhishthir | Runs fixed checks and optional model reviews |
+| Ekalavy | Collects feedback, runs evaluations and controls learning |
 
-Jay handles authentication and Vijay handles authorization at protected execution boundaries.
+Jay signs callers in (authentication). Vijay decides what they may do
+(authorization). Both run at the start of every protected action.
 
 ## Installation
 
@@ -95,8 +105,8 @@ createSpecialistBots().forEach(bot => registry.register(bot));
 console.log(registry.findByCapability('code.patch').map(bot => bot.id)); // ['vishwakarm']
 ```
 
-Model-backed capabilities need a configured provider. Protected operations need
-host authentication, permissions and approval.
+Bot tasks that need a model work once you add a provider. Protected actions need
+sign-in, permissions and approval from your host.
 
 ## Managed firewall
 
@@ -104,73 +114,73 @@ host authentication, permissions and approval.
 import { createShivaxFirewall } from 'shivax/security';
 ```
 
-The firewall starts in `enforce` mode and denies anything not explicitly allowed.
-`monitor` relaxes only rules marked optional; authentication, approvals, tenant
-checks and budgets still apply. `lockdown` blocks every operation except
-explicitly allowed CPU work. Policy changes need an administrator, a host role
-check and human approval.
+The firewall starts in `enforce` mode and blocks anything you have not allowed.
+`monitor` mode relaxes only the rules you mark optional. Sign-in, approvals,
+tenant checks and budgets still apply. `lockdown` blocks everything except CPU
+work you have allowed. To change the policy, a user needs admin rights, must pass
+your role check, and needs a person to approve.
 
-A complete runnable example ships with the package:
+A full example ships with the package:
 
 ```sh
 node node_modules/shivax/examples/sdk/firewall.mjs
 ```
 
-Setup steps are in [docs/production.md](docs/production.md#configuring-the-firewall-new-in-020);
-every option is in the [SDK guide](docs/sdk.md#managed-firewall-core).
+Setup steps are in [docs/production.md](docs/production.md#configuring-the-firewall-new-in-020).
+Every option is in the [SDK guide](docs/sdk.md#managed-firewall-core).
 
 ## SDK entry points
 
 | Import | Contents |
 | --- | --- |
-| `shivax` | Aggregate API |
+| `shivax` | Everything in one import |
 | `shivax/core` | Tensor, NeuralNet, text features, metrics |
 | `shivax/rudra` | Bot contracts, registry, RUDRA, workflows |
-| `shivax/bots` | Seven specialists |
+| `shivax/bots` | The seven specialist bots |
 | `shivax/security` | Jay, Vijay, policies, tools, audit, firewall |
-| `shivax/models` | Model router, providers, Ollama/remote adapters, guarded gateway |
+| `shivax/models` | Model router, providers, Ollama and remote adapters, guarded gateway |
 | `shivax/memory` | Memory engine and storage adapters |
-| `shivax/integrations` | Inspection contracts and services |
+| `shivax/integrations` | UI inspection contracts and services |
 | `shivax/learning` | Feedback, evaluation, training, rollback |
-| `shivax/diagnostics` | Safe error diagnostics |
+| `shivax/diagnostics` | Error details that are safe to show users |
 | `shivax/adapters/inspectra` | Optional Inspectra adapter (`inspectra-engine@1.0.4`) |
-| `shivax/licensing/server` | Server-side license gate |
+| `shivax/licensing/server` | Server-side license check |
 
-Every entry point ships ESM, CommonJS and TypeScript declarations. More examples
-are in [`examples/sdk/`](examples/sdk/README.md).
+Each entry point ships ESM, CommonJS and TypeScript types. More examples are in
+[`examples/sdk/`](examples/sdk/README.md).
 
 ## Frequently asked questions
 
-**Does SHIVAX work with Node.js and browsers?** Yes: Node.js 22+ and modern
-browsers (ES2022), with ESM, CommonJS and TypeScript declarations. Keep identity,
-approvals, credentials and firewall administration on a trusted host, not in the browser.
+**Does ShivAX work in Node.js and the browser?** Yes. It runs on Node.js 22+ and
+modern browsers (ES2022), with ESM, CommonJS and TypeScript types. Keep sign-in,
+approvals, keys and firewall admin on a trusted server, not in the browser.
 
-**Does it need an API key or a cloud LLM?** No. Neural networks, deterministic bot
-capabilities, RUDRA, memory and the firewall run locally. Ollama and remote
+**Do I need an API key or a cloud model?** No. Neural networks, the fixed bot
+tasks, RUDRA, memory and the firewall all run on your machine. Ollama and remote
 providers are optional.
 
-**Can it run autonomous agent workflows?** RUDRA runs bounded workflows with tool
-proposals, approval gates, retries and cancellation. Protected actions require
-host-supplied Jay/Vijay policies.
+**Can it run agent workflows on its own?** Yes, within the limits you set. RUDRA
+runs workflows with tool requests, approval steps, retries and cancellation.
+Protected actions need Jay and Vijay policies from your host.
 
-**Does user feedback train a model automatically?** No. Feedback is stored for
-review and evaluation; training is explicit and model updates require approval.
+**Does user feedback train a model on its own?** No. ShivAX stores feedback so you
+can review and test it. You start training yourself, and a model update needs approval.
 
 ## Production use
 
-Read [docs/production.md](docs/production.md) before deploying. It covers what the
-ML core implements, what each bot does, what needs a model, trusted host versus
-browser boundaries and known limitations. SHIVAX is pre-1.0 and has no published
-benchmarks against other ML or agent frameworks. Verification results are in
+Read [docs/production.md](docs/production.md) before you deploy. It explains what
+the ML core does, what each bot does, what needs a model, what must stay on a
+trusted server, and what ShivAX cannot do yet. ShivAX is pre-1.0, and no
+benchmarks against other ML or agent frameworks exist yet. Test results are in
 [docs/release-readiness.md](docs/release-readiness.md).
 
 ## Support and security
 
 Report bugs and ask questions at
 [github.com/urveshgohil/ShivAX/issues](https://github.com/urveshgohil/ShivAX/issues).
-Do not post vulnerability details in a public issue; follow [SECURITY.md](SECURITY.md).
+Please do not post security issues in a public issue. Follow [SECURITY.md](SECURITY.md) instead.
 
 ## License
 
-Copyright 2025–2026 Urvesh Gohil. Licensed under [Apache License 2.0](LICENSE).
+Copyright 2025–2026 Urvesh Gohil. Licensed under the [Apache License 2.0](LICENSE).
 See [NOTICE](NOTICE) for attribution.

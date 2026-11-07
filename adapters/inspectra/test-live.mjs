@@ -1,4 +1,4 @@
-// Explicit optional integration test. No browser runtime is needed by the normal SHIVAX test suite.
+// Explicit optional integration test. No browser runtime is needed by the normal ShivAX test suite.
 import assert from 'node:assert/strict';
 import { createRequire, register } from 'node:module';
 import { readFile, mkdtemp, rm, stat } from 'node:fs/promises';

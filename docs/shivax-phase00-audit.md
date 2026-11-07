@@ -1,4 +1,4 @@
-# SHIVAX AI — Phase 00: audit existing SHIVAX
+# ShivAX AI — Phase 00: audit existing ShivAX
 
 Date: 2026-10-25 (Asia/Calcutta). Audited checkout: `e47f462`
 (`feat: enhance UI analysis with document pair handling and SLM integration`).
@@ -19,7 +19,7 @@ Phase 00 adds this audit only. No runtime API, package metadata, source, dataset
 test, dependency, or build configuration is changed. Generated `dist/` output was
 rebuilt using the existing build. Nothing was published or deployed.
 
-Scope: this SHIVAX checkout, its source, tests, examples, scripts, documentation,
+Scope: this ShivAX checkout, its source, tests, examples, scripts, documentation,
 and local package dry run. Related Inspectra and Visynq repositories were not
 audited. The older [Visynq audit](visynq-phase0-audit.md) is historical context,
 not current verification of those repositories. No applicable `AGENTS.md` was

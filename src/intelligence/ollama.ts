@@ -9,7 +9,7 @@ export interface OllamaModelAdapterOptions extends OllamaProviderOptions {
     /** Declare only tasks supported by the installed model. Image transport is not implemented here. */
     readonly capabilities?: readonly ('text-reasoning' | 'code-generation')[];
 }
-/** Reuses SHIVAX's bounded loopback transport, local-model verification and structured JSON mode. */
+/** Reuses ShivAX's bounded loopback transport, local-model verification and structured JSON mode. */
 export class OllamaModelAdapter implements ModelProvider {
     readonly id: string;
     readonly locality = 'local' as const;

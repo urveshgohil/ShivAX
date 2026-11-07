@@ -102,7 +102,7 @@ Node example, configured by the trusted application:
 
 ```ts
 import { MemoryEngine, NodeFileMemoryAdapter } from 'shivax';
-const fs = await import('node:fs/promises'); // Optional host import, never a SHIVAX dependency.
+const fs = await import('node:fs/promises'); // Optional host import, never a ShivAX dependency.
 const memory = new MemoryEngine({ persistence: new NodeFileMemoryAdapter({
     path: '/absolute/host-selected/memory.json', fs,
 }) });

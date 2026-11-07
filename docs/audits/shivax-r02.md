@@ -1,4 +1,4 @@
-# SHIVAX R02 - Token and provider fallback safety
+# ShivAX R02 - Token and provider fallback safety
 
 Date: 2026-11-03 (Asia/Calcutta)
 

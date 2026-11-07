@@ -1,4 +1,4 @@
-# SHIVAX B01 — Optional Inspectra import
+# ShivAX B01 — Optional Inspectra import
 
 Date: 2026-11-01 (Asia/Calcutta). Package: `shivax@0.1.2`.
 Baseline: [B00 build audit](build-baseline.md).
@@ -12,7 +12,7 @@ Baseline: [B00 build audit](build-baseline.md).
 - Added `inspectra-engine: "1.0.4"` as an **optional peer** to the root manifest;
   aligned the private adapter manifest to the same exact tested version.
   Neither `dependencies` nor `optionalDependencies` was added. No provider code
-  is bundled into SHIVAX.
+  is bundled into ShivAX.
 - Kept `load = () => import('inspectra-engine/node')`, including in generated CJS.
   Imports and construction remain lazy. Loader rejection now returns fixed setup
   guidance; modules missing a callable `captureUIPage` return fixed compatibility
@@ -42,7 +42,7 @@ captureUIPage(page: Page, options: CaptureOptions & { screenshotPath?: string })
 ```
 
 `CaptureOptions` includes the adapter's `scope`, `maxNodes`, `timeout`, and
-`includeText`. `PageCapture` contains a SHIVAX `UISnapshot`, metadata sidecar, and
+`includeText`. `PageCapture` contains a ShivAX `UISnapshot`, metadata sidecar, and
 optional `{ path, width, height }` screenshot. Runtime extraction produces
 `snapshot.sourceType: 'url'`, `metadata.nodes[node.id]` with `tag`, positional
 `path`, and measured `flexGrid` data. The adapter's maximum of 64 nodes is within
@@ -84,7 +84,7 @@ Playwright 1.64.1 with existing Chromium 1248. No browser download was needed.
 | Export/declaration preservation | `exports`, `main`, `module`, `types`, engines and adapter `.d.mts` unchanged; no `src/` changes |
 | Inspectra source repository | Clean after verification; no modifications performed |
 
-The missing-provider test uses a fresh isolated SHIVAX package layout with no
+The missing-provider test uses a fresh isolated ShivAX package layout with no
 resolvable Inspectra, then links the independently installed npm provider for
 the configured-provider phase. Separate processes prevent module-cache masking.
 It does not substitute a mock for the provider or inject the adapter's `load`.
@@ -92,7 +92,7 @@ The live script installs nothing and removes its temporary package layout.
 
 When `pnpm build` ran, this pnpm 12 environment automatically refreshed the
 development dependency tree after the manifest change and installed the optional
-peer into SHIVAX's own `node_modules`. This is development-checkout behavior,
+peer into ShivAX's own `node_modules`. This is development-checkout behavior,
 not a new mandatory runtime dependency. Absence was therefore verified in the
 isolated consumer rather than inferred from this development checkout. The
 optional-peer metadata is present in the distributed root package manifest.

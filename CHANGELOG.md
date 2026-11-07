@@ -1,9 +1,9 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to this project are listed in this file.
 
-Each minor release line (`0.x.0`) has a release name. Patch releases keep their
-line's name. The npm version stays plain semantic versioning.
+Each minor release line (`0.x.0`) has a release name. Patch releases keep the
+name of their line. The npm version stays plain semantic versioning.
 
 | Release line | Name |
 | --- | --- |
@@ -14,37 +14,36 @@ line's name. The npm version stays plain semantic versioning.
 
 ## [0.2.0] NARASIMHA - 2026-11-07
 
-Version prepared 2026-11-07 after R10 verification. It has not been published to
-npm at the time of writing; the latest published version is 0.1.3. Contains two
-breaking behaviour changes, marked below.
+Prepared on 2026-11-07 after the R10 checks. It is not on npm yet. The latest
+published version is 0.1.3. This release has two breaking changes, marked below.
 
 ### Added
 
-- Managed firewall in `shivax/security` (R04): `createShivaxFirewall` with `enforce`, `monitor` and `lockdown` modes, default-deny registered operations, exact shared model budgets, versioned policy replacement and rollback, cancellation leases and sanitized bounded audit events.
-- Protected execution binding (R05): `protectExecution: true` binds the firewall to one Vijay instance, so RUDRA, workflows and protected tools using it pass firewall admission. Vijay gains an additive `runOperation` method.
-- Guarded model and integration calls (R06): `createGuardedModelGateway` in `shivax/models`; live `checkNetworkAccess` and `checkFileAccess` callbacks for protected tools; destination checks for remote models, Ollama, memory embeddings and persistence, and Inspectra page acquisition.
-- Firewall management (R07): `openShivaxFirewallManagement` with authenticated, approval-gated changes to host-approved policy profiles, compare-and-swap persistence, lockdown and audit reads.
-- `ModelFailureReason` type, additive `error.reason` classification on model errors, and `ModelError` constructor aliases (R02).
-- Runnable SDK examples now ship in the package under `examples/sdk/`, including a new `firewall.mjs`. Package verification checks every documented example is packed and runs the offline ones from an installed copy.
-- `docs/production.md`: scope, bot capabilities, model requirements, firewall setup, trust boundaries and known limitations.
-- `repository`, `bugs` and `homepage` package metadata pointing to the public GitHub repository.
-- R10 adversarial release tests: lockdown during in-flight remote inference and during Inspectra capture, invalid provider and policy URLs, direct gateway bypass attempts, concurrent mode changes, stale approvals and audit redaction of injected input.
+- Managed firewall in `shivax/security` (R04). `createShivaxFirewall` offers `enforce`, `monitor` and `lockdown` modes. It denies any operation you have not allowed, shares one exact model budget, versions each policy change with rollback, can cancel running work, and keeps a capped audit log with secrets removed.
+- Protected execution (R05). `protectExecution: true` ties the firewall to one Vijay instance, so RUDRA, workflows and protected tools that use it must pass the firewall. Vijay gains a new `runOperation` method.
+- Guarded model and integration calls (R06). `createGuardedModelGateway` is in `shivax/models`. Protected tools get live `checkNetworkAccess` and `checkFileAccess` callbacks. Remote models, Ollama, memory embeddings, memory storage and Inspectra page loading now check each destination.
+- Firewall management (R07). `openShivaxFirewallManagement` lets a signed-in admin switch to a host-approved policy profile after a person approves. It saves with compare-and-swap, and it supports lockdown and audit reads.
+- The `ModelFailureReason` type, a new `error.reason` field on model errors, and `ModelError` constructor aliases (R02).
+- The SDK examples now ship in the package under `examples/sdk/`, along with a new `firewall.mjs`. Package checks confirm each documented example is packed, and they run the offline ones from an installed copy.
+- `docs/production.md`, which covers scope, bot tasks, model needs, firewall setup, trust boundaries and known limits.
+- `repository`, `bugs` and `homepage` fields in the package metadata, pointing to the public GitHub repository.
+- R10 attack tests: lockdown during a remote model call and during an Inspectra capture, bad provider and policy URLs, attempts to go around the gateway, mode changes at the same time, stale approvals, and removal of injected input from audit records.
 
 ### Changed
 
-- **Breaking:** token-based model providers must report verifiable token counts. Missing, `null`, fractional, negative or oversized counts, and missing or malformed cost, now fail with the new terminal code `usage-unverifiable`, with no fallback and no further use of that router (R02). Providers that do not bill by token must declare `tokenBased: false`. An explicit `null` cost is still accepted.
-- Reported model cost is reconciled as the larger of the reservation and the reported charge. A verified token or cost overrun latches `usage-limit`, stops fallback and blocks later calls on that router, including overruns reported late after cancellation or timeout (R01, R02).
-- The Ollama adapter keeps reported token usage when generated JSON fails to parse, so an overrun is still enforced (R02).
-- In protected use, `RemoteModelAdapter` loaders must provide `inferGuarded`; legacy-only transports are denied there. Unprotected use is unchanged (R06).
-- SECURITY.md now describes the actual network scope, supported versions and a publicly reachable reporting route. Shipped documentation no longer refers to private sibling applications as package content.
+- **Breaking:** model providers that bill by token must report token counts ShivAX can check. Counts that are missing, `null`, fractional, negative or too large now fail with the new final error code `usage-unverifiable`. So does a missing or malformed cost. There is no fallback, and that router takes no more calls (R02). Providers that do not bill by token must set `tokenBased: false`. A cost of `null` is still accepted.
+- ShivAX now records the larger of the reserved cost and the reported cost. A confirmed token or cost overrun sets `usage-limit` for good. It stops fallback and blocks later calls on that router. This also applies to overruns reported late, after cancellation or a timeout (R01, R02).
+- The Ollama adapter keeps the reported token usage when the model's JSON fails to parse, so overruns still count (R02).
+- In protected use, `RemoteModelAdapter` loaders must provide `inferGuarded`. Protected use rejects transports that offer only the old method. Unprotected use is unchanged (R06).
+- SECURITY.md now states the real network scope, the supported versions and a public way to report issues. The shipped docs no longer describe private sibling apps as part of the package.
 
 ### Fixed
 
-- Exact model cost accounting: three $0.10 calls now fit a $0.30 budget; previously floating-point addition rejected the third (R00-01, fixed in R01).
-- Malformed model output no longer hides a reported token overrun and lets a fallback provider run (R00-02, fixed in R02).
-- **Breaking:** workflow model tools (`ToolRegistry.registerModel`) now follow the R02 usage rules (R03 finding G02). A token-based provider that reports `null` or missing token counts, or malformed usage, fails the action with no retry. A thrown hard model failure (token, cost or usage limit, unverifiable usage, timeout or declared output failure) is no longer retried as a generic tool error; ordinary `provider-error` and `unavailable` failures still retry within `maxRetries`. Usage is read without invoking accessors.
-- Workflow model tool cost reservations use the exact R01 arithmetic instead of a floating-point sum. The provider receives a fully funded `maxCostUSD` cap, and a reported charge equal to that cap is accepted.
-- Test reliability: six timing-sensitive tests no longer fail when the CPU is busy, and the package-process cleanup test uses a private temporary directory so a concurrent `verify:package` cannot fail it.
+- Exact model cost math: three $0.10 calls now fit in a $0.30 budget. Before, floating-point addition rejected the third call (R00-01, fixed in R01).
+- Broken model output no longer hides a reported token overrun and lets a fallback provider run (R00-02, fixed in R02).
+- **Breaking:** workflow model tools (`ToolRegistry.registerModel`) now follow the R02 usage rules (R03 finding G02). If a provider that bills by token reports `null` or missing counts, or malformed usage, the action fails with no retry. Hard model failures (token, cost or usage limits, unverifiable usage, timeouts and declared output failures) are no longer retried as ordinary tool errors. Plain `provider-error` and `unavailable` failures still retry up to `maxRetries`. ShivAX reads usage without calling getters.
+- Workflow model tools now reserve cost with the exact R01 math, not a floating-point sum. The provider gets a fully funded `maxCostUSD` cap, and a charge equal to that cap is accepted.
+- Test reliability: six timing tests no longer fail when the CPU is busy. The package cleanup test now uses its own temp folder, so a `verify:package` run at the same time cannot break it.
 
 ## [0.1.3] - 2026-11-01
 
@@ -57,7 +56,7 @@ breaking behaviour changes, marked below.
 ### Changed
 
 - Target ES2022 JavaScript while preserving the previous public class-field assignment semantics. Older browser targets require application-side dependency transpilation.
-- Declare inspectra-engine 1.0.4 as an optional peer, verified separately from SHIVAX core.
+- Declare inspectra-engine 1.0.4 as an optional peer, verified separately from ShivAX core.
 - Install verification tarballs into isolated temporary projects outside the repository and retain cleanup on failures.
 
 ### Fixed
@@ -73,7 +72,7 @@ breaking behaviour changes, marked below.
 
 - Supported SDK entry points for core intelligence, RUDRA, specialists, security, models, memory, learning and integrations, with ESM/CommonJS declarations and shared runtime classes.
 - UI-safe structured diagnostics and a server-verified licensing interface for a future Lemon Squeezy adapter.
-- Registry, local inference, workflow, durable memory, Inspectra and React examples, plus an approval-gated SHIVAX demo in Visynq Workstation.
+- Registry, local inference, workflow, durable memory, Inspectra and React examples, plus an approval-gated ShivAX demo in Visynq Workstation.
 - Packed-consumer export/type verification and release-readiness reporting.
 
 ### Changed
@@ -84,7 +83,7 @@ breaking behaviour changes, marked below.
 
 ### Changed
 
-- Expand npm discovery keywords and describe SHIVAX as a JavaScript/TypeScript multi-agent AI framework.
+- Expand npm discovery keywords and describe ShivAX as a JavaScript/TypeScript multi-agent AI framework.
 - Add feature-based use cases and concise README answers about platforms, model providers, controlled workflows, UI inspection, and learning.
 
 ## [0.1.0] BRAHMA - 2026-10-03
@@ -110,7 +109,7 @@ baseline date and does not assert that a package release was published or tagged
 
 ### Changed
 
-- Adopt SHIVAX AI branding: Synthetic Hybrid Intelligence with Versatile Autonomous eXperts.
+- Adopt ShivAX AI branding: Synthetic Hybrid Intelligence with Versatile Autonomous eXperts.
 - Standardize bot names to Sanjay, Vishwakarm, Chitragupt, Narad, Yudhishthir, Ekalavy, Jay, and Vijay.
 
 ### Fixed

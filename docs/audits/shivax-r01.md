@@ -1,4 +1,4 @@
-# SHIVAX R01 - Exact model cost accounting
+# ShivAX R01 - Exact model cost accounting
 
 Date: 2026-11-02 (Asia/Calcutta)
 

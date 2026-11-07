@@ -1,4 +1,4 @@
-# SHIVAX B03-F1 — Package verifier process execution
+# ShivAX B03-F1 — Package verifier process execution
 
 Date: 2026-11-01 (Asia/Calcutta). Package: `shivax@0.1.2`, unchanged.
 Follow-up to the failed pnpm gate in [B04](build-stabilization-final.md).
@@ -61,7 +61,7 @@ npm keeps the original offline, script-free `install` arguments. pnpm uses
 `add --offline --ignore-scripts --ignore-workspace --lockfile=false
 --config.auto-install-peers=false <tarball>`. Ignoring the enclosing workspace
 keeps the nested temporary consumer isolated. Peer auto-installation is disabled
-for that consumer; it is not a change to SHIVAX's published peer metadata.
+for that consumer; it is not a change to ShivAX's published peer metadata.
 
 Both managers pack with `--ignore-scripts --json --pack-destination`. npm's array
 result and pnpm's object result normalize to the same verification workflow.
