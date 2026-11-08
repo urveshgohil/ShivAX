@@ -20,4 +20,6 @@ export type {
     RudraMemoryHooks,
     RudraMemoryExecution,
     RudraMemorySummary,
+    RudraRoutingHook,
+    RoutingSelectionRequest,
 } from './types.js';

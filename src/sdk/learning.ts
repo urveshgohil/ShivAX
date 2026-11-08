@@ -6,3 +6,4 @@ export * from '../learning/datasets.js';
 export * from '../learning/benchmarks.js';
 export * from '../learning/registry-store.js';
 export * from '../learning/registry.js';
+export * from '../learning/routing.js';

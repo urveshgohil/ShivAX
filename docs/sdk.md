@@ -18,7 +18,7 @@ CommonJS and portable ES2020 type declarations.
 | `shivax/memory` | Memory engine, storage and lifecycle hooks |
 | `shivax/integrations` | Portable inspection contracts, service and planner |
 | `shivax/adapters/inspectra` | Optional Inspectra adapter, loaded on first use |
-| `shivax/learning` | Feedback, evaluation, reproducible benchmarks, curated training, model or config rollback, and the durable model registry (approval, atomic activation, rollback) |
+| `shivax/learning` | Feedback, evaluation, reproducible benchmarks, curated training, model or config rollback, the durable model registry (approval, atomic activation, rollback), and shadow routing recommendations with promotable routing policies |
 | `shivax/learning/node` | Node.js only. `WorkerTrainingPool`, `trainOfflineCandidateInWorker` and `trainCuratedCandidateInWorker` train candidates in `worker_threads` without blocking the host (see `docs/learning-worker-training.md`). Not part of the root `shivax` import |
 | `shivax/diagnostics` | `toSDKDiagnostic` and `SDKDiagnostic` |
 | `shivax/licensing/server` | ServerLicenseGate, LicenseError and server license contracts |

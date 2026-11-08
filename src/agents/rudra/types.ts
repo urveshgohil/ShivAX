@@ -87,13 +87,38 @@ export interface ExecutionTrace {
     readonly botId?: string;
     readonly capability?: string;
     readonly attempt?: number;
-    readonly decision?: 'validated-plan' | 'capability-then-bot-id' | 'retry-bot-error';
+    /**
+     * `capability-then-bot-id`: the deterministic rule (first registered bot by ID).
+     * `routing-policy`: an approved routing hook chose among the eligible bots.
+     * `routing-policy-rejected`: the hook's answer was invalid, so the deterministic choice was used.
+     */
+    readonly decision?: 'validated-plan' | 'capability-then-bot-id' | 'routing-policy' | 'routing-policy-rejected' | 'retry-bot-error';
     readonly outcome?: 'completed' | 'failed' | 'cancelled' | 'timed-out';
     readonly error?: { readonly code: string; readonly message: string };
+}
+/** What an optional routing hook sees: the step and the bots RUDRA already found for its capability. */
+export interface RoutingSelectionRequest {
+    readonly taskId: string;
+    readonly stepId: string;
+    readonly capability: string;
+    /** Registered bots offering the capability, in bot-ID order. Only these can be chosen. */
+    readonly candidates: readonly string[];
+    /** The deterministic choice (`candidates[0]`), used whenever the hook returns null or an invalid answer. */
+    readonly baseline: string;
+}
+/**
+ * Optional, synchronous, trusted host routing (for example an approved SARASWATI routing policy).
+ * It can only choose among `candidates`; it cannot add bots, capabilities, permissions or steps,
+ * and Vijay, the firewall and approval still check the chosen bot. Return null to keep the baseline.
+ */
+export interface RudraRoutingHook {
+    select(request: RoutingSelectionRequest): string | null;
 }
 export interface RudraHooks {
     /** Mandatory for protected tool-using bots. Pure legacy workflows may omit it. */
     readonly security?: Vijay;
+    /** Optional opt-in routing among eligible bots. Absent: deterministic capability-then-bot-ID routing. */
+    readonly routing?: RudraRoutingHook;
     readonly planner?: Planner;
     readonly approve?: ApprovalHandler;
     /** Observers cannot approve work or change its outcome; thrown/rejected errors are isolated. */

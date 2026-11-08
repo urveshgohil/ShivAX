@@ -141,7 +141,7 @@ Every option is in the [SDK guide](docs/sdk.md#managed-firewall-core).
 | `shivax/models` | Model router, providers, Ollama and remote adapters, guarded gateway |
 | `shivax/memory` | Memory engine and storage adapters |
 | `shivax/integrations` | UI inspection contracts and services |
-| `shivax/learning` | Feedback, evaluation, training, durable model registry, rollback |
+| `shivax/learning` | Feedback, evaluation, training, durable model registry, rollback, shadow routing advice |
 | `shivax/learning/node` | Node.js only: non-blocking neural training in worker threads |
 | `shivax/diagnostics` | Error details that are safe to show users |
 | `shivax/adapters/inspectra` | Optional Inspectra adapter (`inspectra-engine@1.0.4`) |

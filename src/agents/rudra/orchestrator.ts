@@ -18,6 +18,7 @@ import type {
     RudraTaskStatus,
     StepOutput,
     RudraMemoryExecution,
+    RudraRoutingHook,
 } from './types.js';
 
 /** One workflow at a time per instance. Injected implementations are trusted code, not a sandbox. */
@@ -28,6 +29,7 @@ export class RudraOrchestrator {
     private readonly onTrace: RudraHooks['onTrace'];
     private readonly security: RudraHooks['security'];
     private readonly memory: RudraHooks['memory'];
+    private readonly routing: RudraHooks['routing'];
     private occupied = false;
     private disposed = false;
     private controller?: AbortController;
@@ -47,6 +49,10 @@ export class RudraOrchestrator {
             recall: hooks.memory.recall?.bind(hooks.memory),
             record: hooks.memory.record?.bind(hooks.memory),
         }) : undefined;
+        const routing = hooks.routing as unknown;
+        if (routing !== undefined && (!routing || typeof routing !== 'object' || typeof (routing as RudraRoutingHook).select !== 'function'))
+            throw new RudraError('invalid-options');
+        this.routing = routing ? Object.freeze({ select: (routing as RudraRoutingHook).select.bind(routing) }) : undefined;
         if (
             typeof this.planner.plan !== 'function' ||
             (this.approve !== undefined && typeof this.approve !== 'function') ||
@@ -248,17 +254,36 @@ export class RudraOrchestrator {
                 location = { stepId: step.id, capability: step.capability };
                 if (!settings.allowedCapabilities.includes(step.capability))
                     throw new RudraError('capability-denied');
-                const bot = bots.find((candidate) =>
+                const eligible = bots.filter((candidate) =>
                     candidate.capabilities.some((cap) => cap.id === step.capability)
                 );
+                const bot = eligible[0];
                 if (!bot) throw new RudraError('missing-capability');
-                return bot;
+                if (!this.routing) return { bot, decision: 'capability-then-bot-id' as const };
+                // Opt-in routing may only pick another eligible bot. Anything else keeps the deterministic choice.
+                let chosen: unknown;
+                try {
+                    chosen = this.routing.select(Object.freeze({
+                        taskId: task.taskId,
+                        stepId: step.id,
+                        capability: step.capability,
+                        candidates: Object.freeze(eligible.map((candidate) => candidate.id)),
+                        baseline: bot.id,
+                    }));
+                } catch {
+                    chosen = undefined;
+                }
+                if (chosen === null) return { bot, decision: 'capability-then-bot-id' as const };
+                const selected = typeof chosen === 'string' ? eligible.find((candidate) => candidate.id === chosen) : undefined;
+                return selected
+                    ? { bot: selected, decision: 'routing-policy' as const }
+                    : { bot, decision: 'routing-policy-rejected' as const };
             });
             location = {};
             emit({ type: 'plan', decision: 'validated-plan' });
             const values = new Map<string, BotValue>();
             for (const [index, step] of plan.steps.entries()) {
-                const bot = routes[index];
+                const { bot, decision } = routes[index];
                 const data =
                     step.input.source === 'task'
                         ? task.input.data
@@ -308,7 +333,7 @@ export class RudraOrchestrator {
                         botId: bot.id,
                         capability: step.capability,
                         attempt,
-                        decision: 'capability-then-bot-id',
+                        decision,
                     });
                     if (this.approve) {
                         state('waiting_approval');
