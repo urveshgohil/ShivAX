@@ -14,7 +14,7 @@ browser.
 
 ## Supported versions
 
-This policy covers version 0.2.0 NARASIMHA. The managed firewall and the strict
+This policy covers version 0.2.0 NARASIMHA and the unreleased 0.3.0 SARASWATI additions on the development branch. The managed firewall and the strict
 model usage checks are new in 0.2.0. They are not in 0.1.3 or earlier. There is
 no support window or backport policy yet.
 
@@ -96,3 +96,22 @@ or a sandbox must handle real network traffic, symlinks, redirects, DNS, durable
 policy storage, revocation across processes and stopping I/O that does not
 cooperate. A JavaScript library on npm cannot stop a malicious host from going
 around its code. Never pass admin capabilities or signed-in root objects to bots.
+
+## Learning lifecycle boundary (SARASWATI, unreleased)
+
+- **Untrusted inputs.** Feedback, provenance, benchmark reports, routing
+  evidence and memory metadata are untrusted claims. Verification comes only from
+  your host:
+  - Jay-verified reviewers and administrators;
+  - review, consent and approval journals;
+  - trusted evaluator lists;
+  - storage access control.
+- **Checksums are integrity, not authenticity.** For authenticity, configure the
+  registry `signer` with a key you protect.
+- **Model storage.** The model registry store must provide an atomic
+  compare-and-swap across all writers. Never expose the registry, the routing
+  policy switch or approval hooks to bots, tools, browsers or model output.
+- **No self-promotion.** Nothing in SARASWATI trains, activates or reroutes
+  automatically, and repeated retrieval never raises a record's trust.
+- **Firewall coupling.** Lockdown blocks approval, activation and (by default)
+  rollback, and freezes routing to deterministic.

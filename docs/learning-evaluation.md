@@ -108,3 +108,28 @@ public signatures are unchanged. No further reproducible issue was found in this
 pass. Imported aggregate counts without underlying observations cannot establish
 the truth of external evaluations; host evaluators remain trusted. The existing
 in-memory rollback and cooperative cancellation limitations still apply.
+
+## SARASWATI additions (unreleased 0.3.0)
+
+The 0.2.0 APIs above are unchanged. SARASWATI - The Intelligence & Learning
+Release adds:
+
+- [Feedback provenance and dataset governance](learning-governance.md) (S01):
+  `createGovernedFeedback`, `createReviewAttestor`, `curateDataset`,
+  `verifyCuratedDataset`, `checkPartitionLeakage`, `traceDatasetLineage`.
+- [Reproducible benchmarks](learning-benchmarks.md) (S02): `createBenchmarkSuite`,
+  `runBenchmark`, `validateBenchmarkReport`, `compareBenchmarkReports`,
+  `assessBenchmarkCandidate`.
+- [Worker training](learning-worker-training.md) (S03, Node only):
+  `trainOfflineCandidateInWorker`, `trainCuratedCandidateInWorker`,
+  `WorkerTrainingPool`.
+- [Durable model registry](learning-registry.md) (S04): `createModelRegistry`,
+  `openModelRegistry`, `InMemoryModelRegistryStore`.
+- [Shadow routing](learning-routing.md) (S05): `createRoutingAdvisor`,
+  `runRoutingShadow`, `evaluateRoutingQuality`, `RoutingPolicySwitch`.
+- [Memory ranking](memory-ranking.md) (S06): `MemoryRanker`,
+  `createHashingEmbeddings`, `evaluateMemoryRetrieval`.
+
+Learning stays controlled. Unverified feedback never trains. Training never
+activates. Activation needs evidence and human approval. SARASWATI does not
+fine-tune large language models.

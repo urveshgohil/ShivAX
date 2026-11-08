@@ -15,6 +15,39 @@ may do. The firewall decides which actions can run.
 The core has no runtime dependencies. You plug in your own browser automation,
 storage, sign-in and model backends when you need them.
 
+## Coming in 0.3.0 SARASWATI - The Intelligence & Learning Release (unreleased)
+
+SARASWATI adds controlled learning around the existing ML core. Nothing learns
+on its own: every step needs verified data, evidence, a trusted administrator and
+human approval.
+
+- **Existing ML capability:** the CPU neural networks, metrics and model routing
+  from 0.2.0 are unchanged.
+- **Controlled feedback learning:** feedback carries provenance (source, tenant,
+  consent, evidence, retention). Only records a Jay-verified reviewer attested,
+  and that you confirm, enter a curated, leakage-free dataset with a manifest.
+- **CPU neural network training:** train candidates synchronously or, on
+  Node.js, in a worker thread (`shivax/learning/node`). Results are identical.
+  There is no GPU or TensorFlow support.
+- **Evaluation:** versioned, hashed benchmark suites, reports whose summaries are
+  recomputed on validation, and a regression gate in which security cases must
+  always pass.
+- **Human-approved promotion:** a durable model registry
+  (candidate, evaluated, approved, active, with rollback), backed by storage you
+  supply. Approvals expire and go stale when the active version, firewall policy
+  or security settings change.
+- **Optional model providers:** Ollama, remote and other providers stay opt-in
+  host adapters.
+- **Firewall protections:** promotion is refused during firewall lockdown, and
+  routing falls back to deterministic during lockdown.
+- **Shadow routing and memory relevance:** Ekalavya recommends routes without
+  changing them, and an opt-in ranker orders memory results with provenance.
+
+It does **not** fine-tune large language models: SARASWATI trains only ShivAX's
+own small CPU networks and routing policies, and makes no claim of autonomous
+intelligence growth. See [docs/learning-evaluation.md](docs/learning-evaluation.md)
+and the examples in [`examples/sdk/`](examples/sdk/README.md).
+
 ## What's new in 0.2.0 NARASIMHA
 
 - **Firewall:** pick `enforce`, `monitor` or `lockdown` mode. It blocks any
@@ -61,6 +94,8 @@ Imports and entry points have not changed. See [CHANGELOG.md](CHANGELOG.md).
   policies, protected tools, approvals and audit records.
 - **Learning and evaluation:** store checked feedback, build curated datasets,
   run repeatable tests, and update or roll back a model only after it passes.
+  SARASWATI (unreleased) adds provenance, benchmarks, worker training, a durable
+  approval registry, shadow routing and memory ranking.
 
 ## Specialist bots
 

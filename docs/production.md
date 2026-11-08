@@ -29,7 +29,8 @@ JavaScript. There is no GPU, WebAssembly or native code.
 | Metrics | `classificationAccuracy`, `evaluateClassification` (accuracy, cross-entropy, confusion matrix, per-class scores), `crossEntropy`, `evaluateRegression` (MSE, RMSE, MAE, R²). |
 | Text features | `BagOfWords`: a capped Unicode vocabulary and normalized word counts. No tokenizer models or embeddings. |
 
-Large training runs block the thread they run on, so run them in a worker. A
+Large training runs block the thread they run on, so run them in a worker
+(SARASWATI, unreleased: `shivax/learning/node` provides one on Node.js). A
 failed run can keep the batch updates it made before the failure. The handwritten
 digit playground lives in the source repository. It is not in the npm package.
 
@@ -175,3 +176,39 @@ paths inside `dist/` are not supported.
 
 See [release-readiness.md](release-readiness.md) for the latest test record,
 with the exact commands and results.
+
+## Learning and evaluation (SARASWATI, unreleased 0.3.0)
+
+SARASWATI - The Intelligence & Learning Release adds controlled learning around
+the ML core above. All of it is opt-in.
+
+| Capability | What it does | What your host must supply |
+| --- | --- | --- |
+| Feedback provenance (S01) | Wraps v1 feedback with source, tenant, consent, evidence, retention and redaction claims. Curation admits only attested, consented, current records and writes a hashed dataset manifest | A Jay reviewer session, `confirmReview` against your review journal, `consentActive` against your consent store |
+| Benchmarks (S02) | Versioned suites, trusted evaluators, recomputed summaries, a regression gate with mandatory security cases | Evaluators that drive your real bots and models; the list of trusted evaluator ids |
+| Worker training (S03) | CPU training of a candidate in `worker_threads`, identical to synchronous training | Node.js 22+; resource limits that suit your host |
+| Model registry (S04) | Candidate, evaluated, approved and active states with atomic activation, rollback and a hash-chained audit | A `ModelRegistryStore` with an atomic compare-and-swap; administrator roles; an approval journal; optionally a signing key |
+| Shadow routing (S05) | Ekalavya recommends bots from verified evidence; RUDRA routing changes only through an approved policy | Labelled evidence; administrator approval to promote a policy |
+| Memory ranking (S06) | Opt-in ranking with provenance; optional local hashing embeddings | A trusted `sourceQuality` mapping, if you want quality to count |
+
+**Human approval.** Nothing trains, activates or reroutes by itself. Promotion
+needs a trusted administrator verified by Jay, a host approval record and, for
+activation, a confirmation of that record. Approvals expire, and go stale if the
+active version, firewall policy or security settings change.
+
+**Firewall.** Approval and activation are refused during NARASIMHA lockdown or
+closed admission. Rollback is refused too, unless you allow it. Routing policies
+fall back to deterministic routing during lockdown.
+
+**Optional model providers.** Learning works without any remote model.
+Ollama, remote and embedding providers are host adapters you configure and
+declare in `networkOrigins`.
+
+**Limits.**
+
+- SARASWATI does not fine-tune large language models. It trains only ShivAX's
+  small CPU networks (dense layers, up to one million parameters) and routing
+  policies.
+- It makes no claim of autonomous intelligence growth.
+- Quality claims require your own labelled data. The figures in the audit
+  reports come from small constructed fixtures.
