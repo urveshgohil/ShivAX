@@ -4,7 +4,7 @@ This guide covers version 0.2.0 NARASIMHA. Sections marked **New in 0.2.0** cove
 APIs that are not in 0.1.3 or earlier. See `CHANGELOG.md`. For scope, trust
 boundaries and limits, read `docs/production.md` first.
 
-Root imports from `shivax` still work. All 12 public entry points ship ESM,
+Root imports from `shivax` still work. All 13 public entry points ship ESM,
 CommonJS and portable ES2020 type declarations.
 
 | Entry point | API |
@@ -18,7 +18,8 @@ CommonJS and portable ES2020 type declarations.
 | `shivax/memory` | Memory engine, storage and lifecycle hooks |
 | `shivax/integrations` | Portable inspection contracts, service and planner |
 | `shivax/adapters/inspectra` | Optional Inspectra adapter, loaded on first use |
-| `shivax/learning` | Feedback, evaluation, reproducible benchmarks, curated training and model or config rollback |
+| `shivax/learning` | Feedback, evaluation, reproducible benchmarks, curated training, model or config rollback, and the durable model registry (approval, atomic activation, rollback) |
+| `shivax/learning/node` | Node.js only. `WorkerTrainingPool`, `trainOfflineCandidateInWorker` and `trainCuratedCandidateInWorker` train candidates in `worker_threads` without blocking the host (see `docs/learning-worker-training.md`). Not part of the root `shivax` import |
 | `shivax/diagnostics` | `toSDKDiagnostic` and `SDKDiagnostic` |
 | `shivax/licensing/server` | ServerLicenseGate, LicenseError and server license contracts |
 

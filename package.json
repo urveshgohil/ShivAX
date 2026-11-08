@@ -96,6 +96,16 @@
         "default": "./dist/sdk/learning.cjs"
       }
     },
+    "./learning/node": {
+      "import": {
+        "types": "./dist/sdk/learning-node.d.ts",
+        "default": "./dist/sdk/learning-node.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/learning-node.d.ts",
+        "default": "./dist/sdk/learning-node.cjs"
+      }
+    },
     "./diagnostics": {
       "import": {
         "types": "./dist/sdk/diagnostics.d.ts",
@@ -148,6 +158,7 @@
     "examples/sdk/memory-persistence.mjs",
     "examples/sdk/firewall.mjs",
     "examples/sdk/benchmark.mjs",
+    "examples/sdk/model-registry.mjs",
     "examples/sdk/inspectra.mjs"
   ],
   "scripts": {

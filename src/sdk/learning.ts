@@ -4,3 +4,5 @@ export * from '../learning/updates.js';
 export * from '../learning/provenance.js';
 export * from '../learning/datasets.js';
 export * from '../learning/benchmarks.js';
+export * from '../learning/registry-store.js';
+export * from '../learning/registry.js';

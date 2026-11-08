@@ -21,6 +21,7 @@ From a checkout of the source repository, run `pnpm build` first. Then run
 | `memory-persistence.mjs` | A temp folder you can write to | Saves a memory record to a file in a new temp folder, opens it again, then deletes the folder. |
 | `firewall.mjs` | Nothing | Creates a firewall with one CPU operation. It shows a request being denied by default, then an approved lockdown. Uses a mock identity labelled as a demo. |
 | `benchmark.mjs` | Nothing | Scores a baseline and a candidate configuration of a toy system on a versioned benchmark suite, then prints the summary JSON, the regression-gate result and a reproducibility check. The evaluator is demo code. |
+| `model-registry.mjs` | Nothing | Durable model lifecycle with an isolated in-memory store: registers trained XOR networks, evaluates them on a versioned benchmark, has a second person approve and a third activate, rejects an untrained candidate, rolls back, then reopens the store as a restarted host would. Identities and the approval journal are demo stand-ins. |
 | `ollama.mjs` | A local Ollama server with a model installed | Set `SHIVAX_OLLAMA_MODEL` to the model name. Without it, the script exits and tells you how to set it up. |
 | `inspectra.mjs` | Your own browser setup | A module, not a script. It exports `connectInspectra(tools, openPage, authorizeURL)`, which connects the optional Inspectra adapter to the pages and URL rules your host supplies. Live capture also needs the optional peer `inspectra-engine@1.0.4`. |
 
