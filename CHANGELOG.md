@@ -12,6 +12,10 @@ name of their line. The npm version stays plain semantic versioning.
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** the code specialist is now spelled Vishwakarma. Earlier releases dropped the final "a" by mistake. The class is `VishwakarmaBot`, its source file is `src/bots/vishwakarma.ts`, and the bot id is `'vishwakarma'` (was `'vishwakarm'`). Update host policies, firewall `bots` lists and routing expectations that name `vishwakarm`; until you do, they deny the bot. `VishwakarmBot` stays as a deprecated alias of `VishwakarmaBot`.
+
 ## [0.2.0] NARASIMHA - 2026-11-07
 
 Prepared on 2026-11-07 after the R10 checks. It is not on npm yet. The latest

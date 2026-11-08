@@ -19,9 +19,9 @@ request for concrete model runtimes, durable storage, Inspectra or training.
 | `sanjay` | `vision.analyze` | `{ image: { mimeType, base64 }, observations? }`; invokes an injected `VisionModelAdapter`. PNG/JPEG/WebP MIME labels and base64 syntax are validated; actual decoding belongs to the adapter. |
 | `brihaspati` | `reasoning.plan` | An explicit `{ steps }` workflow, or `{goal,allowedCapabilities,maxSteps?}` for an injected provider's optional `plan` method. Both paths reuse RUDRA's dependency validation and return a plan with provenance. Provider proposals must respect the requested capability/step limits and never execute automatically. |
 | `brihaspati` | `reasoning.decide` | `{ question, options: [{id,label}], evidence: [{id,text}] }`; a replaceable `ReasoningProvider` returns a decision. Selected option/evidence IDs must exist in the input. |
-| `vishwakarm` | `code.summarize` | `{ files: [{path,content,language}] }`; reports actual supplied paths, languages, line/character counts. It does not claim semantic parsing or program correctness. |
-| `vishwakarm` | `code.patch` | `{ files, edits: [{path,oldText,newText}] }`; produces unapplied whole-file before/after artifacts from unique exact matches. Ambiguous replacements and unknown paths fail. |
-| `vishwakarm` | `code.suggest` | `{ files, instruction }`; optional `CodeProvider` suggests patch artifacts. Paths must be supplied files and `before` must match the supplied content. Nothing is applied. |
+| `vishwakarma` | `code.summarize` | `{ files: [{path,content,language}] }`; reports actual supplied paths, languages, line/character counts. It does not claim semantic parsing or program correctness. |
+| `vishwakarma` | `code.patch` | `{ files, edits: [{path,oldText,newText}] }`; produces unapplied whole-file before/after artifacts from unique exact matches. Ambiguous replacements and unknown paths fail. |
+| `vishwakarma` | `code.suggest` | `{ files, instruction }`; optional `CodeProvider` suggests patch artifacts. Paths must be supplied files and `before` must match the supplied content. Nothing is applied. |
 | `chitragupt` | `memory.read` | `{ key }`; reads the verified session namespace through `MemoryStorage`. Returns `{found:false}` or `{found:true,value,revision}`. |
 | `chitragupt` | `memory.write` | `{ key, value }`; writes through an approved storage tool. Returns the actual storage revision. |
 | `narad` | `inspection.normalize` | `{ snapshot: UISnapshot }`; validates full existing scene contracts and normalizes units with the existing engine. Returns snapshot, counts and provenance. |
@@ -178,7 +178,7 @@ already-running synchronous handler or roll back an effect.
 
 Added specialist modules:
 
-- `src/bots/sanjay.ts`, `brihaspati.ts`, `vishwakarm.ts`, `chitragupt.ts`,
+- `src/bots/sanjay.ts`, `brihaspati.ts`, `vishwakarma.ts`, `chitragupt.ts`,
   `narad.ts`, `yudhishthir.ts`, `ekalavy.ts` — the seven implementations.
 - `src/bots/base.ts`, `schema.ts`, `types.ts`, `provider.ts` — shared result/schema
   handling and narrow provider contracts.

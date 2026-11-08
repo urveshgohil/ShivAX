@@ -55,7 +55,7 @@ import {
     Jay, Vijay, PermissionPolicyRegistry, ProtectedToolRegistry, SecurityAuditLog,
     type IdentityProvider, type AuthenticatedIdentity, type ProtectedTool, type SecurityDecision,
     createSpecialistBots, createSpecialistSystem, SessionMemoryStore, SessionFeedbackStore,
-    SanjayBot, BrihaspatiBot, VishwakarmBot, ChitraguptBot, NaradBot, YudhishthirBot, EkalavyBot,
+    SanjayBot, BrihaspatiBot, VishwakarmaBot, ChitraguptBot, NaradBot, YudhishthirBot, EkalavyBot,
     type MemoryStorage, type FeedbackStorage, type VisionModelAdapter, type ReasoningProvider, type CodeProvider, type ReviewProvider,
     ModelProviderRegistry, ModelRouter, NeuralModelProvider, RulesModelProvider, RemoteModelAdapter, OllamaModelAdapter, createModelOperation,
     type ModelProvider, type ModelRequest, type ModelResponse, type ModelResult,
@@ -186,7 +186,7 @@ const memory: MemoryStorage = new SessionMemoryStore();
 const feedback: FeedbackStorage = new SessionFeedbackStore();
 const specialists: readonly Bot[] = createSpecialistBots({ vision, reasoning, code: codeProvider, review });
 const specialistSystem = createSpecialistSystem({ memory, feedback, vision, security: { jay, policies } });
-const allSpecialists: Bot[] = [new SanjayBot(), new BrihaspatiBot(), new VishwakarmBot(), new ChitraguptBot(), new NaradBot(), new YudhishthirBot(), new EkalavyBot()];
+const allSpecialists: Bot[] = [new SanjayBot(), new BrihaspatiBot(), new VishwakarmaBot(), new ChitraguptBot(), new NaradBot(), new YudhishthirBot(), new EkalavyBot()];
 const scopedCapability = { id: 'read', description: 'read only', inputSchema: { type: 'object' }, requiredTools: [tool] };
 `);
         writeFileSync(join(directory, 'tsconfig.json'), JSON.stringify({ compilerOptions: {

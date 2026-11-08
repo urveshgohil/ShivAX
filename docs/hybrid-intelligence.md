@@ -220,7 +220,7 @@ Async predicates fail closed, with rejected promises observed.
 
 `createModelOperation(router, capability, contract, routingOptions)` returns an
 injected specialist method. For example, supply its result as Brihaspati's
-`decide`/`plan`, Vishwakarm's `suggest`, Sanjay's `analyze`, or Yudhishthir's
+`decide`/`plan`, Vishwakarma's `suggest`, Sanjay's `analyze`, or Yudhishthir's
 `review`. Each operation needs the matching raw provider-output contract from
 the [specialist guide](specialist-bots.md); specialist semantic validation still
 runs afterward. Scope/task/session context and cancellation propagate.

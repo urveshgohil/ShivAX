@@ -68,7 +68,7 @@ Imports and entry points have not changed. See [CHANGELOG.md](CHANGELOG.md).
 | --- | --- |
 | Sanjay | Reads images through an optional model adapter |
 | Brihaspati | Builds plans and makes choices |
-| Vishwakarm | Sums up source code and proposes patches |
+| Vishwakarma | Sums up source code and proposes patches |
 | Chitragupt | Saves and finds memory records |
 | Narad | Inspects and compares UIs |
 | Yudhishthir | Runs fixed checks and optional model reviews |
@@ -102,7 +102,7 @@ console.log(restored.predictClass([0, 1])); // 1
 
 const registry = new BotRegistry();
 createSpecialistBots().forEach(bot => registry.register(bot));
-console.log(registry.findByCapability('code.patch').map(bot => bot.id)); // ['vishwakarm']
+console.log(registry.findByCapability('code.patch').map(bot => bot.id)); // ['vishwakarma']
 ```
 
 Bot tasks that need a model work once you add a provider. Protected actions need

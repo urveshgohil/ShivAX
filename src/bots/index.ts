@@ -1,6 +1,6 @@
 export { SanjayBot } from './sanjay.js';
 export { BrihaspatiBot } from './brihaspati.js';
-export { VishwakarmBot } from './vishwakarm.js';
+export { VishwakarmaBot, VishwakarmBot } from './vishwakarma.js';
 export { ChitraguptBot } from './chitragupt.js';
 export { NaradBot } from './narad.js';
 export { YudhishthirBot } from './yudhishthir.js';

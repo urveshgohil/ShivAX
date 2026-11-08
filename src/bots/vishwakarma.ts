@@ -24,10 +24,10 @@ function filesValid(files: readonly SourceFile[]): boolean {
         )
     );
 }
-export class VishwakarmBot extends SpecialistBot {
+export class VishwakarmaBot extends SpecialistBot {
     constructor(model?: CodeProvider) {
         const provider = adapter(model, 'suggest');
-        super('vishwakarm', {
+        super('vishwakarma', {
             'code.summarize': {
                 description:
                     'Report supplied source paths, languages, line counts and character counts.',
@@ -151,3 +151,7 @@ export class VishwakarmBot extends SpecialistBot {
         });
     }
 }
+/** @deprecated Since 0.3.0. Use `VishwakarmaBot`. Instances report the bot id `'vishwakarma'`. */
+export const VishwakarmBot = VishwakarmaBot;
+/** @deprecated Since 0.3.0. Use `VishwakarmaBot`. */
+export type VishwakarmBot = VishwakarmaBot;

@@ -42,7 +42,7 @@ its input and output against a fixed schema. No bot trains model weights.
 | --- | --- | --- |
 | Sanjay | `vision.observe` (checks supplied observations), `vision.inspection-reference`, `vision.analyze` (reads an encoded image) | `vision.analyze` needs a host vision adapter. The others are fixed logic. |
 | Brihaspati | `reasoning.plan` (checks a plan you give it, or asks a provider for a short plan; it never runs the plan), `reasoning.decide` (picks from the options and evidence you supply) | Plans you supply need no model. Provider plans and `reasoning.decide` need a host reasoning provider. |
-| Vishwakarm | `code.summarize` (paths, languages, line and character counts), `code.patch` (proposes exact-match replacements; it never applies them), `code.suggest` | `code.suggest` needs a host code provider. The others are fixed logic. |
+| Vishwakarma | `code.summarize` (paths, languages, line and character counts), `code.patch` (proposes exact-match replacements; it never applies them), `code.suggest` | `code.suggest` needs a host code provider. The others are fixed logic. |
 | Chitragupt | `memory.read`, `memory.write` in the signed-in session's space | No model. It needs a memory service and protected tool permissions. |
 | Narad | `inspection.normalize`, `inspection.compare` (fixed UI analysis of two supplied snapshots) | No model. It does not open browsers. Live capture is a separate host feature. |
 | Yudhishthir | `review.findings`, `review.check`, `review.inspection` (fixed checks), `review.model` (advice only) | `review.model` needs a host review provider. It never overrides the fixed checks. |

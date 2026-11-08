@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { EVALUATION_DOMAINS, validateFeedback, exportTrainingData, evaluateDataset, EvaluatedModelUpdates, trainOfflineCandidate, NeuralNet, validateEvaluationRecord, validateTrainingExport, trainCuratedCandidate, createSpecialistSystem, Jay, PermissionPolicyRegistry, MemoryEngine, memoryNamespace, BotExecutor, createTaskContext, BrihaspatiBot, VishwakarmBot, analyzeUI } from 'shivax';
+import { EVALUATION_DOMAINS, validateFeedback, exportTrainingData, evaluateDataset, EvaluatedModelUpdates, trainOfflineCandidate, NeuralNet, validateEvaluationRecord, validateTrainingExport, trainCuratedCandidate, createSpecialistSystem, Jay, PermissionPolicyRegistry, MemoryEngine, memoryNamespace, BotExecutor, createTaskContext, BrihaspatiBot, VishwakarmaBot, analyzeUI } from 'shivax';
 import { learningCases } from './fixtures/learning-cases.mjs';
 import { paired, measurement } from './fixtures/ui-analysis.mjs';
 const signal = () => new AbortController().signal;
@@ -66,7 +66,7 @@ test('representative datasets exercise actual routing, explicit reasoning, code,
         let actual;
         if (domain === 'routing') actual = registry.findByCapability(input)[0]?.id ?? null;
         if (domain === 'reasoning') actual = (await execute(new BrihaspatiBot(), 'reasoning.plan', input)).status;
-        if (domain === 'code') { const result = await execute(new VishwakarmBot(), 'code.patch', input); actual = result.status === 'completed' ? result.data.patches[0].after : 'failed'; }
+        if (domain === 'code') { const result = await execute(new VishwakarmaBot(), 'code.patch', input); actual = result.status === 'completed' ? result.data.patches[0].after : 'failed'; }
         if (domain === 'visual') { const p = paired(); if (input) p.node('title').typography.fontSize = measurement(30); actual = analyzeUI(p.baseline, p.target).issues.length > 0; }
         if (domain === 'permission') actual = (await securedFeedback({ approved: input })).result.status === 'completed';
         if (domain === 'memory') actual = (await store.retrieve(ns, input, signal()))?.value ?? null;
