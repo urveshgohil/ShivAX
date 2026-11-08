@@ -1,434 +1,404 @@
-# SARASWATI S00 — Three-project baseline audit
+# SARASWATI S00 — Three-repository compatibility audit
 
 | Field | Value |
 | --- | --- |
 | Project | ShivAX AI |
 | Target line | 0.3.x SARASWATI |
 | Current line | 0.2.0 NARASIMHA (`package.json`, `VERSION` in `src/index.ts`) |
-| Phase | S00 — three-project baseline (audit only, no product code changed) |
-| Date | 2026-11-08 |
-| ShivAX branch / HEAD | `feat/saraswati-v0.3.0` at `776820f` (same commit as `main` and `origin/main`; no git tags exist) |
-| Inspectra | `D:\Project\packages\inspectra`, `inspectra-engine` 1.1.0, `main` at `c57e172`, clean, read only |
-| Visynq | `D:\Project\packages\visynq-workstation`, `main` at `62f02e1`, 21 staged uncommitted files, read only |
-| Visynq (legacy copy) | `D:\Project\packages\VISYNQ`, git repository with no commits, `inspectra-engine ^1.0.1`, read only, not used further |
+| Phase | S00 — three-repository compatibility audit (`SHIVAX_v0.3_SARASWATI_Roadmap.md`) |
+| Date | 2026-11-08 (revised the same day against the roadmap S00 checklist) |
+| ShivAX branch / HEAD | `feat/saraswati-v0.3.0` at `776820f`, the same commit as `main` and `origin/main`. No git tags. **This is the `gitHead` of the published `shivax@0.2.0`** |
+| Inspectra | `D:\Project\packages\inspectra`, `inspectra-engine` 1.1.0, `main` at `c57e172` (the `gitHead` of the published 1.1.0), clean, read only |
+| Visynq | `D:\Project\packages\visynq-workstation`, `main` at `62f02e1`, 21 staged uncommitted files (firewall UI), read only |
+| Visynq (legacy copy) | `D:\Project\packages\VISYNQ`, a git repository with no commits that depends on `inspectra-engine ^1.0.1`. Not used further |
 
-Scope: this phase read the source and ran the tests. It changed no product
-code in any of the three repositories. Inspectra and Visynq were not modified.
-Nothing was published or tagged. The only file added is this report.
+Scope: S00 read the source and ran the tests. It changed no production code.
+Inspectra and Visynq were not modified; their git state was hashed before and
+after every run (§0.2). Nothing was published or tagged.
 
----
+Separate from S00, one change was made at the user's request: the
+**Vishwakarm → Vishwakarma rename** in ShivAX (uncommitted). It is recorded in
+`CHANGELOG.md` `[Unreleased]` and in decision D2 (§8).
 
-## 0. Baseline results (Task 5)
+## Roadmap S00 checklist
 
-All commands ran on Windows 11, Node v22.23.2, pnpm from `packageManager`
-(`pnpm@12.8.1`), in `D:\Project\packages\shivax`.
-
-| Command | Result |
+| Roadmap requirement | Where answered |
 | --- | --- |
-| `pnpm lint` (`tsc --noEmit && eslint .`) | **exit 0**, no diagnostics |
-| `pnpm test` (clean, `tsc`, CJS declarations, Rollup, then `node --test tests/*.test.mjs`) | **exit 0**. Build had no warnings. **792 tests, 792 pass, 0 fail, 0 cancelled, 0 skipped, 0 todo.** Total `duration_ms` 2102.6 |
-| `pnpm verify:package` | **exit 0**. Packed ESM/CJS SDK imports pass. 7 documented examples present, 5 offline examples ran. Declarations pass for 12 entries in ts/bundler, mts/cts Node16 and mts/cts NodeNext modes. 452 packaged files |
-| `INSPECTRA_ROOT=../inspectra node scripts/check-inspectra-package.mjs` | **exit 1** (expected; see §7.1): `AssertionError: Only Inspectra 1.0.4 is certified by this check. actual: '1.1.0', expected: '1.0.4'` |
-| Read-only interop probe (scratchpad script; imports current `dist`, Inspectra's installed ShivAX copy, and `inspectra/node/index.mjs`) | All runtime symbols that Inspectra and Visynq import exist in the current 0.2.0 `dist` (§7.1). `analyzeUI` output from the current `dist` and from Inspectra's injected copy is byte-identical on the `paired()` fixture (6544 bytes). `inspectra-engine/node` exports `captureUIPage` as a function |
-
-The 792-test total matches the 0.2.0 figure in `docs/release-readiness.md`.
-This is the regression floor for every SARASWATI phase.
-
-Inspectra and Visynq test suites were **not** run. Inspectra's suites launch
-Playwright and write `test-results/`, `playwright-report/` and `debug.log` inside
-that repository. Visynq has staged, uncommitted work in progress. Running either
-would change a repository this phase must leave untouched. The compatibility
-claims below rest on the interop probe and on ShivAX's own adapter tests.
+| SHIVAX `package.json`, `src/learning/*`, `ekalavy.ts`, `memory/`, `security/firewall/`, `intelligence/`, `docs/learning-evaluation.md` | §1 |
+| Inspectra `package.json`, `node/index.mjs`, `tests/integration/` | §1.2, §0.2 |
+| Visynq `package.json`, `FirewallPage.tsx`, `firewall-client.ts`, `src/live/`, README | §1.2, §1.3, §7.1 |
+| Which parts of learning, evaluation, rollback, memory and firewall already exist | §1 |
+| Where learning datasets or labels could enter the scanner and the workstation | §1.3 |
+| Check that Inspectra's `^0.1.2` excludes 0.2 and 0.3, and propose a *tested* update | §0.3, §7.1 |
+| Visynq's invalid `.0.0` version and its missing production firewall host binding | §7.1, risk P1-4 |
+| Repo-specific checks | §0.1, §0.2 |
+| `npm view` registry state | §0.3 |
+| Three-repository API map, test baseline, P0/P1 risks, safe delivery order | §1.2, §0, §7.2, §5 |
 
 ---
 
-## 1. Current implementation matrix (Task 1)
+## 0. Baseline results
+
+Environment: Windows 11 Pro, Node v22.23.2, pnpm 12.8.1, npm (bundled).
+
+### 0.1 ShivAX (`D:\Project\packages\shivax`)
+
+| Command | Before rename | After the Vishwakarma rename |
+| --- | --- | --- |
+| `pnpm lint` | exit 0 | exit 0 |
+| `pnpm test` (includes build) | **792/792 pass**, 0 fail, cancelled or skipped. No build warnings | **793/793 pass** (+1 deprecated-alias test) |
+| `pnpm verify:package` | exit 0. 12 entries in 5 declaration modes, 452 packaged files | exit 0, same counts |
+| `INSPECTRA_ROOT=../inspectra node scripts/check-inspectra-package.mjs` | **exit 1**: `Only Inspectra 1.0.4 is certified by this check. actual: '1.1.0'` | Not rerun (the cause is in the script) |
+
+### 0.2 Inspectra and Visynq (read only, tracked state hashed before and after)
+
+| Repository | Command | Result | Tracked state after |
+| --- | --- | --- | --- |
+| Inspectra | `npm run build` (`scripts/check-build.mjs`: syntax check and entry-point import) | exit 0, "Package entry points verified" | unchanged |
+| Inspectra | `npm run test:unit` | **10/10 pass** | unchanged |
+| Inspectra | `npm run test:security` (network policy, network guard, **ShivAX adapter integration**, dev server; uses Chromium) | **31/31 pass** | unchanged |
+| Visynq | `pnpm test` (`vitest run`) | **27 files, 243/243 tests pass**. These run against the sibling `../shivax/dist`, so they include the rename | `status`, staged diff and unstaged diff hashes identical |
+
+Not run, and why:
+
+- Inspectra `test:integration`, `test:ui-check` and `test:extraction`: these
+  are long Playwright suites. The security suite already covers the ShivAX
+  adapter. Run them in S08.
+- Visynq `build` and `test:integration`: `tsc -b` rewrites the **tracked**
+  `tsconfig.tsbuildinfo`, which is part of the staged work.
+
+### 0.3 npm registry (checked 2026-11-08 with `npm view`)
+
+| Package | Published versions | `latest` | Notes |
+| --- | --- | --- | --- |
+| `shivax` | 0.0.0-stage, 0.1.0, 0.1.2, 0.1.3, **0.2.0 (2026-11-07T16:22Z)** | 0.2.0 | Published `peerDependencies: { "inspectra-engine": "1.0.4" }`. `gitHead 776820f`. 453 files |
+| `inspectra-engine` | 0.0.0-stage, 1.0.0–1.0.4, **1.1.0 (2026-11-07T18:41Z)** | 1.1.0 | 1.1.0 has `dependencies.shivax: "^0.2.0"`. 1.0.4 has `"^0.1.2"` |
+
+**ShivAX docs are stale:** `CHANGELOG.md` ("not on npm yet"), the
+`docs/release-readiness.md` header, and §6 of the first S00 draft all say
+0.2.0 is unpublished.
+
+**Real install test** in an empty scratch project:
+`npm install --dry-run shivax@0.2.0 inspectra-engine@1.1.0` gives
+**`ERESOLVE could not resolve … peerOptional inspectra-engine@"1.0.4" from shivax@0.2.0 … Found: inspectra-engine@1.1.0`** (exit 1).
+Both packages are the current `latest`, so a new user installing both gets this
+error today (risk P0-1).
+
+**Range checks** with `semver@7.8.6` (`satisfies`):
+
+| Range | 0.2.0 | 0.3.0 | 0.3.0-beta.1 | 0.4.0 |
+| --- | --- | --- | --- | --- |
+| `^0.1.2` | false | false | — | — |
+| `^0.2.0` | true | **false** | — | — |
+| `>=0.2.0 <0.4.0` (proposed for Inspectra, after S07) | true | true | **false** | false |
+
+| Peer range | 1.0.3 | 1.0.4 | 1.1.0 | 2.0.0 |
+| --- | --- | --- | --- | --- |
+| `1.0.4` (current) | — | true | **false** | — |
+| `^1.0.4` (proposed) | false | true | true | false |
+
+---
+
+## 1. Current implementation matrix
 
 Legend: **Yes** = implemented and tested. **Partial** = exists, with a limit
 that matters for SARASWATI. **No** = absent.
 
 | Capability | Status | Where | Actual behaviour and limits |
 | --- | --- | --- | --- |
-| Feedback validation | **Yes** | `src/learning/index.ts` `validateFeedback`, `learningFeedbackSchema` | Closed v1 record: `id`, `taskId`, `botId`, `domain` (6 domains), `input`, `output`, `decision` accept/reject/correct. `correction` is required exactly when the decision is `correct`. Size cap 64 KiB. No timestamp, actor, source or consent fields |
-| Verified feedback storage | **Partial** | `storeLearningFeedback`; Ekalavy `learning.feedback`; `src/memory/services.ts`; `src/memory/validation.ts` `approval()` | Saved through the protected tool `shivax.memory.records.save` as category `verified-outcome` with tag `learning-feedback`. Needs the host `verifyOutcome` predicate (otherwise `verification-required`) plus Vijay policy and approval. **Limits:** the namespace includes `sessionId` (`memoryNamespace()`), so feedback cannot be read from another session. Default TTL is 7 days (`DEFAULT_TTL['verified-outcome']`), configurable up to 90 days. Defaults allow 128 records (max 512) and 1 MiB per namespace. Memory is therefore **not a durable system of record** for training data |
-| Legacy feedback path | **Yes** (compat) | Ekalavy `learning.record` / `learning.summarize`; `SessionFeedbackStore` (`src/bots/storage.ts`); `shivax.feedback.append` | A separate, session-only append store that is not connected to the learning module. Kept for compatibility |
-| Evaluation datasets | **Yes** | `validateEvaluationDataset`, `evaluateDataset`, `validateEvaluationRecord` | 1–256 cases, unique ids, 6 domains. Cases run one after another with a 30 s default deadline (max 300 s), cancellation and evaluator isolation. Metrics: completion, exact-match accuracy (key-order independent), routing accuracy, invalid output rate, boolean FP/FN, security pass rate, model calls and tokens, `usageComplete`. Imported reports are checked for internal consistency and **never authorize activation**. Fixture: `tests/fixtures/learning-cases.mjs` (12 cases) |
-| Benchmark repeatability | **Partial** | same | The `EvaluationRecord` embeds the dataset but has **no dataset digest, model digest, seed, ShivAX version, runtime fingerprint or repetition count**. Latency is a single sample per case |
-| Curated training export | **Yes** | `exportTrainingData`, `validateTrainingExport` (`training.ts`) | The host's `approve` callback must return literal `true` for each record. Rejected feedback is excluded. Output is `{format:'shivax-curated-training', version:1, trust:'untrusted', rows}`, max 256 rows. **No provenance**: no source session, curator, time or content hash |
-| Offline model training | **Yes** (synchronous) | `trainOfflineCandidate`, `trainCuratedCandidate`; `src/nn/NeuralNet.ts` | Clones the serialized model, trains the clone and never changes the active model. Rows must be numeric. Max 4096 rows. Training and held-out sets must not overlap (by id and by input), and labels must match the task. `weightsUpdated` compares real parameters. **It blocks the event loop.** `TrainOptions.signal` is only checked between epochs and batches, so it cannot interrupt a synchronous call. Held-out rows are returned to the caller, not evaluated |
-| Non-blocking training | **No** (library). Example only | `examples/digits/worker.mjs` | The digit demo trains in a Web Worker. No reusable job runner, executor interface, progress events or job records exist in `src/` |
-| Model version management | **Partial** | `EvaluatedModelUpdates` (`src/learning/updates.ts`) | Generic `{model, configuration}` snapshots. Runs baseline and candidate on the same dataset. The candidate must reach accuracy 1, invalid rate 0 and completion 1; the baseline result is reported but not used in the gate. Only one proposal can run at a time (`busy`). **History lives in memory (16 versions)**, with no identifiers, digests, persistence or link to datasets. Not connected to `ModelProviderRegistry` or `NeuralModelProvider` |
-| Approval and rollback | **Partial** | `EvaluatedModelUpdates.propose/rollback` | Activating a version and rolling back both need the host approval callback to return literal `true`; both honour cancellation. Rollback only steps back one version and is lost when the process restarts. **Pattern to reuse:** `openShivaxFirewallManagement` (`src/security/firewall/management.ts`) already uses a durable lease, compare-and-swap commit, bounded history journal and validation on restore |
-| Durable model version storage | **No** | — | No store interface or adapter. `MemoryEngine` cannot hold models: records are limited to 1 MiB and expire after at most 90 days |
-| Memory retrieval | **Yes** | `MemoryEngine.search/list` (`src/memory/engine.ts`); `MemoryTaskLifecycle.recall` | Lexical mode scores the fraction of query terms found in the JSON of value, metadata and tags. Semantic mode uses cosine similarity with a host embeddings adapter (the provider id and dimension count must match). Results are filtered by category and tags, limited to 50 (default 20), and are always `trust:'untrusted'`. RUDRA recall takes at most 5 results, goes through Chitragupt and Vijay, and is passed to the planner as `memory.trust:'untrusted'` |
-| Retrieval relevance evaluation | **No** | — | The `memory` evaluation domain only does exact-match checks. There is no precision@k, recall@k, MRR or nDCG, no relevance labels and no lexical-versus-semantic comparison |
-| RUDRA routing | **Yes** (deterministic) | `src/agents/rudra/orchestrator.ts`, `planner.ts` | `CapabilityPlanner` makes a one-step plan. The plan is validated before any step runs. A capability must be in the host allowlist, and the bot chosen is the **first bot by sorted id** that offers it. The planner cannot name a bot or grant permissions. The trace records `decision: 'capability-then-bot-id'` |
-| Model routing | **Yes** (deterministic) | `ModelRouter` (`src/intelligence/router.ts`) | Candidates come from the registry by capability and are sorted by locality (in-process, then local, then remote) and then by id. Optional `providerId` sets the preferred provider. Remote providers need `allowRemote:true`. Fallback is off unless enabled. Cost accounting is exact and token usage must be verifiable (fail closed). The firewall gateway route `createGuardedModelGateway` lists its operation ids in a fixed order |
-| Learning-assisted routing | **No** | — | Neither router uses evaluation or benchmark history |
-| Firewall protections | **Yes** | `src/security/firewall/*`, Jay, Vijay | Modes: enforce, monitor, lockdown. Deny by default. Operation kinds: cpu, tool, model, workflow, bot, file, network. One shared model budget, versioned policies with rollback, revocation, a sanitized audit log and protected execution binding. Not changed by this audit |
-| NeuralNet / Tensor | **Yes** | `src/nn/NeuralNet.ts`, `src/core/Tensor.ts` | `SerializedNeuralNet` v1 holds an inference snapshot: optimizer moments and PRNG progress are deliberately left out. The training work limit is 250M operations per call |
+| Feedback validation | **Yes** | `src/learning/index.ts` `validateFeedback`, `learningFeedbackSchema` | Closed v1 record: `id`, `taskId`, `botId`, `domain` (6 domains), `input`, `output`, `decision` accept/reject/correct. `correction` is required exactly when the decision is `correct`. Limit 64 KiB. `snapshotValue` limits depth to 32 and node count to 10,000. **No timestamp, actor, source, tenant, consent or evidence fields** |
+| Verified feedback storage | **Partial** | `storeLearningFeedback`; Ekalavy `learning.feedback`; `src/memory/services.ts`; `src/memory/validation.ts` `approval()` | Saved through the protected `shivax.memory.records.save` tool as `verified-outcome` with tag `learning-feedback`. Needs the host `verifyOutcome` predicate, a Vijay policy and approval. **Limits:** the namespace includes `sessionId`; the default TTL is 7 days (90 at most); 128 records and 1 MiB per namespace by default. Not a durable system of record |
+| Legacy feedback path | **Yes** (compat) | Ekalavy `learning.record`/`learning.summarize`; `SessionFeedbackStore`; `shivax.feedback.append` | A separate, session-only append store |
+| Privacy admission | **Yes** (memory only) | `privacy()` in `src/memory/validation.ts` | Rejects bearer tokens, private keys, `sk-`/AKIA keys, JWTs, `password=` and similar, email addresses, SSN patterns, and keys named password, token, cookie, email, phone, address and similar. A conservative filter, not a full DLP classifier |
+| Evaluation datasets | **Yes** | `validateEvaluationDataset`, `evaluateDataset`, `validateEvaluationRecord` | 1–256 cases, 6 domains, run one after another, 30 s default timeout (300 s max), cancellation. Metrics: completion, exact-match accuracy, routing accuracy, invalid output rate, FP/FN, security pass rate, usage. Imported reports **never authorize** activation. Fixture: `tests/fixtures/learning-cases.mjs` (12 cases) |
+| Benchmark repeatability | **Partial** | same | No dataset hash, seed, version or runtime fingerprint; one latency sample per case |
+| Curated training export | **Yes** | `exportTrainingData`, `validateTrainingExport` | The host `approve` must return literal `true` for each record. Rejected feedback is excluded. Output `shivax-curated-training` v1 with `trust:'untrusted'`, 256 rows at most. **No provenance, deduplication or partitioning** |
+| Offline model training | **Yes** (synchronous) | `trainOfflineCandidate`, `trainCuratedCandidate` | Trains a clone, at most 4096 rows. Training and held-out sets must not share ids or inputs. **Blocks the event loop** |
+| Non-blocking training | **No** in the library; example only | `examples/digits/worker.mjs` | |
+| Model version management | **Partial** | `EvaluatedModelUpdates` | Strict gate: candidate accuracy, completion and validity must all be 1. Keeps 16 versions in memory. Not durable |
+| Approval and rollback | **Partial** | same | Approval must be literal `true`. One-step rollback, lost on restart. Pattern to reuse: firewall management lease, compare-and-swap and journal |
+| Memory retrieval | **Yes** | `MemoryEngine.search/list`, `MemoryTaskLifecycle.recall` | Lexical term-fraction scoring or semantic cosine. Results are always untrusted |
+| Retrieval relevance evaluation | **No** | — | |
+| RUDRA routing | **Yes** (deterministic) | `orchestrator.ts`, `planner.ts` | Host allowlist, then the first bot by sorted id. The planner cannot choose bots |
+| Model routing | **Yes** (deterministic) | `ModelRouter` | Ordered by locality, then id. Optional `providerId`. Remote needs `allowRemote`. Exact cost math; usage checks fail closed |
+| Learning-assisted routing | **No** | — | |
+| Firewall protections | **Yes** | `src/security/firewall/*`, Jay, Vijay | Enforce, monitor and lockdown modes. Deny by default. Shared budget, policy versions and rollback, audit log |
+| NeuralNet / Tensor | **Yes** | `src/nn/NeuralNet.ts`, `src/core/Tensor.ts` | `SerializedNeuralNet` v1 is an inference snapshot (no optimizer moments or PRNG progress). Repeated `train()` calls reset the shuffle order |
 
-### Specialist bots, orchestration and security components to preserve
+### 1.1 Components to preserve
 
-The seven specialist bots, as `createSpecialistBots` builds them:
+| Bot id | Class | Role |
+| --- | --- | --- |
+| `sanjay` | `SanjayBot` | Vision |
+| `brihaspati` | `BrihaspatiBot` | Reasoning |
+| `vishwakarma` | `VishwakarmaBot` | Code. Was `vishwakarm`; deprecated alias `VishwakarmBot` (see D2) |
+| `chitragupt` | `ChitraguptBot` | Memory |
+| `narad` | `NaradBot` | Messaging and routing support |
+| `yudhishthir` | `YudhishthirBot` | Review |
+| `ekalavy` | `EkalavyBot` | Learning: `learning.feedback`, `learning.record`, `learning.summarize` |
 
-| Bot | Role |
-| --- | --- |
-| `SanjayBot` | Vision |
-| `BrihaspatiBot` | Reasoning |
-| `VishwakarmaBot` | Code |
-| `ChitraguptBot` | Memory |
-| `NaradBot` | Messaging and routing support |
-| `YudhishthirBot` | Review |
-| `EkalavyBot` | Learning. Capabilities: `learning.feedback`, `learning.record`, `learning.summarize` |
+Also preserved: RUDRA (`RudraOrchestrator`, `CapabilityPlanner`), Jay, Vijay,
+and the firewall.
 
-The orchestrator and security components:
+### 1.2 Three-repository API map
 
-- RUDRA: `RudraOrchestrator` and `CapabilityPlanner`.
-- Jay: `src/security/jay.ts`.
-- Vijay: `src/security/vijay.ts`.
-
-None of these need changes for the core of SARASWATI (§4).
-
----
-
-## 2. Missing functionality for SARASWATI (Task 2)
-
-| # | Gap | Why it matters | Evidence |
+| Consumer | Imports from ShivAX | Resolution today | Present in current `dist` |
 | --- | --- | --- | --- |
-| G1 | **Dataset provenance** | Feedback and training exports cannot prove their origin, who curated them or whether they changed after approval. Any benchmark or model version built on them inherits that uncertainty | `exportTrainingData` output has no source, actor, time or hash fields. The `FeedbackRecord` has no timestamp or actor |
-| G2 | **Content digests** | A dataset, report or model cannot be referred to by an identity that cannot be forged. No SHA-256 or digest code exists anywhere in `src/` | `grep sha256/subtle/digest src` finds nothing |
-| G3 | **Training dataset lifecycle** | There is no draft → frozen → approved → retired flow, and no durable store. Verified feedback lives in session-scoped memory that expires after 7 to 90 days, so a dataset must be copied out of memory when it is frozen | `memoryNamespace` includes `sessionId`; `DEFAULT_TTL` |
-| G4 | **Deterministic splits** | `trainCuratedCandidate` needs separate training and held-out exports, but nothing produces a reproducible split | `training.ts` |
-| G5 | **Repeatable benchmarks** | The evaluation record has no seed, dataset digest, model digest, version or runtime fingerprint, and only one latency sample. Two runs cannot be shown to be comparable, and regression thresholds cannot be set | `EvaluationRecord` |
-| G6 | **Benchmark comparison gate** | `EvaluatedModelUpdates` requires 100% accuracy and ignores the baseline. Real models need "no regression beyond a threshold" against a pinned baseline. The current strict gate must stay as it is | `updates.ts` |
-| G7 | **Non-blocking training** | Synchronous `NeuralNet.train` blocks the host. There is no job model with queued/running/terminal states, progress, cancellation or work budgets, and no worker executor in the library | `NeuralNet.train`, `TrainOptions.signal` comment |
-| G8 | **Exact chunked training** | Calling `train({epochs:1})` N times on one instance keeps optimizer and PRNG state, but **resets the shuffle order to identity on each call**. Chunked training is therefore not bit-identical to `train({epochs:N})`. Resuming from `toJSON()` also loses optimizer moments. Determinism has to be defined per job, including its chunk schedule | `NeuralNet.train` (`order` is rebuilt each call); `toJSON` comment |
-| G9 | **Durable model version storage** | Versions are not persistent, have no ids or digests and are not linked to their dataset or benchmark. Rollback does not survive a restart | `updates.ts` (in memory, 16 versions) |
-| G10 | **Model-to-provider bridge** | Nothing turns an approved version into a `NeuralModelProvider`. Firewall model operations hold a fixed `provider` object, so a new model version needs new firewall operations. It cannot be swapped in place | `FirewallModelOperation.provider` |
-| G11 | **Learning-assisted routing** | Both routers are purely deterministic and have no advisory input from measured quality, latency or cost | `ModelRouter` sort; RUDRA `bots.find` |
-| G12 | **Retrieval relevance evaluation** | Lexical and semantic recall cannot be measured, and the two modes cannot be compared | `MemoryEngine.search` |
-| G13 | **Optional peer range** | The exact `inspectra-engine: 1.0.4` peer conflicts with Inspectra 1.1.0 (§7.1) | `package.json` `peerDependencies` |
+| Inspectra `node/index.mjs`, `job-manager.mjs`, `analysis-worker.mjs` | `analyzeUI`, `validateUIAnalysisOptions` (`shivax`); types `UISnapshot`, `UIAnalysisOptions` | `pnpm` override `shivax: file:../shivax`, an injected copy dated 2026-11-07 21:50. `analyzeUI` output is byte-identical to the current `dist` on the `paired()` fixture | Yes |
+| Inspectra `node/shivax.mjs` (`inspectra-engine/shivax`) | `InspectraInspectionProvider` (`shivax/adapters/inspectra`, loaded lazily); types `InspectionCaptureRequest`, `InspectionProviderContext`, `InspectraPageLease`, `InspectraPageSecurity` | same | Yes |
+| Inspectra tests (`integration/*`, `extraction`, `ui-check`) | `analyzeUI`, `validateUISnapshot`, `normalizeUISnapshot`, `validateInspectionObservation`, `analyzeUIWithSLM`, `SLMClient`; `tests/integration/runner.mjs` reads `../../../shivax/tests/fixtures/ui-analysis.mjs` | same, plus a sibling path | Yes |
+| ShivAX adapter, calling Inspectra | `captureUIPage` from `inspectra-engine/node` | Optional peer, exactly `1.0.4` | 1.1.0 still exports it |
+| Visynq `src/lib/shivax-demo.ts` | `createSpecialistSystem` (`shivax/bots`), `Jay`, `PermissionPolicyRegistry` (`shivax/security`), `InspectionPlanner`, `INSPECTION_WORKFLOW_CAPABILITIES`, `validateInspectionObservation` (`shivax/integrations`), types from `shivax/rudra` | Not a dependency. `vite.config.ts` aliases and `tsconfig.json` paths point to `../shivax/dist/sdk/*`. **The README says the published package is used and sibling checkouts are not required, which contradicts the aliases** | Yes |
+| Visynq `src/lib/firewall.ts`, `services/firewall-client.ts` | `FirewallError`; types `FirewallManagement`, `FirewallPolicy`, `FirewallPolicyProfile`, `FirewallAuditEvent`, `FirewallErrorCode`, `FirewallMode` (`shivax/security`) | same | Yes |
+| Visynq diagnostics | `toSDKDiagnostic` (`shivax/diagnostics`) | same | Yes |
+| Visynq, consuming Inspectra | `inspectra-engine ^1.0.4` (client and runner); `src/live/geometry.ts` imports types from `inspectra/client` | Local runner `scripts/local-runner.mjs` | — |
+
+ShivAX itself references neither Visynq nor Playwright in `src/`, `package.json`
+or packaged `adapters/` files. The only Playwright users are the dev scripts
+`adapters/inspectra/test-live.mjs` and `refresh-fixtures.mjs`, which are not in
+the package `files` list.
+
+### 1.3 Where learning datasets or labels could enter
+
+| Entry point | Repository | What exists today | Trust status | SARASWATI handling |
+| --- | --- | --- | --- | --- |
+| E1 Ekalavy `learning.feedback` | ShivAX | v1 `FeedbackRecord` saved as `verified-outcome` after host `verifyOutcome`, Vijay policy and approval | Host-verified, stored `untrusted`, session-scoped, expires | S01: governed feedback with provenance and host attestation; curation from those records |
+| E2 Ekalavy `learning.record` | ShivAX | Free-form `{kind, data, score}` into `SessionFeedbackStore` | Unverified | **Never** a training source |
+| E3 `exportTrainingData` import | ShivAX | Host-selected v1 rows; `validateTrainingExport` accepts any well-formed export | Untrusted | S01: partition and leakage checks also accept old v1 exports; no migration needed |
+| E4 Inspectra local UI server `/api/reviews` (`server.js`) | Inspectra | Per-finding `{status: 'issue'/'accepted'/'ignored', note (2000 chars max), type, at}` keyed by `referenceUrl -> targetUrl` and a `fingerprint` matching `^[a-z0-9]{1,32}$`. Persisted to `visual-reports/reviews.json` (gitignored; `UI_REVIEWS_FILE` overrides). Host header, origin and JSON content type checked (1.1.0). **No reviewer identity and no scope or tenant** | Local, unauthenticated reviewer | I01: may only produce *proposed* feedback. A trusted ShivAX host must attest it |
+| E5 Visynq `reviewExport()` (`src/live/geometry.ts`) | Visynq | Download block `visynqReview {version:1, scope, sessionId, exportedAt, decisions:[{issueId, status: unreviewed/confirmed/dismissed, notes}]}` attached to the Inspectra report | Created in the browser; no reviewer identity | I02: pending proposals only; the browser cannot mark them verified |
+| E6 Inspectra scan output (findings, measurements) | Inspectra | Measured, design and inferred provenance on findings | Model or tool output | Evidence references only. Never labels on their own |
 
 ---
 
-## 3. Proposed v0.3 architecture (Task 4)
+## 2. Missing functionality, mapped to roadmap phases
+
+| # | Gap | Roadmap phase |
+| --- | --- | --- |
+| G1 | Feedback provenance: source, tenant owner, task, agent and model version, reviewer, evidence, consent purpose, label revision, redaction | **S01** |
+| G2 | Content digests (no SHA-256 code exists in `src/`) | **S01** (dataset manifest), S02, S04 |
+| G3 | Curated dataset manifest, deduplication and leakage-safe train/validation/held-out partitions | **S01** |
+| G4 | Training eligibility that untrusted output cannot assert for itself | **S01** |
+| G5 | Repeatable benchmarks: seed, dataset hash, fingerprint, latency distribution, regression thresholds, mandatory 100% security-denial cases | S02 |
+| G6 | Non-blocking (worker) training | S03 |
+| G7 | Chunked or resumed training is not bit-identical to a single run | S03 (document the tolerance) |
+| G8 | Durable model and configuration registry with compare-and-swap activation and restart-safe rollback | S04 |
+| G9 | Approved model version to `NeuralModelProvider`; firewall model operations hold a fixed provider | S04 |
+| G10 | Learning-assisted routing (shadow first) | S05 |
+| G11 | Retrieval relevance evaluation (precision@k, MRR) | S06 |
+| G12 | Optional peer pin `inspectra-engine: 1.0.4` | **H01** (proposed hotfix, §5) |
+| G13 | Stale "0.2.0 not published" statements in ShivAX docs | H01 or S07 |
+
+---
+
+## 3. Proposed v0.3 architecture
 
 ### 3.1 Principles
 
-1. **Additive only.** New modules go under `src/learning/`. `index.ts`, `training.ts`
-   and `updates.ts` are not rewritten. Their exports, signatures and gates stay
-   as they are. The new code calls them.
-2. **Platform neutral.** No Node-only imports in core. Workers, file systems and
-   stores are supplied by the host through interfaces, following the
-   `MemoryPersistence`, `MemoryFileSystem` and `FirewallPolicyStore` patterns.
-   No runtime dependencies, and no Playwright.
-3. **Integrity is not trust.** Digests prove that content has not changed. They
-   do not prove it is true. All learning data stays `trust:'untrusted'`.
-4. **Nothing activates itself.** Training produces candidates. Benchmarks
-   produce reports. Only an explicit `promote()` can activate a version, and
-   only when an approval callback returns literal `true`. Under the firewall it
-   must also pass a state-changing Vijay capability. No code path chains
-   train → gate → activate.
-5. **Advice cannot grant access.** Learning-assisted routing can only reorder
-   candidates that are already allowed. It never adds a provider, bot, capability,
-   locality or permission.
-6. **Validate on load.** Every stored artifact is checked against its schema and
-   its digest when read back, as firewall management does with `policy()` on
-   restore.
+1. **Additive only.** New modules go in `src/learning/`. `index.ts`,
+   `training.ts` and `updates.ts` keep their exports, signatures and gates.
+2. **Platform-neutral core.** No eager Node built-in imports in the
+   browser-safe bundles. A Node `worker_threads` executor ships behind a
+   separate documented entry point (roadmap S03).
+3. **Integrity is not authenticity.** A digest shows the content is unchanged.
+   Reviewer identity and verification come only from trusted host callbacks,
+   checked again when a dataset is curated. All learning data stays
+   `trust:'untrusted'`.
+4. **Untrusted data cannot verify itself.** Provenance from feedback, models or
+   Inspectra is a set of *claims*. The schema has no `verified`, `approved` or
+   `reviewer` field. Attestations are a separate host-created record, bound to
+   the content digest.
+5. **Nothing activates itself.** No API chains train, gate and activate. Every
+   activation needs approval to be literal `true`, plus the firewall and Vijay.
+6. **Validate on load.** Stored artifacts are checked against their schema and
+   digest every time they are read.
 
-### 3.2 Components
+### 3.2 Components by phase
 
-| Module (new) | Purpose | Key public surface (proposed) |
+| Phase | Module | Purpose |
 | --- | --- | --- |
-| `src/learning/canonical.ts` | Canonical JSON and SHA-256 using Web Crypto (`crypto.subtle.digest`, available in Node 22+ and browsers) | `canonicalJSON(value)`, `digestJSON(value, signal): Promise<Digest>` with `Digest = 'sha256:<64 hex>'` |
-| `src/learning/provenance.ts` | Dataset manifests and provenance | `DatasetManifest` v1: `id`, `version`, `contentDigest`, `rowCount`, `domains`, `sources[]` (`verified-feedback`, `curated-import`, `evaluation-fixture` or `synthetic`, each with feedback ids and an opaque `actorRef`), `parents[]` digests, `createdAt`, `consent` flags, `trust:'untrusted'`. `createDatasetManifest`, `validateDatasetManifest`, `verifyDatasetContent` |
-| `src/learning/datasets.ts` | Dataset lifecycle and deterministic splits | States: `draft`, `frozen`, `approved`, `retired`. `freeze()` copies the rows into the store and fixes the digest. `approve()` needs the host callback to return `true`. `splitDataset(rows, {seed, ratios})` assigns each row by a seeded hash of its `feedbackId` and is checked for disjointness. `DatasetStore` interface: lease plus compare-and-swap commit. `InMemoryDatasetStore`. `FileDatasetStore` takes a host-supplied fs, in the style of `MemoryFileSystem` |
-| `src/learning/benchmarks.ts` | Repeatable benchmarks | `BenchmarkSuite` v1: `id`, `datasetDigest`, `cases`, `repetitions`, `seed`. `runBenchmark(suite, subject, evaluate, signal)` wraps `evaluateDataset` once per repetition. `BenchmarkReport` v1 holds `suiteDigest`, `subjectDigest`, environment (ShivAX `VERSION`, runtime name and version), deterministic metrics (must be identical across repetitions or the run is flagged `nondeterministic`) and latency p50/p95/max. `compareBenchmarks(baseline, candidate, thresholds)` returns a verdict per metric. `validateBenchmarkReport` |
-| `src/learning/retrieval.ts` | Retrieval relevance evaluation | `RetrievalCase` holds `query: MemoryQuery` and graded `relevant: {id, grade}[]`. `evaluateRetrieval(store, namespace, cases, {k}, signal)` reports precision@k, recall@k, MRR, nDCG@k and hit rate, per mode (lexical or semantic) and overall. It runs against a host-supplied `MemoryStore`, usually an isolated `MemoryEngine` filled from a fixture. Output follows the `BenchmarkReport` format |
-| `src/learning/jobs.ts` | Training without blocking the host | `TrainingJobSpec` v1: model digest, dataset digest, split seed, `TrainOptions`, **chunk schedule**, budgets. `TrainingJobRunner` with states queued, running, then succeeded, failed or cancelled, plus progress events and a `signal`. `TrainingExecutor` interface. `CooperativeTrainingExecutor` runs epoch chunks and yields between them on the main thread. `createPortTrainingExecutor(factory)` works with any `postMessage` port (Web Worker or `worker_threads`) supplied by the host and cancels by terminating it. Output: a `TrainingArtifact` (serialized model, digest, losses, spec digest). **Never activates** |
-| `src/learning/registry.ts` | Durable model versions | `ModelVersionRecord` v1: `versionId`, `modelDigest`, `datasetDigest`, `benchmarkDigest`, `parent`, state (`candidate`, `approved`, `active`, `retired` or `rolled-back`), opaque approval `actorRef`s. `ModelVersionRegistry` methods: `register(candidate)`, `promote(versionId, comparison, approve, signal)`, `rollback(approve, signal)`, `active()`, `history()`. `ModelVersionStore` interface (lease plus compare-and-swap, with the journal appended atomically). `InMemoryModelVersionStore`. `FileModelVersionStore` with a host fs. Helper `createNeuralProviderFromVersion(record, id)` returns a `NeuralModelProvider`; the host must still rebuild its firewall operations |
-| `src/learning/routing.ts` | Learning-assisted routing advice | `RoutingAdvisor` builds advice from `BenchmarkReport`s that the host generated itself; imported reports are rejected. `adviseProviders(capability, allowedIds)` returns a reordered subset of `allowedIds`. `adviseBots(capability, candidateBotIds)` does the same for bots. Results are deterministic, with ties broken by id. Optional `ModelRoutingOptions.preference` (additive) or a host-side `providerId` selection |
+| S01 | `src/learning/provenance.ts` | `FeedbackProvenance` v1 claims, `GovernedFeedback` v1 (wraps an unchanged v1 `FeedbackRecord`), `ReviewAttestation` v1, canonical JSON, SHA-256 digest, `storeGovernedFeedback` (same Chitragupt and Vijay path) |
+| S01 | `src/learning/datasets.ts` | `curateDataset`: eligibility, tenant, consent, attestation, staleness and retention checks; deterministic deduplication; leakage-safe partition. `checkPartitionLeakage`, which also works on old v1 exports. `DatasetManifest` v1 |
+| S02 | `src/learning/benchmarks.ts` | Versioned suites and reports, before-and-after comparison, thresholds, mandatory security cases |
+| S03 | `src/learning/jobs.ts` plus a Node entry point | Training jobs, progress, cancellation, worker executor |
+| S04 | `src/learning/registry.ts` | Durable registry with statuses `candidate`, `evaluated`, `approved`, `active`, `rejected`, `rolled_back` |
+| S05 | `src/learning/routing.ts` | Shadow recommendation engine; deterministic routing stays authoritative |
+| S06 | `src/learning/retrieval.ts` | Relevance metrics over labelled fixtures |
 
-### 3.3 Integration points with existing code
-
-| Existing component | How SARASWATI uses it | Change type |
-| --- | --- | --- |
-| `exportTrainingData` / `validateTrainingExport` | Starting point for `draft` datasets. Its output is wrapped in a manifest | None |
-| `trainCuratedCandidate` / `trainOfflineCandidate` | Called inside the job executors, so all existing validation still applies | None |
-| `evaluateDataset` | Called once per benchmark repetition | None |
-| `EvaluatedModelUpdates` | Stays as the strict in-memory gate. The registry is a parallel, durable option, and the docs explain when to use each | None |
-| `NeuralNet.fromJSON/toJSON` | Model artifacts use the existing `SerializedNeuralNet` v1 | None |
-| `MemoryEngine` / `MemoryStore` | Read when assembling datasets (verified outcomes) and by the retrieval evaluator. Never used to store models or frozen datasets | None |
-| Firewall | Training jobs run as `kind:'cpu'` host operations. `promote` and `rollback` run as `state-changing` operations under a separate capability that needs human approval, as `adminCapability` does | None to the firewall. Host wiring documented |
-| `ModelRouter` | S08 option A: the host passes the advisor's top id as `providerId` (no ShivAX change). Option B: an additive optional `preference` routing key | Optional additive |
-| `RudraOrchestrator` | S08 option: an optional `RudraHooks.botAdvisor` that can only reorder the bots RUDRA already found for a capability. Today each capability maps to one bot, so this matters only for host-registered extra bots | Optional additive (see risk R7) |
-| Ekalavy | No change until S09. Then possibly one read-only `learning.benchmark.summarize`. **Never** training, promotion or rollback capabilities on any bot | Deferred |
-
-### 3.4 Implementation dependency graph
-
-Module level (arrow means "depends on"):
+### 3.3 Dependency graph
 
 ```mermaid
 graph TD
-  canonical[learning/canonical.ts]
-  provenance[learning/provenance.ts] --> canonical
-  datasets[learning/datasets.ts] --> provenance
-  datasets --> trainingExisting[(learning/training.ts: existing)]
-  benchmarks[learning/benchmarks.ts] --> provenance
-  benchmarks --> evalExisting[(learning/index.ts evaluateDataset: existing)]
-  retrieval[learning/retrieval.ts] --> benchmarks
-  retrieval --> memory[(memory/types.ts MemoryStore: existing)]
-  jobs[learning/jobs.ts] --> datasets
-  jobs --> trainingExisting
-  jobs --> nn[(nn/NeuralNet.ts: existing)]
-  registry[learning/registry.ts] --> provenance
-  registry --> benchmarks
-  registry --> jobs
-  registry --> neural[(intelligence/neural.ts NeuralModelProvider: existing)]
-  routing[learning/routing.ts] --> benchmarks
-  routing --> registry
-  routing -.optional.-> router[(intelligence/router.ts: existing)]
-  routing -.optional.-> rudra[(agents/rudra: existing)]
-  sdk[sdk/learning.ts + index.ts exports] --> datasets & benchmarks & retrieval & jobs & registry & routing
+  H01[H01 peer range hotfix 0.2.1: proposed] -.independent.-> S07
+  S01[S01 provenance + dataset governance] --> S02[S02 reproducible benchmarks]
+  S01 --> S03[S03 worker training]
+  S02 --> S04[S04 durable version lifecycle]
+  S03 --> S04
+  S02 --> S05[S05 shadow routing recommendations]
+  S04 --> S05
+  S01 --> S06[S06 retrieval relevance]
+  S02 --> S06
+  S05 --> S07[S07 SDK, examples, docs]
+  S06 --> S07
+  S07 --> I01[I01 Inspectra feedback adapter]
+  I01 --> I02[I02 Visynq review dashboard + trusted host]
+  I02 --> S08[S08 cross-repository E2E]
+  S08 --> S09[S09 release candidate GO/NO-GO]
 ```
 
-Phase level (must finish before):
+Module dependencies inside ShivAX:
 
-```text
-S01 Compatibility guardrails
- └─► S02 Canonical digests + provenance
-      ├─► S03 Dataset lifecycle + DatasetStore
-      │    └─► S06 Non-blocking training jobs ─┐
-      ├─► S04 Repeatable benchmarks ───────────┼─► S07 Durable model version registry
-      │    └─► S05 Retrieval relevance eval    │        └─► S08 Learning-assisted routing
-      │                                        │                 └─► S09 SDK/Ekalavy/docs integration
-      └────────────────────────────────────────┘                          └─► S10 Hardening + release readiness (no publish)
-```
-
-S04 and S05 can run in parallel with S03 and S06 once S02 is done.
+- `provenance.ts` uses `agents/validation` (`snapshotValue`, `record`,
+  `identifier`), `memory/validation` (`privacy`) and `learning/index`
+  (`validateFeedback`).
+- `datasets.ts` uses `provenance.ts`, plus `training.ts`
+  (`validateTrainingExport`) for v1 compatibility.
+- `benchmarks.ts` uses `evaluateDataset` and the `provenance` digests.
+- `jobs.ts` uses `training.ts` and `nn/NeuralNet`.
+- `registry.ts` uses the `benchmarks`, `jobs` and `provenance` digests, and
+  `intelligence/neural`.
+- `routing.ts` uses `benchmarks` and `registry`, reads `ModelRouter` and RUDRA
+  only in shadow mode, and is never on the execution path by default.
 
 ---
 
 ## 4. Files requiring changes
 
-### 4.1 New files
-
-| File | Phase |
-| --- | --- |
-| `tests/api-surface.test.mjs`, `tests/fixtures/api-surface-0.2.0.json` (runtime export names per entry point, generated from the current `dist`) | S01 |
-| `src/learning/canonical.ts`, `src/learning/provenance.ts` | S02 |
-| `src/learning/datasets.ts` (plus in-memory and file dataset stores) | S03 |
-| `src/learning/benchmarks.ts` | S04 |
-| `src/learning/retrieval.ts`, `tests/fixtures/retrieval-cases.mjs` | S05 |
-| `src/learning/jobs.ts`, `examples/sdk/training-worker.mjs` (host-side worker example) | S06 |
-| `src/learning/registry.ts` (plus in-memory and file model version stores) | S07 |
-| `src/learning/routing.ts` | S08 |
-| `tests/saraswati-provenance.test.mjs`, `-datasets`, `-benchmarks`, `-retrieval`, `-jobs`, `-registry`, `-routing` | S02–S08 |
-| `docs/saraswati.md` (guide), `docs/audits/saraswati-sNN.md` (one per phase) | each phase |
-
-### 4.2 Existing files, additive edits only
-
-| File | Change | Phase |
+| File | Phase | Change |
 | --- | --- | --- |
-| `package.json` | Widen `peerDependencies.inspectra-engine` from `1.0.4` to `^1.0.4` (G13). Version bump to `0.3.0` **only in S10**. No new dependencies | S01, S10 |
-| `scripts/check-inspectra-package.mjs` | Certify 1.1.0, or a list of certified versions, instead of asserting exactly `1.0.4` | S01 |
-| `adapters/inspectra/index.mjs` | Update the setup message text "Install optional peer inspectra-engine@1.0.4". Behaviour unchanged | S01 |
-| `tests/inspectra-adapter.test.mjs` | Match the updated message | S01 |
-| `src/sdk/learning.ts` | `export *` from the new learning modules | S02–S08 |
-| `src/index.ts` | The same root exports. `VERSION` set to `'0.3.0'` only in S10 | S02–S08, S10 |
-| `scripts/check-sdk-package.mjs` | Only if new documented examples are added to `files` | S06, S09 |
-| `src/intelligence/types.ts`, `src/intelligence/router.ts` | **Optional (S08 option B):** add `preference?: readonly string[]` to `ModelRoutingOptions` and its closed-key `record()` list | S08 |
-| `src/agents/rudra/types.ts`, `orchestrator.ts` | **Optional:** `RudraHooks.botAdvisor` and a new trace `decision` value (risk R7) | S08 |
-| `src/bots/ekalavy.ts` | **Optional:** one read-only summary capability. Existing three capabilities unchanged | S09 |
-| `CHANGELOG.md` | Add `0.3.x SARASWATI` to the release table and an `[Unreleased]` section | each phase |
-| `docs/learning-evaluation.md`, `docs/SHIVAX_PHASES.md`, `docs/sdk.md`, `README.md`, `docs/production.md`, `docs/release-readiness.md` | Documentation | S09, S10 |
+| `src/learning/provenance.ts`, `src/learning/datasets.ts` (new) | S01 | New |
+| `tests/learning-governance.test.mjs`, `tests/fixtures/governed-feedback.mjs` (new) | S01 | New |
+| `src/sdk/learning.ts`, `src/index.ts` | S01–S06 | Additive `export *` |
+| `docs/learning-governance.md` (new), `docs/learning-evaluation.md`, `CHANGELOG.md` | S01 and later | Docs |
+| `src/learning/benchmarks.ts`, `jobs.ts`, `registry.ts`, `routing.ts`, `retrieval.ts` (new) | S02–S06 | New |
+| `package.json` | H01 / S09 | Peer range `^1.0.4` (H01). Version `0.3.0` only at S09 with authorization |
+| `scripts/check-inspectra-package.mjs`, `adapters/inspectra/index.mjs` (message text), `tests/inspectra-adapter.test.mjs` | H01 | Certify 1.1.0 |
+| `docs/release-readiness.md`, `CHANGELOG.md` 0.2.0 header | H01 / S07 | Correct the "not published" statements |
+| Inspectra (`package.json`, adapter) | I01 | Out of ShivAX scope |
+| Visynq (`package.json` version, review UI, trusted host) | I02 | Out of ShivAX scope |
 
-### 4.3 Files that must not change in SARASWATI core
+**Must not change in SARASWATI core:**
 
-`src/learning/index.ts`, `src/learning/training.ts`, `src/learning/updates.ts`,
-`src/bots/{sanjay,brihaspati,vishwakarma,chitragupt,narad,yudhishthir}.ts`,
-`src/bots/system.ts`, `src/security/jay.ts`, `src/security/vijay.ts`,
-`src/security/firewall/*`, `src/nn/*`, `src/core/Tensor.ts`, `src/memory/*`.
-Any proposed change to these needs its own review and must say so in that
-phase's audit.
-
-No files in `D:\Project\packages\inspectra` or `D:\Project\packages\visynq-workstation`
-change during S01–S10.
+- `src/learning/index.ts`, `training.ts`, `updates.ts`
+- `src/bots/*`, except the completed rename (D2)
+- `src/security/jay.ts`, `vijay.ts`, `firewall/*`
+- `src/nn/*`, `src/core/Tensor.ts`
+- `src/memory/*`
 
 ---
 
-## 5. Ordered phases
+## 5. Safe delivery order
 
-| Phase | Goal | Depends on | Exit criteria |
+| Order | Phase | Repository | Gate (from roadmap) |
 | --- | --- | --- | --- |
-| **S01** Compatibility guardrails | Freeze the 0.2 public surface and unblock Inspectra 1.1.0 | S00 | API surface test passes, with every current export still present. Peer range widened. Inspectra certification passes against the installed 1.1.0 (requires Chromium through Inspectra's Playwright; skipped if absent, with the reason stated). 792 + new tests pass |
-| **S02** Digests and provenance | Content identity for data and artifacts | S01 | Canonical JSON is the same regardless of key order. SHA-256 matches known test vectors. Manifest validation is closed. Tampered content is rejected |
-| **S03** Dataset lifecycle | Durable, reproducible training datasets | S02 | The state machine rejects illegal transitions. `freeze` copies the rows. Splits are deterministic and disjoint. Store compare-and-swap conflicts are detected. Data read back is checked against the schema and digest |
-| **S04** Repeatable benchmarks | Comparable, versioned evaluation | S02 | The same suite and subject give identical deterministic metrics across repetitions and processes. Nondeterminism is flagged. `compareBenchmarks` thresholds are enforced. Reports cannot be forged into authorization |
-| **S05** Retrieval relevance | Measure memory recall | S04 | Metric values match worked examples by hand. Lexical and semantic results are reported separately. Runs only against a host-supplied store |
-| **S06** Non-blocking training | Jobs that keep the host responsive | S03 | Event-loop delay stays bounded during cooperative training. A port executor cancels by terminating. Same spec gives the same artifact digest. Work limits are enforced. No activation |
-| **S07** Durable model versions | Persistent registry with approval and rollback | S04, S06 | Promotion needs the gate plus literal `true` approval. Rollback survives a simulated restart. The journal is append-only. A corrupt store fails closed. The provider bridge works |
-| **S08** Learning-assisted routing | Advisory ordering from measured results | S04, S07 | Advice is a permutation of a subset of the allowed candidates. Remote, firewall and policy denials still apply. With no reports, behaviour is unchanged. Imported reports are rejected |
-| **S09** Integration | SDK exports, examples, docs, optional Ekalavy read-only summary | S03–S08 | `verify:package` passes. Documented examples run offline. The seven bots and their capabilities are unchanged (or changed only additively) |
-| **S10** Hardening and release readiness | Security review, attack tests, version decision | S09 | All acceptance tests pass. Release readiness report written. **No publish and no tag** |
+| 0 | **H01 (proposed, needs authorization):** 0.2.1 hotfix from `main` to widen the peer range to `^1.0.4`, certify 1.1.0 and correct the stale publish statements | ShivAX | Real `npm install` of `shivax` and `inspectra-engine@1.1.0` resolves; 0.2.0 tests unchanged |
+| 1 | S01 provenance and dataset governance | ShivAX | Unauthorized or unverified content never becomes training data; v1 learning tests pass |
+| 2 | S02 reproducible benchmarks | ShivAX | Two identical runs give the same logical results; corrupt reports fail |
+| 3 | S03 worker training | ShivAX | Synchronous behaviour unchanged; the event loop is not blocked |
+| 4 | S04 durable version lifecycle | ShivAX | Rejected or failed candidates cannot activate; rollback survives a restart |
+| 5 | S05 shadow routing | ShivAX | Default routing is byte-for-byte compatible |
+| 6 | S06 retrieval relevance | ShivAX | No cross-scope leakage; gains measured on fixtures |
+| 7 | S07 SDK, examples, docs | ShivAX | A fresh tarball consumer runs every example |
+| 8 | I01 Inspectra adapter | Inspectra | Old report consumers keep working |
+| 9 | I02 Visynq dashboard and trusted host | Visynq | Review actions only create pending proposals |
+| 10 | S08 cross-repository E2E | all | One offline approval flow passes |
+| 11 | S09 release GO/NO-GO | ShivAX first | All P0 items pass; no automatic publishing |
 
-Each phase ends with `pnpm lint`, `pnpm test` and `pnpm verify:package`, plus
-its own `docs/audits/saraswati-sNN.md`. Each phase stops for review before the
-next one starts.
+Each phase ends with `pnpm lint`, `pnpm test`, `pnpm verify:package` and its own
+`docs/audits/saraswati-sNN.md`. Each phase stops for review.
 
 ---
 
 ## 6. Acceptance tests
 
-### 6.1 Global regression (every phase)
+### 6.1 Every phase
 
-1. `pnpm test`: the 792 baseline tests still pass, with 0 failures, cancellations or skips.
-2. `pnpm lint` and `pnpm verify:package` exit 0.
-3. **API surface:** for each of the 12 entry points, the runtime export names are
-   a superset of `tests/fixtures/api-surface-0.2.0.json`, and ESM and CJS name sets
-   are equal (extends the existing `tests/sdk.test.mjs` check).
-4. **NeuralNet and Tensor:** a fixed-seed network trained on the existing XOR fixture
-   gives the same `toJSON()` before and after each phase, and `Tensor` tests pass
-   unchanged.
-5. **Bots:** `createSpecialistBots()` returns the seven bots in the same order, with
-   the same ids and capability ids. Ekalavy's three capabilities are unchanged.
-6. **Firewall:** all existing `tests/firewall*.test.mjs` pass unchanged, and no file
-   under `src/security/firewall/` changes (checked with `git diff --stat` in each
-   phase audit).
-7. **No Playwright:** `package.json` lists no `playwright`, `@playwright/*` or
-   `playwright-core` dependency of any kind, and no file in `dist/` imports one.
-8. **No autonomous deployment:** no exported function both produces a candidate and
-   activates it. A static test lists every call site of `promote` and
-   `EvaluatedModelUpdates.propose` in `src/` and expects none.
+1. All existing tests pass (floor: 793 after the rename).
+2. Lint and `verify:package` exit 0. ESM and CJS export name sets are equal.
+3. The seven bot ids and capabilities are unchanged, apart from D2.
+4. No file under `src/security/firewall/` changes.
+5. No Playwright dependency in `package.json` and no Playwright import in `dist/`.
+6. No exported API both produces and activates a candidate.
 
-### 6.2 Phase-specific
+### 6.2 S01 (the next phase)
 
-| Phase | Test |
+| # | Test |
 | --- | --- |
-| S01 | Installing with `inspectra-engine@1.1.0` resolves without `ERESOLVE` in a temporary project (npm, `--dry-run`). The certification script accepts 1.1.0 and rejects 0.9.0 and 2.0.0 |
-| S02 | `digestJSON({b:1,a:[2,{d:3,c:4}]})` equals `digestJSON({a:[2,{c:4,d:3}],b:1})`. Known SHA-256 test vectors (empty string, "abc"). Changing one byte of a row fails `verifyDatasetContent`. A manifest with unknown keys, a bad digest format, `trust` other than `untrusted`, or more than the maximum rows or sources is rejected. Prototype-pollution keys (`__proto__`) are rejected |
-| S03 | Illegal transitions (`draft→approved`, `retired→frozen`) throw. `approve` returning `1`, `'true'` or a Promise that resolves to `1` is rejected. `splitDataset` with the same seed gives the same split in two processes, the splits are disjoint and the ratios are respected within one row. Two concurrent `commit`s produce one success and one conflict. A stored dataset with a changed digest is rejected on load. Expired memory feedback is not needed after `freeze` |
-| S04 | Running a suite twice in separate processes gives identical deterministic metrics and `suiteDigest`. An evaluator that returns different results across repetitions is flagged `nondeterministic` and cannot pass a gate. `compareBenchmarks` fails when accuracy drops beyond the threshold or security pass rate drops at all. An edited `BenchmarkReport` fails `validateBenchmarkReport`. A report built by `validateEvaluationRecord` from imported data cannot be used for `promote` |
-| S05 | Three queries over five records with hand-calculated precision@3, recall@3, MRR and nDCG@3 match to within 1e-12. Semantic mode without embeddings reports `unavailable` and does not crash. The evaluator never writes to the store (store spy). Results stay `trust:'untrusted'` |
-| S06 | During cooperative training of a 784-32-10 network on 500 digit rows, a 10 ms interval timer keeps firing (maximum gap at most chunk time plus 50 ms). Cancelling mid-job moves the state to `cancelled` within one chunk, and a port executor calls `terminate()`. The same `TrainingJobSpec` gives the same artifact digest twice. The digest differs from a single-call run only when the chunk schedule differs (documents G8). A spec over the `NeuralNet` work limit is rejected before starting. The source model object and its digest are unchanged afterwards |
-| S07 | `promote` without a passing comparison, or with approval `!== true`, leaves `active()` unchanged. Promote, then rebuild the registry from the same store, then `active()` returns the promoted version (restart). Rollback after a restart restores the previous version. A store whose journal is missing an entry, or whose model digest does not match, fails closed with a typed error. Concurrent promotes produce one success and one conflict. `createNeuralProviderFromVersion` gives predictions identical to `NeuralNet.fromJSON` of the same artifact. Under the firewall, `promote` without the state-changing capability is denied, and lockdown blocks it |
-| S08 | Advisor output is always a subset of the input candidates, in some order. Remote providers are never added when `allowRemote` is false. Firewall `providers.ids` and `localities` denials still apply with advice present. With no reports, routing is identical to 0.2 (same `attempts`). Ties are broken by id. Advice built from a tampered or imported report is rejected. If the RUDRA advisor option is accepted, `bots.find` behaviour is unchanged when no advisor is set |
-| S09 | Packed consumer imports the new learning exports in ESM and CJS. Examples run offline. Visynq's import list (§7.1) still resolves against the new `dist` (read-only probe) |
-| S10 | Attack tests: dataset poisoning through unverified feedback is excluded; a corrupted store; an oversized model artifact (above the `fromJSON` 32M character limit); a worker posting malformed progress; an advisor fed adversarial reports; approval re-entrancy during promote; lockdown during a running training job |
+| A1 | Existing v1 `validateFeedback`, `exportTrainingData`, `validateTrainingExport` and `trainCuratedCandidate` behaviour unchanged (existing 17 learning tests) |
+| A2 | Malicious feedback: provenance carrying `verified`, `approved`, `reviewer`, `__proto__` or unknown keys is rejected; secrets, emails and tokens anywhere in the record are rejected |
+| A3 | Unverified: a record without a matching host attestation is excluded, as is one whose attestation digest no longer matches after an edit |
+| A4 | Untrusted sources (`model-output`, `inspection-finding`) are excluded unless a human-review attestation exists, and they can never attest themselves |
+| A5 | Cross-tenant: a record whose owner scope differs from the curation scope is excluded |
+| A6 | Consent withdrawn: host `consentActive` returning anything except literal `true` excludes the record; a missing purpose excludes it |
+| A7 | Stale reviewer: an attestation older than `maxAttestationAgeMs`, or host `reviewerActive` returning anything except `true`, excludes it |
+| A8 | Duplicates: an identical duplicate collapses to one row; same id with different content excludes both; conflicting labels on the same input exclude all; a superseded label revision is replaced |
+| A9 | Oversized: feedback above 64 KiB, provenance above its limit, depth above 32, or too many records or evidence items is rejected |
+| A10 | Partition: no feedback id, canonical input or source group appears in two splits; the same seed gives the same split; a different seed is still leak-free |
+| A11 | `checkPartitionLeakage` detects id and input leaks in old v1 exports |
+| A12 | The split outputs are valid v1 exports that `trainCuratedCandidate` accepts |
+| A13 | `storeGovernedFeedback` persists only through `shivax.memory.records.save` with host verification, Vijay policy and approval; a denial leaves memory unchanged |
+| A14 | Exclusion reports contain only ids and reason codes, never content |
+| A15 | The manifest digest is the same regardless of input order and key order, and changes when any row changes |
+
+Later phases: the roadmap gates in §5, refined in each phase's audit.
 
 ---
 
 ## 7. Compatibility and security risks
 
-### 7.1 Interoperability review (Task 3)
+### 7.1 Interoperability findings
 
-#### Inspectra version declaration
+- **Inspectra's ShivAX range.** `^0.1.2` belongs to Inspectra 1.0.4 (commit
+  `7ba4d70`, published). The current 1.1.0 (`48b8d31`, published) declares
+  `^0.2.0`. Neither range accepts 0.3.0 (§0.3). Proposed tested update for
+  I01, after S07: `>=0.2.0 <0.4.0`, or `^0.3.0` if 0.3 changes anything
+  Inspectra uses. Prereleases need an explicit range.
+- **Adapter security contract.** The page security contract is structural
+  (`checkDestination`, `owner`, `timeoutMs`, `context.checkNetworkAccess`).
+  It does not use module-private WeakMaps, and providers are checked by shape.
+  A nested 0.2 adapter inside a 0.3 host therefore still enforces the host
+  firewall.
+- **Visynq** is already optional: no package dependency in either direction.
+  - `package.json` has version `".0.0"`, which is invalid SemVer (fix in I02).
+  - **Missing production firewall host binding**, confirmed in source:
+    `FirewallPage` renders `NotConnected` when `client` is `null`;
+    `firewall-client.ts` states "R07 ships no production transport"; the
+    README requires a trusted host to pass a binding to
+    `<App firewall={…} />`; and the Inspectra runner token must not be used
+    as that transport.
+  - The README's "sibling checkouts are not required" contradicts the Vite
+    and tsconfig aliases to `../shivax/dist`.
 
-The brief says Inspectra references `shivax ^0.1.2`. That was true of an older
-revision. The current Inspectra HEAD declares `^0.2.0`. Git history of
-`inspectra/package.json`:
+### 7.2 Risk register (P0 = blocks a safe release or harms current users; P1 = must be fixed in its phase)
 
-| Inspectra commit | Date | Version | `shivax` range |
-| --- | --- | --- | --- |
-| `b198da0` | 2026-10-15 | — | `file:../shivax` |
-| `f68c100` | 2026-10-21 | — | `^0.1.0` |
-| `7ba4d70` | 2026-10-30 | 1.0.4 | **`^0.1.2`** (the "supplied source"; matches published `inspectra-engine@1.0.4`) |
-| `48b8d31` | 2026-11-08 | 1.1.0 | **`^0.2.0`** (current HEAD; `CHANGELOG` lists this as a breaking dependency change) |
-
-The local install ignores both ranges. `pnpm-lock.yaml` sets
-`overrides: shivax: file:../shivax`, and `node_modules/shivax` is a copy pnpm
-injected on 2026-11-07 at 21:50 (version 0.2.0). Its `analyzeUI` output is
-byte-identical to the current `dist`.
-
-#### Semver consequences on 0.x
-
-| Range | Matches 0.2.x | Matches 0.3.x |
+| ID | Risk | Mitigation |
 | --- | --- | --- |
-| `^0.1.2` | No | No |
-| `^0.2.0` | Yes | **No** |
-
-An app that installs `shivax@0.3.x` next to `inspectra-engine@1.1.0` gets two
-ShivAX copies: 0.3 for the app and a nested 0.2 for Inspectra.
-
-#### What Inspectra uses from ShivAX
-
-| Symbol | Entry | Present in 0.2.0 `dist` | 0.3 plan impact |
-| --- | --- | --- | --- |
-| `analyzeUI`, `validateUIAnalysisOptions`, `validateUISnapshot`, `normalizeUISnapshot` | `shivax` | Yes | Untouched (visual module out of scope) |
-| `analyzeUIWithSLM`, `SLMClient` (tests only) | `shivax` | Yes | Untouched |
-| `validateInspectionObservation` | `shivax` | Yes | Must stay compatible with v1 (see R2) |
-| `InspectraInspectionProvider` (+ types `InspectraPageLease`, `InspectraPageSecurity`) | `shivax/adapters/inspectra` | Yes | Untouched except the message text |
-| types `UISnapshot`, `UIAnalysisOptions`, `InspectionCaptureRequest`, `InspectionProviderContext` | `shivax` | Yes | Untouched |
-
-ShivAX's adapter calls `captureUIPage` from `inspectra-engine/node`, and 1.1.0
-still exports it. The page security contract passed between them is structural:
-`checkDestination`, `owner`, `timeoutMs`, `context.checkNetworkAccess`. It does
-not depend on module-private WeakMaps, and `registerInspectionService` checks
-providers by shape, not with `instanceof`. A nested 0.2 adapter registered into
-a 0.3 host therefore still enforces the 0.3 firewall's network checks.
-
-**Verdict:** Inspectra 1.1.0 is compatible with ShivAX 0.2.0 today. It is
-compatible with the planned 0.3 APIs as long as:
-
-- the inspection and visual contracts stay frozen;
-- Inspectra widens its range to `>=0.2.0 <0.4.0`, or to `^0.3.0` when 0.3 ships.
-  That is a later, separate Inspectra change, not part of this work.
-
-Release blocker, recorded by Inspectra's own CHANGELOG: ShivAX 0.2.0 pins the
-optional peer `inspectra-engine` to exactly `1.0.4`, so npm gives `ERESOLVE`
-when an app installs Inspectra 1.1.0 as well. This is fixed on the ShivAX side
-in S01 (G13).
-
-#### Visynq stays optional
-
-ShivAX has no reference to Visynq in `src/`, `adapters/` or `package.json`.
-`visynq-workstation` does not declare ShivAX as a dependency at all. Its
-`tsconfig.json` paths and `vite.config.ts` aliases point at
-`../shivax/dist/sdk/*.esm.js` and `.d.ts`, and its Vite config keeps
-`shivax/adapters`, `dist/licensing`, Playwright and Inspectra's node and
-scanner code out of the browser bundle.
-
-Visynq imports these symbols, all present in 0.2.0:
-
-| Entry | Symbols |
-| --- | --- |
-| `shivax/bots` | `createSpecialistSystem` |
-| `shivax/security` | `Jay`, `PermissionPolicyRegistry`, `FirewallError`; types `FirewallManagement`, `FirewallPolicy`, `FirewallPolicyProfile`, `FirewallAuditEvent`, `FirewallErrorCode`, `FirewallMode` |
-| `shivax/integrations` | `InspectionPlanner`, `INSPECTION_WORKFLOW_CAPABILITIES`, `validateInspectionObservation` |
-| `shivax/rudra` | types `BotValue`, `ExecutionTrace`, `RudraResult` |
-| `shivax/diagnostics` | `toSDKDiagnostic` |
-
-Visynq observations, recorded but not acted on:
-
-- `package.json` has `"version": ".0.0"`, which is not valid semver.
-- 21 files are staged but not committed (firewall UI work).
-- The open item "Visynq demo startup cancellation" from `docs/release-readiness.md`
-  is still on the Visynq side.
-
-### 7.2 Risk register
-
-| # | Risk | Kind | Likelihood / impact | Mitigation |
-| --- | --- | --- | --- | --- |
-| R1 | **Two ShivAX copies** (0.3 in the app, 0.2 nested under Inspectra) | Compatibility | High / Medium | Keep the inspection, visual and adapter contracts structural and frozen. `toSDKDiagnostic` uses `instanceof`, so errors thrown by the nested copy become `failed`; document this. Recommend Inspectra widen its range after 0.3 ships |
-| R2 | Changing the `InspectionObservation` or `UISnapshot` schema in 0.3 would break the nested 0.2 adapter's output inside a 0.3 host | Compatibility | Low if frozen / High | Out of SARASWATI scope. The S01 API surface test plus a fixture round-trip test guard it |
-| R3 | Exact peer pin `inspectra-engine: 1.0.4` blocks Inspectra 1.1.0 installs | Compatibility | Certain / High | S01: `^1.0.4` and certify 1.1.0 |
-| R4 | Visynq builds directly against `../shivax/dist`, so any `dist` change reaches Visynq immediately, even mid-phase | Compatibility | Medium / Medium | Additive exports only. Run the S09 read-only Visynq import probe. Never rename `dist/sdk/*` files |
-| R5 | Verified feedback lives in session-scoped memory that expires (7–90 days), so datasets built later may be missing records | Data integrity | High / High | `freeze` copies the rows into `DatasetStore`. Memory is only a source |
-| R6 | Chunked or resumed training is not bit-identical to a single run (G8) | Reproducibility | Certain / Medium | The chunk schedule is part of `TrainingJobSpec` and its digest. Document that resuming from `toJSON` resets optimizer moments |
-| R7 | Adding a value to `ExecutionTrace['decision']` or `type` breaks consumers that switch over every case. Visynq imports `ExecutionTrace` | Compatibility (types) | Medium / Low | Prefer model routing advice (S08 option A, no type change). If the RUDRA advisor is added, document the new value in CHANGELOG as a type-level addition |
-| R8 | Adding a key to `ModelRoutingOptions` (closed-key `record()` validation) means callers that pass it fail closed on older ShivAX | Compatibility | Low / Low | Option A needs no new key. Option B is documented as 0.3+ only |
-| R9 | **Autonomous deployment** by chaining train → benchmark → promote in host code or a bot | Security | Medium / Critical | No API combines these steps. Approval must be literal `true`. Promotion is a state-changing firewall capability needing human approval. No bot capability can promote. Static call-site test (§6.1 item 8) |
-| R10 | **Dataset poisoning**: verified outcomes are host assertions, and correct feedback can carry adversarial corrections | Security | Medium / High | Provenance records the source and actor. Curation (`approve`) is still required. Held-out benchmarks must not regress. All data stays untrusted |
-| R11 | A digest shows the content is unchanged but not who wrote it. A store attacker can write a matching record and digest | Security | Medium / High | Stores are host-trusted. Use the compare-and-swap journal, as in `FirewallPolicyStore`. Optional host signing hook on the store; actor references are opaque. Validate schema and digest on load |
-| R12 | **Routing advice manipulation**: imported or forged reports steer traffic to a worse or remote provider | Security | Medium / High | The advisor accepts only reports the host generated and checked against their digests. Advice can only reorder allowed candidates. `allowRemote` and the firewall still apply |
-| R13 | Oversized or malicious model artifacts exhaust memory during `fromJSON` (32M character limit) or registry load | Security / DoS | Low / Medium | Size limits on artifacts and store records, checked before parsing. Digest check before `fromJSON` |
-| R14 | A training worker sends forged progress or a forged artifact | Security | Low / Medium | The runner validates every message. The final artifact is recomputed (digest of the parsed model), never taken from the worker as given. Terminate on protocol violation. The worker receives rows and options only, never tools, credentials or contexts |
-| R15 | Privacy or credential data in datasets | Privacy | Medium / High | Apply the memory module's existing `privacy()` admission checks again when rows enter a dataset. Consent flags in the manifest |
-| R16 | Cooperative training still holds the main thread for one chunk | Availability | Certain / Low | Chunk budget based on the `NeuralNet` work formula. Recommend the port executor for large jobs |
-| R17 | Breaking 0.2 learning gates by accident (for example, relaxing the `EvaluatedModelUpdates` 100% rule) | Compatibility | Low / High | Those files are on the do-not-change list (§4.3), and the existing 17 learning tests stay green |
-| R18 | Inspectra and Visynq test suites were not run in S00 | Verification gap | — | Recorded in §0. When those repositories may be changed, run Inspectra `test:security` and `test:unit` and Visynq's tests against the S09 `dist` |
+| **P0-1** | The published `shivax@0.2.0` together with the published `inspectra-engine@1.1.0` fails to install (`ERESOLVE`) — reproduced | H01 hotfix 0.2.1 with `^1.0.4` (needs authorization to publish) |
+| **P0-2** | Autonomous deployment: chaining train, benchmark and promote | No combined API. Approval must be literal `true`. Firewall state-changing capability. Static call-site test |
+| **P0-3** | Unverified, model or Inspectra output becoming training data | S01: claims-only provenance, host attestation bound to the digest, eligibility checked again at curation |
+| **P0-4** | Cross-tenant training data or embeddings | S01: owner scope must match the curation scope; S06: the same for retrieval |
+| **P0-5** | Breaking 0.2 public APIs or relaxing the strict gate in `EvaluatedModelUpdates` | Do-not-change list; existing tests; ESM/CJS export parity |
+| **P1-1** | Two ShivAX copies (0.3 app plus nested 0.2 under Inspectra). `toSDKDiagnostic` uses `instanceof` | Keep the inspection contracts frozen; widen Inspectra in I01 |
+| **P1-2** | Bot id rename `vishwakarm` → `vishwakarma` (committed in `4d0a372`) breaks host policies that name the old id; they fail closed | D2 resolved as option A. A migration note is in CHANGELOG. Release notes for 0.3.0 (S07) must call it out |
+| **P1-3** | Verified feedback expires within 7–90 days and is session-scoped | S01: curation copies rows into the manifest's split exports; durable dataset storage in S04 |
+| **P1-4** | Visynq's firewall UI has no production transport; reviews are created in the browser without identity | I02: a trusted host adapter; the browser only proposes |
+| **P1-5** | Inspectra `/api/reviews` has no reviewer identity or tenant | I01: proposals only |
+| **P1-6** | Chunked or resumed training differs from a single run | S03: document the tolerance |
+| **P1-7** | A forged or edited attestation or manifest in storage (a digest is not authenticity) | Host checks the reviewer again at curation; optional host signing hook (S04) |
+| **P1-8** | Dataset poisoning through correct feedback | Curation, attestation and held-out non-regression (S02, S04) |
+| **P1-9** | Docs say 0.2.0 is unpublished | H01 or S07 |
+| P2-1 | Visynq README contradicts its sibling aliases | I02 |
+| P2-2 | Cooperative training holds the thread for one chunk | S03: worker executor |
 
 ---
 
-**S00 complete.** No code changed. S01 starts only after review of this report.
+## 8. Decisions needed from the user
+
+| ID | Decision | Recommendation |
+| --- | --- | --- |
+| D1 | Authorize the H01 hotfix branch (`fix/peer-range-0.2.1` from `main`) to fix P0-1. Publishing stays a separate decision | Yes. It affects current npm users and is independent of SARASWATI |
+| D2 | The roadmap's universal rule says "keep exact bot IDs … `vishwakarm` …". The rename requested on 2026-11-08 changed the id to `vishwakarma`. **Resolved, option A:** the user committed the rename, including the id, as `4d0a372`. The current bot ids are `sanjay, brihaspati, vishwakarma, chitragupt, narad, yudhishthir, ekalavy`, and later phases must not change them. The breaking change against 0.2.0 is recorded in `CHANGELOG.md` | Update the roadmap's universal-instructions bot list to `vishwakarma` (the roadmap file is the user's; not edited) |
+
+---
+
+**S00 complete** (revised against the roadmap). S01 follows.

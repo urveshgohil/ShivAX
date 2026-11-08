@@ -18,7 +18,7 @@ CommonJS and portable ES2020 type declarations.
 | `shivax/memory` | Memory engine, storage and lifecycle hooks |
 | `shivax/integrations` | Portable inspection contracts, service and planner |
 | `shivax/adapters/inspectra` | Optional Inspectra adapter, loaded on first use |
-| `shivax/learning` | Feedback, evaluation, curated training and model or config rollback |
+| `shivax/learning` | Feedback, evaluation, reproducible benchmarks, curated training and model or config rollback |
 | `shivax/diagnostics` | `toSDKDiagnostic` and `SDKDiagnostic` |
 | `shivax/licensing/server` | ServerLicenseGate, LicenseError and server license contracts |
 

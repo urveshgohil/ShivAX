@@ -147,6 +147,7 @@
     "examples/sdk/rudra.mjs",
     "examples/sdk/memory-persistence.mjs",
     "examples/sdk/firewall.mjs",
+    "examples/sdk/benchmark.mjs",
     "examples/sdk/inspectra.mjs"
   ],
   "scripts": {
