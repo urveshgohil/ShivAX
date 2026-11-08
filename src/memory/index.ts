@@ -9,6 +9,8 @@ export { MEMORY_CATEGORIES } from './validation.js';
 export { MEMORY_ACTIONS } from './contracts.js';
 export { registerMemoryServices, memoryNamespace } from './services.js';
 export { MemoryTaskLifecycle } from './lifecycle.js';
+export { MemoryRanker, createHashingEmbeddings, MEMORY_RANKING_LIMITS } from './ranking.js';
+export type { MemoryRankingOptions, MemoryRankingWeights, RankedMemoryQuery, RankedMemoryResult, RankedMemorySearch } from './ranking.js';
 export type {
     MemoryCategory,
     MemoryRecord,

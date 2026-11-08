@@ -7,3 +7,4 @@ export * from '../learning/benchmarks.js';
 export * from '../learning/registry-store.js';
 export * from '../learning/registry.js';
 export * from '../learning/routing.js';
+export * from '../learning/retrieval.js';

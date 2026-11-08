@@ -139,7 +139,7 @@ Every option is in the [SDK guide](docs/sdk.md#managed-firewall-core).
 | `shivax/bots` | The seven specialist bots |
 | `shivax/security` | Jay, Vijay, policies, tools, audit, firewall |
 | `shivax/models` | Model router, providers, Ollama and remote adapters, guarded gateway |
-| `shivax/memory` | Memory engine and storage adapters |
+| `shivax/memory` | Memory engine, storage adapters, opt-in ranked retrieval |
 | `shivax/integrations` | UI inspection contracts and services |
 | `shivax/learning` | Feedback, evaluation, training, durable model registry, rollback, shadow routing advice |
 | `shivax/learning/node` | Node.js only: non-blocking neural training in worker threads |

@@ -15,7 +15,7 @@ CommonJS and portable ES2020 type declarations.
 | `shivax/bots` | The seven specialist bots and helpers to combine them |
 | `shivax/security` | Jay, Vijay, policies, tools and audit; managed firewall and management (new in 0.2.0) |
 | `shivax/models` | Model providers, neural, rules, Ollama and remote adapters, and SLM; guarded model gateway (new in 0.2.0) |
-| `shivax/memory` | Memory engine, storage and lifecycle hooks |
+| `shivax/memory` | Memory engine, storage and lifecycle hooks; opt-in ranked retrieval (`MemoryRanker`) and a local hashing embeddings adapter |
 | `shivax/integrations` | Portable inspection contracts, service and planner |
 | `shivax/adapters/inspectra` | Optional Inspectra adapter, loaded on first use |
 | `shivax/learning` | Feedback, evaluation, reproducible benchmarks, curated training, model or config rollback, the durable model registry (approval, atomic activation, rollback), and shadow routing recommendations with promotable routing policies |
