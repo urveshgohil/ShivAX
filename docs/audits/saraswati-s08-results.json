@@ -1,0 +1,3277 @@
+{
+  "phase": "S08",
+  "started": "2026-11-09T05:41:49.709Z",
+  "platform": "win32-x64",
+  "os": "Windows_NT 10.0.26300",
+  "work": "<work>",
+  "packages": {
+    "shivax": {
+      "file": "shivax-0.2.0.tgz",
+      "name": "shivax",
+      "version": "0.2.0",
+      "entries": 509,
+      "packedBytes": 687753,
+      "unpackedBytes": 3151986,
+      "integrity": "sha512-Ob9yr+NhBW7yvcOU/vijAVtJHhWE8Dar+ibFxya3IEDeFl9ldLQmYQfOwinWBlFHMe0kq49b/E3F79YQzQHHcQ==",
+      "sha256": "215f8270e39256135985496cca6edaf9e02a30e2d123466174a29399b8f90ee6",
+      "tarEntries": 509
+    },
+    "inspectra-engine": {
+      "file": "inspectra-engine-1.1.0.tgz",
+      "name": "inspectra-engine",
+      "version": "1.1.0",
+      "entries": 47,
+      "packedBytes": 139045,
+      "unpackedBytes": 475294,
+      "integrity": "sha512-4F8g49Z0eKFtt/tMqwbqQLGJUzzJ5sv7Z84BrsAeNRhRLokDa78oWA5cIRt6lkWWLoVITKD4QZm8XvSULyz8aw==",
+      "sha256": "96b3db6059af363b94d759c051488e9e8cb4bff7365db95e72528f220acd002a",
+      "tarEntries": 47
+    }
+  },
+  "ranges": {
+    "shivax": {
+      "version": "0.2.0",
+      "peerInspectra": "1.0.4",
+      "optional": true,
+      "engines": {
+        "node": ">=22"
+      }
+    },
+    "inspectra": {
+      "version": "1.1.0",
+      "shivaxRange": "^0.2.0 || ^0.3.0",
+      "engines": {
+        "node": ">=22.15"
+      }
+    },
+    "visynq": {
+      "version": "1.0.0",
+      "private": true,
+      "inspectraRange": "^1.1.0",
+      "declaresShivax": false,
+      "engines": {
+        "node": ">=22.15"
+      }
+    },
+    "semver": {
+      "inspectraShivaxRange": {
+        "0.1.2": false,
+        "0.2.0": true,
+        "0.3.0": true,
+        "0.3.4": true,
+        "0.4.0": false
+      },
+      "shivaxPeerAcceptsInspectra": {
+        "1.1.0": false,
+        "1.2.0": false
+      },
+      "proposedPeer": {
+        "range": "^1.0.4",
+        "1.1.0": true,
+        "1.2.0": true,
+        "2.0.0": false
+      },
+      "visynqAcceptsInspectra": {
+        "1.1.0": true,
+        "1.2.0": true
+      }
+    },
+    "playwright": "1.64.1",
+    "typescript": "7.0.2"
+  },
+  "runs": [
+    {
+      "node": "v22.23.2",
+      "npm": "10.9.8",
+      "installs": [
+        {
+          "label": "strict-v22232",
+          "specs": [
+            "inspectra-engine-1.1.0.tgz",
+            "shivax-0.2.0.tgz",
+            "playwright@1.64.1",
+            "typescript@7.0.2",
+            "node@22"
+          ],
+          "flags": [],
+          "outcome": "ERESOLVE",
+          "ms": 3334,
+          "lines": [
+            "code ERESOLVE",
+            "ERESOLVE could not resolve",
+            "While resolving: shivax@0.2.0",
+            "Found: inspectra-engine@1.1.0",
+            "Could not resolve dependency:",
+            "peerOptional inspectra-engine@\"1.0.4\" from shivax@0.2.0",
+            "Conflicting peer dependency: inspectra-engine@1.0.4",
+            "peerOptional inspectra-engine@\"1.0.4\" from shivax@0.2.0"
+          ],
+          "tree": null,
+          "log": "install-strict-v22232.log"
+        },
+        {
+          "label": "inspectra-v22232",
+          "specs": [
+            "inspectra-engine-1.1.0.tgz",
+            "shivax-0.2.0.tgz",
+            "playwright@1.64.1",
+            "typescript@7.0.2",
+            "node@22"
+          ],
+          "flags": [
+            "--legacy-peer-deps"
+          ],
+          "outcome": "ok",
+          "ms": 7760,
+          "lines": [],
+          "tree": {
+            "valid": false,
+            "shivax": "0.2.0",
+            "inspectra": "1.1.0",
+            "inspectraShivax": "0.2.0",
+            "problems": [
+              "invalid: inspectra-engine@1.1.0 <work>\\inspectra-v22232\\node_modules\\inspectra-engine"
+            ]
+          },
+          "log": "install-inspectra-v22232.log"
+        },
+        {
+          "label": "proposed-v22232",
+          "specs": [
+            "inspectra-engine-1.1.0.tgz",
+            "shivax-0.3.0.tgz",
+            "playwright@1.64.1"
+          ],
+          "flags": [],
+          "outcome": "ok",
+          "ms": 7372,
+          "lines": [],
+          "tree": {
+            "valid": true,
+            "shivax": "0.3.0",
+            "inspectra": "1.1.0",
+            "inspectraShivax": "0.3.0",
+            "problems": []
+          },
+          "log": "install-proposed-v22232.log",
+          "smoke": "{\"feedback\":\"function\",\"curate\":\"function\",\"compare\":\"function\"}"
+        },
+        {
+          "label": "standalone-v22232",
+          "specs": [
+            "shivax-0.2.0.tgz"
+          ],
+          "flags": [],
+          "outcome": "ok",
+          "ms": 1567,
+          "lines": [],
+          "tree": {
+            "valid": true,
+            "shivax": "0.2.0",
+            "inspectra": null,
+            "inspectraShivax": null,
+            "problems": []
+          },
+          "log": "install-standalone-v22232.log"
+        }
+      ],
+      "suites": [
+        {
+          "name": "packaging-v22232",
+          "exit": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 2541,
+          "failures": [],
+          "log": "packaging-v22232.log"
+        },
+        {
+          "name": "capture-v22232",
+          "exit": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 43538,
+          "failures": [],
+          "log": "capture-v22232.log"
+        },
+        {
+          "name": "inspectra-installed-v22232",
+          "exit": 0,
+          "tests": 38,
+          "pass": 38,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 23404,
+          "failures": [],
+          "log": "inspectra-installed-v22232.log"
+        },
+        {
+          "name": "no-inspectra-v22232",
+          "exit": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 1061,
+          "failures": [],
+          "log": "no-inspectra-v22232.log"
+        },
+        {
+          "name": "visynq-s08-v22232",
+          "exit": 0,
+          "files": 2,
+          "failedFiles": 0,
+          "loadFailures": [],
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "ms": 3127,
+          "failures": [],
+          "log": "visynq-s08-v22232.log"
+        },
+        {
+          "name": "lifecycle-v22232",
+          "exit": 0,
+          "tests": 23,
+          "pass": 23,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 2938,
+          "failures": [],
+          "log": "lifecycle-v22232.log"
+        },
+        {
+          "name": "visynq-all-v22232",
+          "exit": 0,
+          "files": 76,
+          "failedFiles": 0,
+          "loadFailures": [],
+          "tests": 303,
+          "pass": 303,
+          "fail": 0,
+          "skipped": 0,
+          "ms": 43346,
+          "failures": [],
+          "log": "visynq-all-v22232.log"
+        },
+        {
+          "name": "visynq-build-v22232",
+          "exit": 1,
+          "tsc": 1,
+          "tscErrors": 5,
+          "tscSample": [
+            "src/hooks/useScan.ts(162,66): error TS2339: Property 'error' does not exist on type '({ id: number; sessionId: string; timestamp: string; } & { type: \"page\"; na",
+            "src/hooks/useScan.ts(162,85): error TS2339: Property 'error' does not exist on type '({ id: number; sessionId: string; timestamp: string; } & { type: \"page\"; na",
+            "src/live/useScan.ts(159,66): error TS2339: Property 'error' does not exist on type '({ id: number; sessionId: string; timestamp: string; } & { type: \"page\"; nam",
+            "src/live/useScan.ts(159,85): error TS2339: Property 'error' does not exist on type '({ id: number; sessionId: string; timestamp: string; } & { type: \"page\"; nam"
+          ],
+          "vite": 0,
+          "viteError": [],
+          "ms": 2616,
+          "log": "visynq-vite-build-v22232.log",
+          "boundary": "ok"
+        },
+        {
+          "name": "shivax-repo-v22232",
+          "exit": 0,
+          "tests": 897,
+          "pass": 897,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 18792,
+          "failures": [],
+          "log": "shivax-repo-v22232.log"
+        },
+        {
+          "name": "inspectra-repo-test-unit-v22232",
+          "exit": 0,
+          "tests": 24,
+          "pass": 24,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 1439,
+          "failures": [],
+          "log": "inspectra-repo-test-unit-v22232.log"
+        },
+        {
+          "name": "inspectra-repo-test-feedback-v22232",
+          "exit": 0,
+          "tests": 17,
+          "pass": 17,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 7115,
+          "failures": [],
+          "log": "inspectra-repo-test-feedback-v22232.log"
+        },
+        {
+          "name": "inspectra-repo-test-security-v22232",
+          "exit": 0,
+          "tests": 45,
+          "pass": 45,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 29512,
+          "failures": [],
+          "log": "inspectra-repo-test-security-v22232.log"
+        },
+        {
+          "name": "inspectra-repo-test-extraction-v22232",
+          "exit": 0,
+          "tests": 12,
+          "pass": 12,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 33238,
+          "failures": [],
+          "log": "inspectra-repo-test-extraction-v22232.log"
+        },
+        {
+          "name": "inspectra-repo-test-ui-check-v22232",
+          "exit": 0,
+          "tests": 55,
+          "pass": 55,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 122607,
+          "failures": [],
+          "log": "inspectra-repo-test-ui-check-v22232.log"
+        },
+        {
+          "name": "inspectra-repo-test-integration-v22232",
+          "exit": 1,
+          "tests": 80,
+          "pass": 72,
+          "fail": 6,
+          "cancelled": 0,
+          "skipped": 2,
+          "todo": 0,
+          "ms": 109792,
+          "failures": [
+            "packed packages install outside workspace; installed ESM contracts and CLI compare work",
+            "real local OCR and visual detection recover content, sections, rows, columns and relationships",
+            "PNG-to-URL reuses Shivax and highlights accepted matches on both reference and known implementation",
+            "CLI PNG metadata and local runner inline PNG use real OCR and authenticated highlight artifacts",
+            "real OCR process cancellation and execution deadlines remove incomplete artifacts",
+            "known target changes surface missing controls and moved headings as review findings"
+          ],
+          "log": "inspectra-repo-test-integration-v22232.log"
+        }
+      ],
+      "packaging": {
+        "node": "v22.23.2",
+        "installed": {
+          "shivax": "0.2.0",
+          "inspectra-engine": "1.1.0",
+          "playwright": "1.64.1"
+        },
+        "ranges": {
+          "inspectraDependsOnShivax": "^0.2.0 || ^0.3.0",
+          "shivaxPeerInspectra": "1.0.4",
+          "shivaxPeerOptional": true,
+          "engines": {
+            "shivax": ">=22",
+            "inspectra-engine": ">=22.15"
+          },
+          "satisfied": {
+            "inspectraAcceptsInstalledShivax": true,
+            "inspectraAcceptsShivax030": true,
+            "shivaxPeerAcceptsInstalledInspectra": false,
+            "nodeSatisfiesShivax": true,
+            "nodeSatisfiesInspectra": true
+          }
+        },
+        "esm": {
+          "shivax": 187,
+          "shivax/core": 12,
+          "shivax/rudra": 14,
+          "shivax/bots": 14,
+          "shivax/security": 9,
+          "shivax/models": 13,
+          "shivax/memory": 13,
+          "shivax/integrations": 5,
+          "shivax/learning": 83,
+          "shivax/learning/node": 7,
+          "shivax/diagnostics": 1,
+          "shivax/licensing/server": 2,
+          "shivax/adapters/inspectra": 2,
+          "inspectra-engine": 13,
+          "inspectra-engine/node": 13,
+          "inspectra-engine/shivax": 3,
+          "inspectra-engine/feedback": 5,
+          "inspectra-engine/client": 1
+        },
+        "cjs": {
+          "shivax": 187,
+          "shivax/core": 12,
+          "shivax/rudra": 14,
+          "shivax/bots": 14,
+          "shivax/security": 9,
+          "shivax/models": 13,
+          "shivax/memory": 13,
+          "shivax/integrations": 5,
+          "shivax/learning": 83,
+          "shivax/learning/node": 7,
+          "shivax/diagnostics": 1,
+          "shivax/licensing/server": 2,
+          "shivax/adapters/inspectra": 2
+        },
+        "inspectraRequire": {
+          "inspectra-engine": "ERR_PACKAGE_PATH_NOT_EXPORTED",
+          "inspectra-engine/node": "ERR_PACKAGE_PATH_NOT_EXPORTED",
+          "inspectra-engine/shivax": "ERR_PACKAGE_PATH_NOT_EXPORTED",
+          "inspectra-engine/feedback": "ERR_PACKAGE_PATH_NOT_EXPORTED",
+          "inspectra-engine/client": "ERR_PACKAGE_PATH_NOT_EXPORTED"
+        },
+        "declarations": [
+          {
+            "ext": "ts",
+            "moduleResolution": "bundler",
+            "label": "shivax",
+            "ok": true
+          },
+          {
+            "ext": "mts",
+            "moduleResolution": "Node16",
+            "label": "shivax",
+            "ok": true
+          },
+          {
+            "ext": "mts",
+            "moduleResolution": "NodeNext",
+            "label": "shivax",
+            "ok": true
+          },
+          {
+            "ext": "cts",
+            "moduleResolution": "Node16",
+            "label": "shivax (CJS)",
+            "ok": true
+          },
+          {
+            "ext": "cts",
+            "moduleResolution": "NodeNext",
+            "label": "shivax (CJS)",
+            "ok": true
+          },
+          {
+            "ext": "ts",
+            "moduleResolution": "bundler",
+            "label": "shivax+inspectra",
+            "ok": true
+          },
+          {
+            "ext": "mts",
+            "moduleResolution": "Node16",
+            "label": "shivax+inspectra",
+            "ok": true
+          },
+          {
+            "ext": "mts",
+            "moduleResolution": "NodeNext",
+            "label": "shivax+inspectra",
+            "ok": true
+          }
+        ]
+      },
+      "capture": {
+        "node": "v22.23.2",
+        "platform": "win32-x64",
+        "url": [
+          {
+            "variant": "font-h1-up",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "typography.fontSize@heading"
+            ],
+            "ms": 2997
+          },
+          {
+            "variant": "font-h1-down",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "typography.fontSize@heading"
+            ],
+            "ms": 2486
+          },
+          {
+            "variant": "font-p-down",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "typography.fontSize@paragraph"
+            ],
+            "ms": 2496
+          },
+          {
+            "variant": "font-p-up",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "typography.fontSize@paragraph"
+            ],
+            "ms": 2493
+          },
+          {
+            "variant": "color-h1",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "typography.color@heading"
+            ],
+            "ms": 2481
+          },
+          {
+            "variant": "color-p",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "typography.color@paragraph"
+            ],
+            "ms": 2477
+          },
+          {
+            "variant": "gap-wide",
+            "issues": 3,
+            "truePositives": 2,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.height@document",
+              "heading-description.gap",
+              "layout.marginBottom@heading"
+            ],
+            "ms": 2463
+          },
+          {
+            "variant": "gap-tight",
+            "issues": 3,
+            "truePositives": 2,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.height@document",
+              "heading-description.gap",
+              "layout.marginBottom@heading"
+            ],
+            "ms": 2480
+          },
+          {
+            "variant": "pad-wide",
+            "issues": 4,
+            "truePositives": 2,
+            "falsePositives": 2,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.height@document",
+              "position.y@paragraph",
+              "layout.paddingBottom@link",
+              "layout.paddingTop@link"
+            ],
+            "ms": 2478
+          },
+          {
+            "variant": "pad-tight",
+            "issues": 4,
+            "truePositives": 2,
+            "falsePositives": 2,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.height@document",
+              "position.y@paragraph",
+              "layout.paddingBottom@link",
+              "layout.paddingTop@link"
+            ],
+            "ms": 2479
+          },
+          {
+            "variant": "missing-note",
+            "issues": 3,
+            "truePositives": 1,
+            "falsePositives": 2,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.height@document",
+              "position.y@region",
+              "missing@paragraph"
+            ],
+            "ms": 2463
+          },
+          {
+            "variant": "box-wide",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.width@region"
+            ],
+            "ms": 2481
+          },
+          {
+            "variant": "box-narrow",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.width@region"
+            ],
+            "ms": 2478
+          },
+          {
+            "variant": "mixed-a",
+            "issues": 6,
+            "truePositives": 4,
+            "falsePositives": 2,
+            "falseNegatives": 0,
+            "reported": [
+              "typography.color@paragraph",
+              "bounds.height@document",
+              "position.y@paragraph",
+              "layout.paddingBottom@link",
+              "layout.paddingTop@link",
+              "typography.fontSize@heading"
+            ],
+            "ms": 2496
+          },
+          {
+            "variant": "mixed-b",
+            "issues": 5,
+            "truePositives": 4,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.height@document",
+              "bounds.width@region",
+              "heading-description.gap",
+              "layout.marginBottom@heading",
+              "typography.fontSize@paragraph"
+            ],
+            "ms": 2478
+          },
+          {
+            "variant": "identical",
+            "issues": 0,
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [],
+            "ms": 2478
+          }
+        ],
+        "figma": {
+          "issues": 5,
+          "apiCalls": 3,
+          "baselineEvidenceKinds": [
+            "design",
+            "estimated"
+          ],
+          "properties": [
+            "typography.color",
+            "bounds.height",
+            "layout.display",
+            "extra",
+            "typography.fontSize"
+          ],
+          "ms": 1277
+        },
+        "png": {
+          "issues": 9,
+          "baselineEvidenceKinds": [
+            "estimated"
+          ],
+          "properties": [
+            "bounds.height",
+            "position.y",
+            "missing",
+            "missing",
+            "missing",
+            "missing",
+            "missing",
+            "missing",
+            "extra"
+          ],
+          "ms": 1459
+        },
+        "cancellation": {
+          "outcome": "Error",
+          "pagesOpened": 1,
+          "ms": 84,
+          "outputRemoved": true
+        },
+        "externalRequests": [],
+        "urlDetection": {
+          "tp": 25,
+          "fp": 11,
+          "fn": 0,
+          "precision": 0.6944444444444444,
+          "recall": 1
+        }
+      },
+      "lifecycle": {
+        "node": "v22.23.2",
+        "platform": "win32-x64",
+        "steps": {
+          "uiReview": {
+            "feedbackId": "inspectra:4dc86a0a79ebcda18b5ba10cdbdafb612eba6155:r1",
+            "decision": "correct",
+            "correction": {
+              "severity": "high",
+              "basis": "reviewer"
+            },
+            "stored": 1
+          },
+          "fixtureReviews": {
+            "counts": {
+              "proposed": 43,
+              "needs-review": 3,
+              "invalid": 3
+            },
+            "bySource": {
+              "figma": {
+                "accept": 0,
+                "correct": 2,
+                "reject": 1,
+                "needs-review": 2,
+                "invalid": 0
+              },
+              "png": {
+                "accept": 6,
+                "correct": 0,
+                "reject": 2,
+                "needs-review": 1,
+                "invalid": 0
+              },
+              "url": {
+                "accept": 4,
+                "correct": 17,
+                "reject": 11,
+                "needs-review": 0,
+                "invalid": 3
+              }
+            },
+            "refused": [
+              {
+                "ref": "url:gap-tight",
+                "property": "heading-description:n3.gap",
+                "category": "relationship",
+                "reasons": [
+                  "evidence-limit"
+                ]
+              },
+              {
+                "ref": "url:gap-wide",
+                "property": "heading-description:n3.gap",
+                "category": "relationship",
+                "reasons": [
+                  "evidence-limit"
+                ]
+              },
+              {
+                "ref": "url:mixed-b",
+                "property": "heading-description:n3.gap",
+                "category": "relationship",
+                "reasons": [
+                  "evidence-limit"
+                ]
+              }
+            ],
+            "journal": 47,
+            "attestations": 44
+          },
+          "curation": {
+            "stored": 44,
+            "eligible": 23,
+            "splits": {
+              "train": 17,
+              "validation": 0,
+              "heldOut": 6
+            },
+            "excluded": {
+              "rejected-decision": 14,
+              "not-selected": 7
+            },
+            "digest": "sha256:350c94ebd3893bb871f368d8405398c00670e8c1d944554edd10ac50a4d3e83e"
+          },
+          "features": {
+            "features": 19,
+            "heldOutRows": 6,
+            "heldOutDroppedAsFeatureDuplicates": 1
+          },
+          "training": {
+            "rows": {
+              "train": 17,
+              "heldOut": 5
+            },
+            "features": 19,
+            "options": {
+              "epochs": 1200,
+              "learningRate": 0.2,
+              "batchSize": 8
+            },
+            "seed": 7,
+            "progress": [
+              {
+                "epoch": 300,
+                "loss": 0.00166
+              },
+              {
+                "epoch": 600,
+                "loss": 0.00075
+              },
+              {
+                "epoch": 900,
+                "loss": 0.00049
+              },
+              {
+                "epoch": 1200,
+                "loss": 0.00035
+              }
+            ],
+            "hostTimerTicks": 11,
+            "wallMs": 141,
+            "worker": {
+              "startupMs": 21,
+              "trainingMs": 115
+            },
+            "trainAccuracy": 1,
+            "heldOutAccuracy": 1
+          },
+          "registry": {
+            "v1": "evaluated",
+            "eligible": true,
+            "reasons": []
+          },
+          "promotion": {
+            "v1": "active",
+            "untrained": {
+              "state": "rejected",
+              "reasons": [
+                "below-minimum",
+                "regression"
+              ]
+            }
+          },
+          "rudra": {
+            "default": "triage-baseline",
+            "unapproved": "triage-baseline",
+            "approved": "triage-candidate",
+            "model": "v1",
+            "policy": "p1"
+          },
+          "rollback": {
+            "routing": "p0",
+            "model": "v1",
+            "v3": "rolled_back",
+            "firewallVersion": 1,
+            "audit": [
+              "create",
+              "register",
+              "evaluate",
+              "approve",
+              "activate",
+              "register",
+              "evaluate",
+              "register",
+              "evaluate",
+              "approve",
+              "activate",
+              "rollback"
+            ]
+          },
+          "integrity": {
+            "stored": 44,
+            "unique": 44
+          }
+        },
+        "security": {
+          "unauthorizedPromotion": {
+            "mallory": "unauthorized",
+            "alice": "unauthorized",
+            "gita": "cross-tenant",
+            "rhea": "unauthorized",
+            "activateBeforeApproval": "invalid-transition"
+          },
+          "spoofedReviewer": {
+            "extraFieldsRefused": 5,
+            "forgedSessionRefused": true,
+            "expiredRefused": true,
+            "revokedRefused": true,
+            "forgedAttestationsAdmitted": 0,
+            "forgedExclusions": {
+              "rejected-decision": 14,
+              "review-unconfirmed": 30
+            }
+          },
+          "crossTenant": {
+            "reviewRefused": "unknown-report",
+            "curationExcluded": 30,
+            "registryRefused": true
+          },
+          "duplicate": {
+            "hostRefused": "duplicate-review",
+            "curationDuplicates": 1
+          },
+          "withdrawnConsent": {
+            "excluded": 1,
+            "v1Records": 23,
+            "v2Records": 22
+          },
+          "corruptManifest": {
+            "tampered": 1,
+            "verifyOk": false,
+            "load": "checksum-mismatch",
+            "problems": null
+          },
+          "invalidReport": {
+            "forgedRateRejected": true,
+            "missingCasesRejected": true,
+            "registryRejected": true
+          },
+          "unapproved": {
+            "activateRefused": true
+          },
+          "staleApproval": {
+            "code": "stale-approval",
+            "firewallVersion": {
+              "approvedAt": 1,
+              "now": 2
+            }
+          },
+          "lockdownTraining": {
+            "firewallOutcome": "revoked",
+            "worker": "cancelled",
+            "newJob": "lockdown",
+            "activate": "lockdown"
+          },
+          "lockdownProvider": {
+            "outcome": "revoked",
+            "providerCalls": 1
+          },
+          "workerCancellation": {
+            "code": "cancelled",
+            "liveWorkers": 0
+          },
+          "runnerTokenSeparation": {
+            "hostRefusedRunnerToken": true,
+            "runnerOwnToken": 400,
+            "runnerRefusedHostSession": 401
+          },
+          "memoryIsolation": {
+            "acme": 44,
+            "globex": 0,
+            "reviewerNamespace": 0,
+            "unattestedStoreRefused": "failed"
+          }
+        },
+        "benchmarks": {
+          "baseline": {
+            "passRate": 0.6666666666666666,
+            "cases": 9,
+            "reasoning": 0.4,
+            "permission": 1,
+            "latencyMs": {
+              "p50": 0.015,
+              "p95": 0.142
+            },
+            "logicalDigest": "sha256:56f986e338934534435842af56afb463064b4169c39c8b1cb87f568eab161efa"
+          },
+          "candidate": {
+            "passRate": 1,
+            "cases": 9,
+            "reasoning": 1,
+            "permission": 1,
+            "latencyMs": {
+              "p50": 1.329,
+              "p95": 2.559
+            },
+            "logicalDigest": "sha256:13b3d941e3da61437bbacd7f2ec171701437e28365c7cae514bdcd78852ba936"
+          },
+          "comparison": {
+            "fixed": 3,
+            "regressed": 0,
+            "securityRegressions": 0
+          },
+          "assessment": {
+            "eligible": true,
+            "reasons": [],
+            "policy": "shivax-strict-v1"
+          }
+        },
+        "reportsLoaded": 18,
+        "activeResourcesAtTeardown": [
+          "PipeWrap",
+          "PipeWrap"
+        ]
+      },
+      "no-inspectra": {
+        "node": "v22.23.2",
+        "examples": {
+          "registry": {
+            "exit": 0,
+            "ms": 67
+          },
+          "local-model": {
+            "exit": 0,
+            "ms": 51
+          },
+          "rudra": {
+            "exit": 0,
+            "ms": 78
+          },
+          "memory-persistence": {
+            "exit": 0,
+            "ms": 54
+          },
+          "firewall": {
+            "exit": 0,
+            "ms": 50
+          },
+          "benchmark": {
+            "exit": 0,
+            "ms": 75
+          },
+          "model-registry": {
+            "exit": 0,
+            "ms": 177
+          },
+          "feedback-curation": {
+            "exit": 0,
+            "ms": 66
+          },
+          "worker-training": {
+            "exit": 0,
+            "ms": 154
+          },
+          "routing-shadow": {
+            "exit": 0,
+            "ms": 67
+          },
+          "memory-ranking": {
+            "exit": 0,
+            "ms": 67
+          }
+        },
+        "shivax": "0.2.0",
+        "entries": {
+          "shivax": 187,
+          "shivax/core": 12,
+          "shivax/rudra": 14,
+          "shivax/bots": 14,
+          "shivax/security": 9,
+          "shivax/models": 13,
+          "shivax/memory": 13,
+          "shivax/integrations": 5,
+          "shivax/learning": 83,
+          "shivax/learning/node": 7,
+          "shivax/diagnostics": 1,
+          "shivax/licensing/server": 2,
+          "shivax/adapters/inspectra": 2
+        },
+        "bots": [
+          "sanjay",
+          "brihaspati",
+          "vishwakarma",
+          "chitragupt",
+          "narad",
+          "yudhishthir",
+          "ekalavy"
+        ]
+      },
+      "nodeBinary": "v22.23.2"
+    },
+    {
+      "node": "v24.22.2",
+      "npm": "11.19.1",
+      "installs": [
+        {
+          "label": "strict-v24222",
+          "specs": [
+            "inspectra-engine-1.1.0.tgz",
+            "shivax-0.2.0.tgz",
+            "playwright@1.64.1",
+            "typescript@7.0.2",
+            "node@24"
+          ],
+          "flags": [],
+          "outcome": "ERESOLVE",
+          "ms": 3869,
+          "lines": [
+            "code ERESOLVE",
+            "ERESOLVE could not resolve",
+            "While resolving: shivax@0.2.0",
+            "Found: inspectra-engine@1.1.0",
+            "Could not resolve dependency:",
+            "peerOptional inspectra-engine@\"1.0.4\" from shivax@0.2.0",
+            "Conflicting peer dependency: inspectra-engine@1.0.4",
+            "peerOptional inspectra-engine@\"1.0.4\" from shivax@0.2.0"
+          ],
+          "tree": null,
+          "log": "install-strict-v24222.log"
+        },
+        {
+          "label": "inspectra-v24222",
+          "specs": [
+            "inspectra-engine-1.1.0.tgz",
+            "shivax-0.2.0.tgz",
+            "playwright@1.64.1",
+            "typescript@7.0.2",
+            "node@24"
+          ],
+          "flags": [
+            "--legacy-peer-deps"
+          ],
+          "outcome": "ok",
+          "ms": 7617,
+          "lines": [],
+          "tree": {
+            "valid": false,
+            "shivax": "0.2.0",
+            "inspectra": "1.1.0",
+            "inspectraShivax": "0.2.0",
+            "problems": [
+              "invalid: inspectra-engine@1.1.0 <work>\\inspectra-v24222\\node_modules\\inspectra-engine"
+            ]
+          },
+          "log": "install-inspectra-v24222.log"
+        },
+        {
+          "label": "proposed-v24222",
+          "specs": [
+            "inspectra-engine-1.1.0.tgz",
+            "shivax-0.3.0.tgz",
+            "playwright@1.64.1"
+          ],
+          "flags": [],
+          "outcome": "ok",
+          "ms": 7348,
+          "lines": [],
+          "tree": {
+            "valid": true,
+            "shivax": "0.3.0",
+            "inspectra": "1.1.0",
+            "inspectraShivax": "0.3.0",
+            "problems": []
+          },
+          "log": "install-proposed-v24222.log",
+          "smoke": "{\"feedback\":\"function\",\"curate\":\"function\",\"compare\":\"function\"}"
+        },
+        {
+          "label": "standalone-v24222",
+          "specs": [
+            "shivax-0.2.0.tgz"
+          ],
+          "flags": [],
+          "outcome": "ok",
+          "ms": 1742,
+          "lines": [],
+          "tree": {
+            "valid": true,
+            "shivax": "0.2.0",
+            "inspectra": null,
+            "inspectraShivax": null,
+            "problems": []
+          },
+          "log": "install-standalone-v24222.log"
+        }
+      ],
+      "suites": [
+        {
+          "name": "packaging-v24222",
+          "exit": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 2406,
+          "failures": [],
+          "log": "packaging-v24222.log"
+        },
+        {
+          "name": "capture-v24222",
+          "exit": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 43441,
+          "failures": [],
+          "log": "capture-v24222.log"
+        },
+        {
+          "name": "inspectra-installed-v24222",
+          "exit": 0,
+          "tests": 38,
+          "pass": 38,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 22778,
+          "failures": [],
+          "log": "inspectra-installed-v24222.log"
+        },
+        {
+          "name": "no-inspectra-v24222",
+          "exit": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 954,
+          "failures": [],
+          "log": "no-inspectra-v24222.log"
+        },
+        {
+          "name": "visynq-s08-v24222",
+          "exit": 0,
+          "files": 2,
+          "failedFiles": 0,
+          "loadFailures": [],
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "ms": 2674,
+          "failures": [],
+          "log": "visynq-s08-v24222.log"
+        },
+        {
+          "name": "lifecycle-v24222",
+          "exit": 0,
+          "tests": 23,
+          "pass": 23,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 2594,
+          "failures": [],
+          "log": "lifecycle-v24222.log"
+        },
+        {
+          "name": "visynq-all-v24222",
+          "exit": 0,
+          "files": 76,
+          "failedFiles": 0,
+          "loadFailures": [],
+          "tests": 303,
+          "pass": 303,
+          "fail": 0,
+          "skipped": 0,
+          "ms": 40521,
+          "failures": [],
+          "log": "visynq-all-v24222.log"
+        },
+        {
+          "name": "visynq-build-v24222",
+          "exit": 1,
+          "tsc": 1,
+          "tscErrors": 5,
+          "tscSample": [
+            "src/hooks/useScan.ts(162,66): error TS2339: Property 'error' does not exist on type '({ id: number; sessionId: string; timestamp: string; } & { type: \"page\"; na",
+            "src/hooks/useScan.ts(162,85): error TS2339: Property 'error' does not exist on type '({ id: number; sessionId: string; timestamp: string; } & { type: \"page\"; na",
+            "src/live/useScan.ts(159,66): error TS2339: Property 'error' does not exist on type '({ id: number; sessionId: string; timestamp: string; } & { type: \"page\"; nam",
+            "src/live/useScan.ts(159,85): error TS2339: Property 'error' does not exist on type '({ id: number; sessionId: string; timestamp: string; } & { type: \"page\"; nam"
+          ],
+          "vite": 0,
+          "viteError": [],
+          "ms": 2378,
+          "log": "visynq-vite-build-v24222.log",
+          "boundary": "ok"
+        },
+        {
+          "name": "shivax-repo-v24222",
+          "exit": 0,
+          "tests": 897,
+          "pass": 897,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 17258,
+          "failures": [],
+          "log": "shivax-repo-v24222.log"
+        },
+        {
+          "name": "inspectra-repo-test-unit-v24222",
+          "exit": 0,
+          "tests": 24,
+          "pass": 24,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 1221,
+          "failures": [],
+          "log": "inspectra-repo-test-unit-v24222.log"
+        },
+        {
+          "name": "inspectra-repo-test-feedback-v24222",
+          "exit": 0,
+          "tests": 17,
+          "pass": 17,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 6915,
+          "failures": [],
+          "log": "inspectra-repo-test-feedback-v24222.log"
+        },
+        {
+          "name": "inspectra-repo-test-security-v24222",
+          "exit": 0,
+          "tests": 45,
+          "pass": 45,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 29131,
+          "failures": [],
+          "log": "inspectra-repo-test-security-v24222.log"
+        },
+        {
+          "name": "inspectra-repo-test-extraction-v24222",
+          "exit": 0,
+          "tests": 12,
+          "pass": 12,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 33406,
+          "failures": [],
+          "log": "inspectra-repo-test-extraction-v24222.log"
+        },
+        {
+          "name": "inspectra-repo-test-ui-check-v24222",
+          "exit": 0,
+          "tests": 55,
+          "pass": 55,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 122567,
+          "failures": [],
+          "log": "inspectra-repo-test-ui-check-v24222.log"
+        },
+        {
+          "name": "inspectra-repo-test-integration-v24222",
+          "exit": 1,
+          "tests": 80,
+          "pass": 72,
+          "fail": 6,
+          "cancelled": 0,
+          "skipped": 2,
+          "todo": 0,
+          "ms": 139066,
+          "failures": [
+            "packed packages install outside workspace; installed ESM contracts and CLI compare work",
+            "real local OCR and visual detection recover content, sections, rows, columns and relationships",
+            "PNG-to-URL reuses Shivax and highlights accepted matches on both reference and known implementation",
+            "CLI PNG metadata and local runner inline PNG use real OCR and authenticated highlight artifacts",
+            "real OCR process cancellation and execution deadlines remove incomplete artifacts",
+            "known target changes surface missing controls and moved headings as review findings"
+          ],
+          "log": "inspectra-repo-test-integration-v24222.log"
+        }
+      ],
+      "packaging": {
+        "node": "v24.22.2",
+        "installed": {
+          "shivax": "0.2.0",
+          "inspectra-engine": "1.1.0",
+          "playwright": "1.64.1"
+        },
+        "ranges": {
+          "inspectraDependsOnShivax": "^0.2.0 || ^0.3.0",
+          "shivaxPeerInspectra": "1.0.4",
+          "shivaxPeerOptional": true,
+          "engines": {
+            "shivax": ">=22",
+            "inspectra-engine": ">=22.15"
+          },
+          "satisfied": {
+            "inspectraAcceptsInstalledShivax": true,
+            "inspectraAcceptsShivax030": true,
+            "shivaxPeerAcceptsInstalledInspectra": false,
+            "nodeSatisfiesShivax": true,
+            "nodeSatisfiesInspectra": true
+          }
+        },
+        "esm": {
+          "shivax": 187,
+          "shivax/core": 12,
+          "shivax/rudra": 14,
+          "shivax/bots": 14,
+          "shivax/security": 9,
+          "shivax/models": 13,
+          "shivax/memory": 13,
+          "shivax/integrations": 5,
+          "shivax/learning": 83,
+          "shivax/learning/node": 7,
+          "shivax/diagnostics": 1,
+          "shivax/licensing/server": 2,
+          "shivax/adapters/inspectra": 2,
+          "inspectra-engine": 13,
+          "inspectra-engine/node": 13,
+          "inspectra-engine/shivax": 3,
+          "inspectra-engine/feedback": 5,
+          "inspectra-engine/client": 1
+        },
+        "cjs": {
+          "shivax": 187,
+          "shivax/core": 12,
+          "shivax/rudra": 14,
+          "shivax/bots": 14,
+          "shivax/security": 9,
+          "shivax/models": 13,
+          "shivax/memory": 13,
+          "shivax/integrations": 5,
+          "shivax/learning": 83,
+          "shivax/learning/node": 7,
+          "shivax/diagnostics": 1,
+          "shivax/licensing/server": 2,
+          "shivax/adapters/inspectra": 2
+        },
+        "inspectraRequire": {
+          "inspectra-engine": "ERR_PACKAGE_PATH_NOT_EXPORTED",
+          "inspectra-engine/node": "ERR_PACKAGE_PATH_NOT_EXPORTED",
+          "inspectra-engine/shivax": "ERR_PACKAGE_PATH_NOT_EXPORTED",
+          "inspectra-engine/feedback": "ERR_PACKAGE_PATH_NOT_EXPORTED",
+          "inspectra-engine/client": "ERR_PACKAGE_PATH_NOT_EXPORTED"
+        },
+        "declarations": [
+          {
+            "ext": "ts",
+            "moduleResolution": "bundler",
+            "label": "shivax",
+            "ok": true
+          },
+          {
+            "ext": "mts",
+            "moduleResolution": "Node16",
+            "label": "shivax",
+            "ok": true
+          },
+          {
+            "ext": "mts",
+            "moduleResolution": "NodeNext",
+            "label": "shivax",
+            "ok": true
+          },
+          {
+            "ext": "cts",
+            "moduleResolution": "Node16",
+            "label": "shivax (CJS)",
+            "ok": true
+          },
+          {
+            "ext": "cts",
+            "moduleResolution": "NodeNext",
+            "label": "shivax (CJS)",
+            "ok": true
+          },
+          {
+            "ext": "ts",
+            "moduleResolution": "bundler",
+            "label": "shivax+inspectra",
+            "ok": true
+          },
+          {
+            "ext": "mts",
+            "moduleResolution": "Node16",
+            "label": "shivax+inspectra",
+            "ok": true
+          },
+          {
+            "ext": "mts",
+            "moduleResolution": "NodeNext",
+            "label": "shivax+inspectra",
+            "ok": true
+          }
+        ]
+      },
+      "capture": {
+        "node": "v24.22.2",
+        "platform": "win32-x64",
+        "url": [
+          {
+            "variant": "font-h1-up",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "typography.fontSize@heading"
+            ],
+            "ms": 2976
+          },
+          {
+            "variant": "font-h1-down",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "typography.fontSize@heading"
+            ],
+            "ms": 2486
+          },
+          {
+            "variant": "font-p-down",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "typography.fontSize@paragraph"
+            ],
+            "ms": 2483
+          },
+          {
+            "variant": "font-p-up",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "typography.fontSize@paragraph"
+            ],
+            "ms": 2509
+          },
+          {
+            "variant": "color-h1",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "typography.color@heading"
+            ],
+            "ms": 2497
+          },
+          {
+            "variant": "color-p",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "typography.color@paragraph"
+            ],
+            "ms": 2480
+          },
+          {
+            "variant": "gap-wide",
+            "issues": 3,
+            "truePositives": 2,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.height@document",
+              "heading-description.gap",
+              "layout.marginBottom@heading"
+            ],
+            "ms": 2461
+          },
+          {
+            "variant": "gap-tight",
+            "issues": 3,
+            "truePositives": 2,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.height@document",
+              "heading-description.gap",
+              "layout.marginBottom@heading"
+            ],
+            "ms": 2465
+          },
+          {
+            "variant": "pad-wide",
+            "issues": 4,
+            "truePositives": 2,
+            "falsePositives": 2,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.height@document",
+              "position.y@paragraph",
+              "layout.paddingBottom@link",
+              "layout.paddingTop@link"
+            ],
+            "ms": 2478
+          },
+          {
+            "variant": "pad-tight",
+            "issues": 4,
+            "truePositives": 2,
+            "falsePositives": 2,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.height@document",
+              "position.y@paragraph",
+              "layout.paddingBottom@link",
+              "layout.paddingTop@link"
+            ],
+            "ms": 2464
+          },
+          {
+            "variant": "missing-note",
+            "issues": 3,
+            "truePositives": 1,
+            "falsePositives": 2,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.height@document",
+              "position.y@region",
+              "missing@paragraph"
+            ],
+            "ms": 2461
+          },
+          {
+            "variant": "box-wide",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.width@region"
+            ],
+            "ms": 2495
+          },
+          {
+            "variant": "box-narrow",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.width@region"
+            ],
+            "ms": 2462
+          },
+          {
+            "variant": "mixed-a",
+            "issues": 6,
+            "truePositives": 4,
+            "falsePositives": 2,
+            "falseNegatives": 0,
+            "reported": [
+              "typography.color@paragraph",
+              "bounds.height@document",
+              "position.y@paragraph",
+              "layout.paddingBottom@link",
+              "layout.paddingTop@link",
+              "typography.fontSize@heading"
+            ],
+            "ms": 2487
+          },
+          {
+            "variant": "mixed-b",
+            "issues": 5,
+            "truePositives": 4,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.height@document",
+              "bounds.width@region",
+              "heading-description.gap",
+              "layout.marginBottom@heading",
+              "typography.fontSize@paragraph"
+            ],
+            "ms": 2511
+          },
+          {
+            "variant": "identical",
+            "issues": 0,
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [],
+            "ms": 2492
+          }
+        ],
+        "figma": {
+          "issues": 5,
+          "apiCalls": 3,
+          "baselineEvidenceKinds": [
+            "design",
+            "estimated"
+          ],
+          "properties": [
+            "typography.color",
+            "bounds.height",
+            "layout.display",
+            "extra",
+            "typography.fontSize"
+          ],
+          "ms": 1280
+        },
+        "png": {
+          "issues": 9,
+          "baselineEvidenceKinds": [
+            "estimated"
+          ],
+          "properties": [
+            "bounds.height",
+            "position.y",
+            "missing",
+            "missing",
+            "missing",
+            "missing",
+            "missing",
+            "missing",
+            "extra"
+          ],
+          "ms": 1439
+        },
+        "cancellation": {
+          "outcome": "Error",
+          "pagesOpened": 1,
+          "ms": 87,
+          "outputRemoved": true
+        },
+        "externalRequests": [],
+        "urlDetection": {
+          "tp": 25,
+          "fp": 11,
+          "fn": 0,
+          "precision": 0.6944444444444444,
+          "recall": 1
+        }
+      },
+      "lifecycle": {
+        "node": "v24.22.2",
+        "platform": "win32-x64",
+        "steps": {
+          "uiReview": {
+            "feedbackId": "inspectra:4dc86a0a79ebcda18b5ba10cdbdafb612eba6155:r1",
+            "decision": "correct",
+            "correction": {
+              "severity": "high",
+              "basis": "reviewer"
+            },
+            "stored": 1
+          },
+          "fixtureReviews": {
+            "counts": {
+              "proposed": 43,
+              "needs-review": 3,
+              "invalid": 3
+            },
+            "bySource": {
+              "figma": {
+                "accept": 0,
+                "correct": 2,
+                "reject": 1,
+                "needs-review": 2,
+                "invalid": 0
+              },
+              "png": {
+                "accept": 6,
+                "correct": 0,
+                "reject": 2,
+                "needs-review": 1,
+                "invalid": 0
+              },
+              "url": {
+                "accept": 4,
+                "correct": 17,
+                "reject": 11,
+                "needs-review": 0,
+                "invalid": 3
+              }
+            },
+            "refused": [
+              {
+                "ref": "url:gap-tight",
+                "property": "heading-description:n3.gap",
+                "category": "relationship",
+                "reasons": [
+                  "evidence-limit"
+                ]
+              },
+              {
+                "ref": "url:gap-wide",
+                "property": "heading-description:n3.gap",
+                "category": "relationship",
+                "reasons": [
+                  "evidence-limit"
+                ]
+              },
+              {
+                "ref": "url:mixed-b",
+                "property": "heading-description:n3.gap",
+                "category": "relationship",
+                "reasons": [
+                  "evidence-limit"
+                ]
+              }
+            ],
+            "journal": 47,
+            "attestations": 44
+          },
+          "curation": {
+            "stored": 44,
+            "eligible": 23,
+            "splits": {
+              "train": 17,
+              "validation": 0,
+              "heldOut": 6
+            },
+            "excluded": {
+              "rejected-decision": 14,
+              "not-selected": 7
+            },
+            "digest": "sha256:a841d64264f7c0721abf2c9bdf7fb20f1f4399bf115062140b9ec9de82ec5d59"
+          },
+          "features": {
+            "features": 19,
+            "heldOutRows": 6,
+            "heldOutDroppedAsFeatureDuplicates": 1
+          },
+          "training": {
+            "rows": {
+              "train": 17,
+              "heldOut": 5
+            },
+            "features": 19,
+            "options": {
+              "epochs": 1200,
+              "learningRate": 0.2,
+              "batchSize": 8
+            },
+            "seed": 7,
+            "progress": [
+              {
+                "epoch": 300,
+                "loss": 0.00166
+              },
+              {
+                "epoch": 600,
+                "loss": 0.00075
+              },
+              {
+                "epoch": 900,
+                "loss": 0.00049
+              },
+              {
+                "epoch": 1200,
+                "loss": 0.00035
+              }
+            ],
+            "hostTimerTicks": 10,
+            "wallMs": 121,
+            "worker": {
+              "startupMs": 18,
+              "trainingMs": 99
+            },
+            "trainAccuracy": 1,
+            "heldOutAccuracy": 1
+          },
+          "registry": {
+            "v1": "evaluated",
+            "eligible": true,
+            "reasons": []
+          },
+          "promotion": {
+            "v1": "active",
+            "untrained": {
+              "state": "rejected",
+              "reasons": [
+                "below-minimum",
+                "regression"
+              ]
+            }
+          },
+          "rudra": {
+            "default": "triage-baseline",
+            "unapproved": "triage-baseline",
+            "approved": "triage-candidate",
+            "model": "v1",
+            "policy": "p1"
+          },
+          "rollback": {
+            "routing": "p0",
+            "model": "v1",
+            "v3": "rolled_back",
+            "firewallVersion": 1,
+            "audit": [
+              "create",
+              "register",
+              "evaluate",
+              "approve",
+              "activate",
+              "register",
+              "evaluate",
+              "register",
+              "evaluate",
+              "approve",
+              "activate",
+              "rollback"
+            ]
+          },
+          "integrity": {
+            "stored": 44,
+            "unique": 44
+          }
+        },
+        "security": {
+          "unauthorizedPromotion": {
+            "mallory": "unauthorized",
+            "alice": "unauthorized",
+            "gita": "cross-tenant",
+            "rhea": "unauthorized",
+            "activateBeforeApproval": "invalid-transition"
+          },
+          "spoofedReviewer": {
+            "extraFieldsRefused": 5,
+            "forgedSessionRefused": true,
+            "expiredRefused": true,
+            "revokedRefused": true,
+            "forgedAttestationsAdmitted": 0,
+            "forgedExclusions": {
+              "rejected-decision": 14,
+              "review-unconfirmed": 30
+            }
+          },
+          "crossTenant": {
+            "reviewRefused": "unknown-report",
+            "curationExcluded": 30,
+            "registryRefused": true
+          },
+          "duplicate": {
+            "hostRefused": "duplicate-review",
+            "curationDuplicates": 1
+          },
+          "withdrawnConsent": {
+            "excluded": 1,
+            "v1Records": 23,
+            "v2Records": 22
+          },
+          "corruptManifest": {
+            "tampered": 1,
+            "verifyOk": false,
+            "load": "checksum-mismatch",
+            "problems": null
+          },
+          "invalidReport": {
+            "forgedRateRejected": true,
+            "missingCasesRejected": true,
+            "registryRejected": true
+          },
+          "unapproved": {
+            "activateRefused": true
+          },
+          "staleApproval": {
+            "code": "stale-approval",
+            "firewallVersion": {
+              "approvedAt": 1,
+              "now": 2
+            }
+          },
+          "lockdownTraining": {
+            "firewallOutcome": "revoked",
+            "worker": "cancelled",
+            "newJob": "lockdown",
+            "activate": "lockdown"
+          },
+          "lockdownProvider": {
+            "outcome": "revoked",
+            "providerCalls": 1
+          },
+          "workerCancellation": {
+            "code": "cancelled",
+            "liveWorkers": 0
+          },
+          "runnerTokenSeparation": {
+            "hostRefusedRunnerToken": true,
+            "runnerOwnToken": 400,
+            "runnerRefusedHostSession": 401
+          },
+          "memoryIsolation": {
+            "acme": 44,
+            "globex": 0,
+            "reviewerNamespace": 0,
+            "unattestedStoreRefused": "failed"
+          }
+        },
+        "benchmarks": {
+          "baseline": {
+            "passRate": 0.6666666666666666,
+            "cases": 9,
+            "reasoning": 0.4,
+            "permission": 1,
+            "latencyMs": {
+              "p50": 0.016,
+              "p95": 0.103
+            },
+            "logicalDigest": "sha256:56f986e338934534435842af56afb463064b4169c39c8b1cb87f568eab161efa"
+          },
+          "candidate": {
+            "passRate": 1,
+            "cases": 9,
+            "reasoning": 1,
+            "permission": 1,
+            "latencyMs": {
+              "p50": 1.148,
+              "p95": 1.697
+            },
+            "logicalDigest": "sha256:9ed703fb78ccb9110011cd6016c74dad70e01d04b5373893c64164be0cd295f2"
+          },
+          "comparison": {
+            "fixed": 3,
+            "regressed": 0,
+            "securityRegressions": 0
+          },
+          "assessment": {
+            "eligible": true,
+            "reasons": [],
+            "policy": "shivax-strict-v1"
+          }
+        },
+        "reportsLoaded": 18,
+        "activeResourcesAtTeardown": [
+          "PipeWrap",
+          "PipeWrap"
+        ]
+      },
+      "no-inspectra": {
+        "node": "v24.22.2",
+        "examples": {
+          "registry": {
+            "exit": 0,
+            "ms": 61
+          },
+          "local-model": {
+            "exit": 0,
+            "ms": 48
+          },
+          "rudra": {
+            "exit": 0,
+            "ms": 70
+          },
+          "memory-persistence": {
+            "exit": 0,
+            "ms": 50
+          },
+          "firewall": {
+            "exit": 0,
+            "ms": 46
+          },
+          "benchmark": {
+            "exit": 0,
+            "ms": 67
+          },
+          "model-registry": {
+            "exit": 0,
+            "ms": 152
+          },
+          "feedback-curation": {
+            "exit": 0,
+            "ms": 64
+          },
+          "worker-training": {
+            "exit": 0,
+            "ms": 137
+          },
+          "routing-shadow": {
+            "exit": 0,
+            "ms": 62
+          },
+          "memory-ranking": {
+            "exit": 0,
+            "ms": 60
+          }
+        },
+        "shivax": "0.2.0",
+        "entries": {
+          "shivax": 187,
+          "shivax/core": 12,
+          "shivax/rudra": 14,
+          "shivax/bots": 14,
+          "shivax/security": 9,
+          "shivax/models": 13,
+          "shivax/memory": 13,
+          "shivax/integrations": 5,
+          "shivax/learning": 83,
+          "shivax/learning/node": 7,
+          "shivax/diagnostics": 1,
+          "shivax/licensing/server": 2,
+          "shivax/adapters/inspectra": 2
+        },
+        "bots": [
+          "sanjay",
+          "brihaspati",
+          "vishwakarma",
+          "chitragupt",
+          "narad",
+          "yudhishthir",
+          "ekalavy"
+        ]
+      },
+      "nodeBinary": "v24.22.2"
+    },
+    {
+      "node": "v26.13.0",
+      "npm": "11.20.0",
+      "installs": [
+        {
+          "label": "strict-v26130",
+          "specs": [
+            "inspectra-engine-1.1.0.tgz",
+            "shivax-0.2.0.tgz",
+            "playwright@1.64.1",
+            "typescript@7.0.2",
+            "node@26"
+          ],
+          "flags": [],
+          "outcome": "ERESOLVE",
+          "ms": 3405,
+          "lines": [
+            "code ERESOLVE",
+            "ERESOLVE could not resolve",
+            "While resolving: shivax@0.2.0",
+            "Found: inspectra-engine@1.1.0",
+            "Could not resolve dependency:",
+            "peerOptional inspectra-engine@\"1.0.4\" from shivax@0.2.0",
+            "Conflicting peer dependency: inspectra-engine@1.0.4",
+            "peerOptional inspectra-engine@\"1.0.4\" from shivax@0.2.0"
+          ],
+          "tree": null,
+          "log": "install-strict-v26130.log"
+        },
+        {
+          "label": "inspectra-v26130",
+          "specs": [
+            "inspectra-engine-1.1.0.tgz",
+            "shivax-0.2.0.tgz",
+            "playwright@1.64.1",
+            "typescript@7.0.2",
+            "node@26"
+          ],
+          "flags": [
+            "--legacy-peer-deps"
+          ],
+          "outcome": "ok",
+          "ms": 7225,
+          "lines": [],
+          "tree": {
+            "valid": false,
+            "shivax": "0.2.0",
+            "inspectra": "1.1.0",
+            "inspectraShivax": "0.2.0",
+            "problems": [
+              "invalid: inspectra-engine@1.1.0 <work>\\inspectra-v26130\\node_modules\\inspectra-engine"
+            ]
+          },
+          "log": "install-inspectra-v26130.log"
+        },
+        {
+          "label": "proposed-v26130",
+          "specs": [
+            "inspectra-engine-1.1.0.tgz",
+            "shivax-0.3.0.tgz",
+            "playwright@1.64.1"
+          ],
+          "flags": [],
+          "outcome": "ok",
+          "ms": 8600,
+          "lines": [],
+          "tree": {
+            "valid": true,
+            "shivax": "0.3.0",
+            "inspectra": "1.1.0",
+            "inspectraShivax": "0.3.0",
+            "problems": []
+          },
+          "log": "install-proposed-v26130.log",
+          "smoke": "{\"feedback\":\"function\",\"curate\":\"function\",\"compare\":\"function\"}"
+        },
+        {
+          "label": "standalone-v26130",
+          "specs": [
+            "shivax-0.2.0.tgz"
+          ],
+          "flags": [],
+          "outcome": "ok",
+          "ms": 1942,
+          "lines": [],
+          "tree": {
+            "valid": true,
+            "shivax": "0.2.0",
+            "inspectra": null,
+            "inspectraShivax": null,
+            "problems": []
+          },
+          "log": "install-standalone-v26130.log"
+        }
+      ],
+      "suites": [
+        {
+          "name": "packaging-v26130",
+          "exit": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 2364,
+          "failures": [],
+          "log": "packaging-v26130.log"
+        },
+        {
+          "name": "capture-v26130",
+          "exit": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 43759,
+          "failures": [],
+          "log": "capture-v26130.log"
+        },
+        {
+          "name": "inspectra-installed-v26130",
+          "exit": 0,
+          "tests": 38,
+          "pass": 38,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 22731,
+          "failures": [],
+          "log": "inspectra-installed-v26130.log"
+        },
+        {
+          "name": "no-inspectra-v26130",
+          "exit": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 845,
+          "failures": [],
+          "log": "no-inspectra-v26130.log"
+        },
+        {
+          "name": "visynq-s08-v26130",
+          "exit": 0,
+          "files": 2,
+          "failedFiles": 0,
+          "loadFailures": [],
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "ms": 2606,
+          "failures": [],
+          "log": "visynq-s08-v26130.log"
+        },
+        {
+          "name": "lifecycle-v26130",
+          "exit": 0,
+          "tests": 23,
+          "pass": 23,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 2102,
+          "failures": [],
+          "log": "lifecycle-v26130.log"
+        },
+        {
+          "name": "visynq-all-v26130",
+          "exit": 0,
+          "files": 76,
+          "failedFiles": 0,
+          "loadFailures": [],
+          "tests": 303,
+          "pass": 303,
+          "fail": 0,
+          "skipped": 0,
+          "ms": 40278,
+          "failures": [],
+          "log": "visynq-all-v26130.log"
+        },
+        {
+          "name": "visynq-build-v26130",
+          "exit": 1,
+          "tsc": 1,
+          "tscErrors": 5,
+          "tscSample": [
+            "src/hooks/useScan.ts(162,66): error TS2339: Property 'error' does not exist on type '({ id: number; sessionId: string; timestamp: string; } & { type: \"page\"; na",
+            "src/hooks/useScan.ts(162,85): error TS2339: Property 'error' does not exist on type '({ id: number; sessionId: string; timestamp: string; } & { type: \"page\"; na",
+            "src/live/useScan.ts(159,66): error TS2339: Property 'error' does not exist on type '({ id: number; sessionId: string; timestamp: string; } & { type: \"page\"; nam",
+            "src/live/useScan.ts(159,85): error TS2339: Property 'error' does not exist on type '({ id: number; sessionId: string; timestamp: string; } & { type: \"page\"; nam"
+          ],
+          "vite": 0,
+          "viteError": [],
+          "ms": 2227,
+          "log": "visynq-vite-build-v26130.log",
+          "boundary": "ok"
+        },
+        {
+          "name": "shivax-repo-v26130",
+          "exit": 0,
+          "tests": 897,
+          "pass": 897,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 15215,
+          "failures": [],
+          "log": "shivax-repo-v26130.log"
+        },
+        {
+          "name": "inspectra-repo-test-unit-v26130",
+          "exit": 0,
+          "tests": 24,
+          "pass": 24,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 1082,
+          "failures": [],
+          "log": "inspectra-repo-test-unit-v26130.log"
+        },
+        {
+          "name": "inspectra-repo-test-feedback-v26130",
+          "exit": 0,
+          "tests": 17,
+          "pass": 17,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 6768,
+          "failures": [],
+          "log": "inspectra-repo-test-feedback-v26130.log"
+        },
+        {
+          "name": "inspectra-repo-test-security-v26130",
+          "exit": 0,
+          "tests": 45,
+          "pass": 45,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 28964,
+          "failures": [],
+          "log": "inspectra-repo-test-security-v26130.log"
+        },
+        {
+          "name": "inspectra-repo-test-extraction-v26130",
+          "exit": 0,
+          "tests": 12,
+          "pass": 12,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 33395,
+          "failures": [],
+          "log": "inspectra-repo-test-extraction-v26130.log"
+        },
+        {
+          "name": "inspectra-repo-test-ui-check-v26130",
+          "exit": 0,
+          "tests": 55,
+          "pass": 55,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "ms": 123129,
+          "failures": [],
+          "log": "inspectra-repo-test-ui-check-v26130.log"
+        },
+        {
+          "name": "inspectra-repo-test-integration-v26130",
+          "exit": 1,
+          "tests": 80,
+          "pass": 72,
+          "fail": 6,
+          "cancelled": 0,
+          "skipped": 2,
+          "todo": 0,
+          "ms": 106268,
+          "failures": [
+            "packed packages install outside workspace; installed ESM contracts and CLI compare work",
+            "real local OCR and visual detection recover content, sections, rows, columns and relationships",
+            "PNG-to-URL reuses Shivax and highlights accepted matches on both reference and known implementation",
+            "CLI PNG metadata and local runner inline PNG use real OCR and authenticated highlight artifacts",
+            "real OCR process cancellation and execution deadlines remove incomplete artifacts",
+            "known target changes surface missing controls and moved headings as review findings"
+          ],
+          "log": "inspectra-repo-test-integration-v26130.log"
+        }
+      ],
+      "packaging": {
+        "node": "v26.13.0",
+        "installed": {
+          "shivax": "0.2.0",
+          "inspectra-engine": "1.1.0",
+          "playwright": "1.64.1"
+        },
+        "ranges": {
+          "inspectraDependsOnShivax": "^0.2.0 || ^0.3.0",
+          "shivaxPeerInspectra": "1.0.4",
+          "shivaxPeerOptional": true,
+          "engines": {
+            "shivax": ">=22",
+            "inspectra-engine": ">=22.15"
+          },
+          "satisfied": {
+            "inspectraAcceptsInstalledShivax": true,
+            "inspectraAcceptsShivax030": true,
+            "shivaxPeerAcceptsInstalledInspectra": false,
+            "nodeSatisfiesShivax": true,
+            "nodeSatisfiesInspectra": true
+          }
+        },
+        "esm": {
+          "shivax": 187,
+          "shivax/core": 12,
+          "shivax/rudra": 14,
+          "shivax/bots": 14,
+          "shivax/security": 9,
+          "shivax/models": 13,
+          "shivax/memory": 13,
+          "shivax/integrations": 5,
+          "shivax/learning": 83,
+          "shivax/learning/node": 7,
+          "shivax/diagnostics": 1,
+          "shivax/licensing/server": 2,
+          "shivax/adapters/inspectra": 2,
+          "inspectra-engine": 13,
+          "inspectra-engine/node": 13,
+          "inspectra-engine/shivax": 3,
+          "inspectra-engine/feedback": 5,
+          "inspectra-engine/client": 1
+        },
+        "cjs": {
+          "shivax": 187,
+          "shivax/core": 12,
+          "shivax/rudra": 14,
+          "shivax/bots": 14,
+          "shivax/security": 9,
+          "shivax/models": 13,
+          "shivax/memory": 13,
+          "shivax/integrations": 5,
+          "shivax/learning": 83,
+          "shivax/learning/node": 7,
+          "shivax/diagnostics": 1,
+          "shivax/licensing/server": 2,
+          "shivax/adapters/inspectra": 2
+        },
+        "inspectraRequire": {
+          "inspectra-engine": "ERR_PACKAGE_PATH_NOT_EXPORTED",
+          "inspectra-engine/node": "ERR_PACKAGE_PATH_NOT_EXPORTED",
+          "inspectra-engine/shivax": "ERR_PACKAGE_PATH_NOT_EXPORTED",
+          "inspectra-engine/feedback": "ERR_PACKAGE_PATH_NOT_EXPORTED",
+          "inspectra-engine/client": "ERR_PACKAGE_PATH_NOT_EXPORTED"
+        },
+        "declarations": [
+          {
+            "ext": "ts",
+            "moduleResolution": "bundler",
+            "label": "shivax",
+            "ok": true
+          },
+          {
+            "ext": "mts",
+            "moduleResolution": "Node16",
+            "label": "shivax",
+            "ok": true
+          },
+          {
+            "ext": "mts",
+            "moduleResolution": "NodeNext",
+            "label": "shivax",
+            "ok": true
+          },
+          {
+            "ext": "cts",
+            "moduleResolution": "Node16",
+            "label": "shivax (CJS)",
+            "ok": true
+          },
+          {
+            "ext": "cts",
+            "moduleResolution": "NodeNext",
+            "label": "shivax (CJS)",
+            "ok": true
+          },
+          {
+            "ext": "ts",
+            "moduleResolution": "bundler",
+            "label": "shivax+inspectra",
+            "ok": true
+          },
+          {
+            "ext": "mts",
+            "moduleResolution": "Node16",
+            "label": "shivax+inspectra",
+            "ok": true
+          },
+          {
+            "ext": "mts",
+            "moduleResolution": "NodeNext",
+            "label": "shivax+inspectra",
+            "ok": true
+          }
+        ]
+      },
+      "capture": {
+        "node": "v26.13.0",
+        "platform": "win32-x64",
+        "url": [
+          {
+            "variant": "font-h1-up",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "typography.fontSize@heading"
+            ],
+            "ms": 3013
+          },
+          {
+            "variant": "font-h1-down",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "typography.fontSize@heading"
+            ],
+            "ms": 2513
+          },
+          {
+            "variant": "font-p-down",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "typography.fontSize@paragraph"
+            ],
+            "ms": 2512
+          },
+          {
+            "variant": "font-p-up",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "typography.fontSize@paragraph"
+            ],
+            "ms": 2513
+          },
+          {
+            "variant": "color-h1",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "typography.color@heading"
+            ],
+            "ms": 2482
+          },
+          {
+            "variant": "color-p",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "typography.color@paragraph"
+            ],
+            "ms": 2512
+          },
+          {
+            "variant": "gap-wide",
+            "issues": 3,
+            "truePositives": 2,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.height@document",
+              "heading-description.gap",
+              "layout.marginBottom@heading"
+            ],
+            "ms": 2512
+          },
+          {
+            "variant": "gap-tight",
+            "issues": 3,
+            "truePositives": 2,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.height@document",
+              "heading-description.gap",
+              "layout.marginBottom@heading"
+            ],
+            "ms": 2476
+          },
+          {
+            "variant": "pad-wide",
+            "issues": 4,
+            "truePositives": 2,
+            "falsePositives": 2,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.height@document",
+              "position.y@paragraph",
+              "layout.paddingBottom@link",
+              "layout.paddingTop@link"
+            ],
+            "ms": 2506
+          },
+          {
+            "variant": "pad-tight",
+            "issues": 4,
+            "truePositives": 2,
+            "falsePositives": 2,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.height@document",
+              "position.y@paragraph",
+              "layout.paddingBottom@link",
+              "layout.paddingTop@link"
+            ],
+            "ms": 2495
+          },
+          {
+            "variant": "missing-note",
+            "issues": 3,
+            "truePositives": 1,
+            "falsePositives": 2,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.height@document",
+              "position.y@region",
+              "missing@paragraph"
+            ],
+            "ms": 2497
+          },
+          {
+            "variant": "box-wide",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.width@region"
+            ],
+            "ms": 2498
+          },
+          {
+            "variant": "box-narrow",
+            "issues": 1,
+            "truePositives": 1,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.width@region"
+            ],
+            "ms": 2515
+          },
+          {
+            "variant": "mixed-a",
+            "issues": 6,
+            "truePositives": 4,
+            "falsePositives": 2,
+            "falseNegatives": 0,
+            "reported": [
+              "typography.color@paragraph",
+              "bounds.height@document",
+              "position.y@paragraph",
+              "layout.paddingBottom@link",
+              "layout.paddingTop@link",
+              "typography.fontSize@heading"
+            ],
+            "ms": 2496
+          },
+          {
+            "variant": "mixed-b",
+            "issues": 5,
+            "truePositives": 4,
+            "falsePositives": 1,
+            "falseNegatives": 0,
+            "reported": [
+              "bounds.height@document",
+              "bounds.width@region",
+              "heading-description.gap",
+              "layout.marginBottom@heading",
+              "typography.fontSize@paragraph"
+            ],
+            "ms": 2497
+          },
+          {
+            "variant": "identical",
+            "issues": 0,
+            "truePositives": 0,
+            "falsePositives": 0,
+            "falseNegatives": 0,
+            "reported": [],
+            "ms": 2496
+          }
+        ],
+        "figma": {
+          "issues": 5,
+          "apiCalls": 3,
+          "baselineEvidenceKinds": [
+            "design",
+            "estimated"
+          ],
+          "properties": [
+            "typography.color",
+            "bounds.height",
+            "layout.display",
+            "extra",
+            "typography.fontSize"
+          ],
+          "ms": 1280
+        },
+        "png": {
+          "issues": 9,
+          "baselineEvidenceKinds": [
+            "estimated"
+          ],
+          "properties": [
+            "bounds.height",
+            "position.y",
+            "missing",
+            "missing",
+            "missing",
+            "missing",
+            "missing",
+            "missing",
+            "extra"
+          ],
+          "ms": 1474
+        },
+        "cancellation": {
+          "outcome": "Error",
+          "pagesOpened": 1,
+          "ms": 83,
+          "outputRemoved": true
+        },
+        "externalRequests": [],
+        "urlDetection": {
+          "tp": 25,
+          "fp": 11,
+          "fn": 0,
+          "precision": 0.6944444444444444,
+          "recall": 1
+        }
+      },
+      "lifecycle": {
+        "node": "v26.13.0",
+        "platform": "win32-x64",
+        "steps": {
+          "uiReview": {
+            "feedbackId": "inspectra:4dc86a0a79ebcda18b5ba10cdbdafb612eba6155:r1",
+            "decision": "correct",
+            "correction": {
+              "severity": "high",
+              "basis": "reviewer"
+            },
+            "stored": 1
+          },
+          "fixtureReviews": {
+            "counts": {
+              "proposed": 43,
+              "needs-review": 3,
+              "invalid": 3
+            },
+            "bySource": {
+              "figma": {
+                "accept": 0,
+                "correct": 2,
+                "reject": 1,
+                "needs-review": 2,
+                "invalid": 0
+              },
+              "png": {
+                "accept": 6,
+                "correct": 0,
+                "reject": 2,
+                "needs-review": 1,
+                "invalid": 0
+              },
+              "url": {
+                "accept": 4,
+                "correct": 17,
+                "reject": 11,
+                "needs-review": 0,
+                "invalid": 3
+              }
+            },
+            "refused": [
+              {
+                "ref": "url:gap-tight",
+                "property": "heading-description:n3.gap",
+                "category": "relationship",
+                "reasons": [
+                  "evidence-limit"
+                ]
+              },
+              {
+                "ref": "url:gap-wide",
+                "property": "heading-description:n3.gap",
+                "category": "relationship",
+                "reasons": [
+                  "evidence-limit"
+                ]
+              },
+              {
+                "ref": "url:mixed-b",
+                "property": "heading-description:n3.gap",
+                "category": "relationship",
+                "reasons": [
+                  "evidence-limit"
+                ]
+              }
+            ],
+            "journal": 47,
+            "attestations": 44
+          },
+          "curation": {
+            "stored": 44,
+            "eligible": 23,
+            "splits": {
+              "train": 17,
+              "validation": 0,
+              "heldOut": 6
+            },
+            "excluded": {
+              "rejected-decision": 14,
+              "not-selected": 7
+            },
+            "digest": "sha256:5f181d6718335483c9d87104b3a12902cc750110e92f694232ad4b1c66db1d6f"
+          },
+          "features": {
+            "features": 19,
+            "heldOutRows": 6,
+            "heldOutDroppedAsFeatureDuplicates": 1
+          },
+          "training": {
+            "rows": {
+              "train": 17,
+              "heldOut": 5
+            },
+            "features": 19,
+            "options": {
+              "epochs": 1200,
+              "learningRate": 0.2,
+              "batchSize": 8
+            },
+            "seed": 7,
+            "progress": [
+              {
+                "epoch": 300,
+                "loss": 0.00166
+              },
+              {
+                "epoch": 600,
+                "loss": 0.00075
+              },
+              {
+                "epoch": 900,
+                "loss": 0.00049
+              },
+              {
+                "epoch": 1200,
+                "loss": 0.00035
+              }
+            ],
+            "hostTimerTicks": 10,
+            "wallMs": 128,
+            "worker": {
+              "startupMs": 8,
+              "trainingMs": 117
+            },
+            "trainAccuracy": 1,
+            "heldOutAccuracy": 1
+          },
+          "registry": {
+            "v1": "evaluated",
+            "eligible": true,
+            "reasons": []
+          },
+          "promotion": {
+            "v1": "active",
+            "untrained": {
+              "state": "rejected",
+              "reasons": [
+                "below-minimum",
+                "regression"
+              ]
+            }
+          },
+          "rudra": {
+            "default": "triage-baseline",
+            "unapproved": "triage-baseline",
+            "approved": "triage-candidate",
+            "model": "v1",
+            "policy": "p1"
+          },
+          "rollback": {
+            "routing": "p0",
+            "model": "v1",
+            "v3": "rolled_back",
+            "firewallVersion": 1,
+            "audit": [
+              "create",
+              "register",
+              "evaluate",
+              "approve",
+              "activate",
+              "register",
+              "evaluate",
+              "register",
+              "evaluate",
+              "approve",
+              "activate",
+              "rollback"
+            ]
+          },
+          "integrity": {
+            "stored": 44,
+            "unique": 44
+          }
+        },
+        "security": {
+          "unauthorizedPromotion": {
+            "mallory": "unauthorized",
+            "alice": "unauthorized",
+            "gita": "cross-tenant",
+            "rhea": "unauthorized",
+            "activateBeforeApproval": "invalid-transition"
+          },
+          "spoofedReviewer": {
+            "extraFieldsRefused": 5,
+            "forgedSessionRefused": true,
+            "expiredRefused": true,
+            "revokedRefused": true,
+            "forgedAttestationsAdmitted": 0,
+            "forgedExclusions": {
+              "rejected-decision": 14,
+              "review-unconfirmed": 30
+            }
+          },
+          "crossTenant": {
+            "reviewRefused": "unknown-report",
+            "curationExcluded": 30,
+            "registryRefused": true
+          },
+          "duplicate": {
+            "hostRefused": "duplicate-review",
+            "curationDuplicates": 1
+          },
+          "withdrawnConsent": {
+            "excluded": 1,
+            "v1Records": 23,
+            "v2Records": 22
+          },
+          "corruptManifest": {
+            "tampered": 1,
+            "verifyOk": false,
+            "load": "checksum-mismatch",
+            "problems": null
+          },
+          "invalidReport": {
+            "forgedRateRejected": true,
+            "missingCasesRejected": true,
+            "registryRejected": true
+          },
+          "unapproved": {
+            "activateRefused": true
+          },
+          "staleApproval": {
+            "code": "stale-approval",
+            "firewallVersion": {
+              "approvedAt": 1,
+              "now": 2
+            }
+          },
+          "lockdownTraining": {
+            "firewallOutcome": "revoked",
+            "worker": "cancelled",
+            "newJob": "lockdown",
+            "activate": "lockdown"
+          },
+          "lockdownProvider": {
+            "outcome": "revoked",
+            "providerCalls": 1
+          },
+          "workerCancellation": {
+            "code": "cancelled",
+            "liveWorkers": 0
+          },
+          "runnerTokenSeparation": {
+            "hostRefusedRunnerToken": true,
+            "runnerOwnToken": 400,
+            "runnerRefusedHostSession": 401
+          },
+          "memoryIsolation": {
+            "acme": 44,
+            "globex": 0,
+            "reviewerNamespace": 0,
+            "unattestedStoreRefused": "failed"
+          }
+        },
+        "benchmarks": {
+          "baseline": {
+            "passRate": 0.6666666666666666,
+            "cases": 9,
+            "reasoning": 0.4,
+            "permission": 1,
+            "latencyMs": {
+              "p50": 0.013,
+              "p95": 0.101
+            },
+            "logicalDigest": "sha256:56f986e338934534435842af56afb463064b4169c39c8b1cb87f568eab161efa"
+          },
+          "candidate": {
+            "passRate": 1,
+            "cases": 9,
+            "reasoning": 1,
+            "permission": 1,
+            "latencyMs": {
+              "p50": 0.924,
+              "p95": 1.362
+            },
+            "logicalDigest": "sha256:db675fcce063e3e0be7f4d3996adacb4f5d85ce66fef4abcee105bf1e25a8087"
+          },
+          "comparison": {
+            "fixed": 3,
+            "regressed": 0,
+            "securityRegressions": 0
+          },
+          "assessment": {
+            "eligible": true,
+            "reasons": [],
+            "policy": "shivax-strict-v1"
+          }
+        },
+        "reportsLoaded": 18,
+        "activeResourcesAtTeardown": [
+          "PipeWrap",
+          "PipeWrap"
+        ]
+      },
+      "no-inspectra": {
+        "node": "v26.13.0",
+        "examples": {
+          "registry": {
+            "exit": 0,
+            "ms": 54
+          },
+          "local-model": {
+            "exit": 0,
+            "ms": 41
+          },
+          "rudra": {
+            "exit": 0,
+            "ms": 64
+          },
+          "memory-persistence": {
+            "exit": 0,
+            "ms": 46
+          },
+          "firewall": {
+            "exit": 0,
+            "ms": 41
+          },
+          "benchmark": {
+            "exit": 0,
+            "ms": 59
+          },
+          "model-registry": {
+            "exit": 0,
+            "ms": 134
+          },
+          "feedback-curation": {
+            "exit": 0,
+            "ms": 56
+          },
+          "worker-training": {
+            "exit": 0,
+            "ms": 103
+          },
+          "routing-shadow": {
+            "exit": 0,
+            "ms": 59
+          },
+          "memory-ranking": {
+            "exit": 0,
+            "ms": 55
+          }
+        },
+        "shivax": "0.2.0",
+        "entries": {
+          "shivax": 187,
+          "shivax/core": 12,
+          "shivax/rudra": 14,
+          "shivax/bots": 14,
+          "shivax/security": 9,
+          "shivax/models": 13,
+          "shivax/memory": 13,
+          "shivax/integrations": 5,
+          "shivax/learning": 83,
+          "shivax/learning/node": 7,
+          "shivax/diagnostics": 1,
+          "shivax/licensing/server": 2,
+          "shivax/adapters/inspectra": 2
+        },
+        "bots": [
+          "sanjay",
+          "brihaspati",
+          "vishwakarma",
+          "chitragupt",
+          "narad",
+          "yudhishthir",
+          "ekalavy"
+        ]
+      },
+      "nodeBinary": "v26.13.0"
+    }
+  ],
+  "sources": {
+    "shivax": "5ec8084 S07 Feat: Add SARASWATI - The Intelligence & Learning Release (0.3.0) changes (+ uncommitted changes)",
+    "inspectra": "b291e05 feat: update SHIVAX compatibility and feedback integration documentation",
+    "visynq": "6e17608 Update inspectra-engine version to ^1.1.0 and adjust minimumReleaseAgeExclude in pnpm-workspace.yaml",
+    "shivaxDistBuilt": "2026-11-09T04:54:18.034Z"
+  },
+  "visynqProject": {
+    "patches": [
+      "package.json: inspectra-engine and shivax -> packed tarballs (shivax was not declared; it resolved through ../shivax aliases)",
+      "pnpm-workspace.yaml: overrides shivax -> the same tarball, so Inspectra and Visynq share one copy",
+      "vite.config.ts: removed the shivax/* -> ../shivax/dist alias",
+      "tsconfig.json: removed the shivax path mappings to ../shivax/dist",
+      "src/test/learning-dashboard.test.tsx: ../../../shivax/dist/sdk/learning-node.esm.js -> shivax/learning/node (package export)",
+      "src/lib/shivax-demo.ts: ../../../shivax/examples/sdk/inspection-fixture.json (not in the shivax package) -> vendored ./inspection-fixture.json"
+    ],
+    "environment": {
+      "nativeAddonProbe": {
+        "rollup": "ERR_DLOPEN_FAILED",
+        "oxide": "ok"
+      },
+      "wasmSubstitution": [
+        "rollup -> @rollup/wasm-node@4.68.0"
+      ]
+    },
+    "install": {
+      "exit": 0,
+      "ms": 861,
+      "log": "install-visynq-wasm.log"
+    },
+    "asIs": {
+      "tscExit": 1,
+      "tscErrors": 5,
+      "tscSample": [
+        "src/hooks/useScan.ts(162,66): error TS2339: Property 'error' does not exist on type '({ id: number; sessionId: string; timestamp: string; } & { type: \"page\"; na",
+        "src/hooks/useScan.ts(162,85): error TS2339: Property 'error' does not exist on type '({ id: number; sessionId: string; timestamp: string; } & { type: \"page\"; na",
+        "src/lib/shivax-demo.ts(6,21): error TS2307: Cannot find module '../../../shivax/examples/sdk/inspection-fixture.json' or its corresponding type declarations.",
+        "src/live/useScan.ts(159,66): error TS2339: Property 'error' does not exist on type '({ id: number; sessionId: string; timestamp: string; } & { type: \"page\"; nam",
+        "src/live/useScan.ts(159,85): error TS2339: Property 'error' does not exist on type '({ id: number; sessionId: string; timestamp: string; } & { type: \"page\"; nam"
+      ],
+      "suite": {
+        "name": "visynq-all-as-is",
+        "exit": 1,
+        "files": 51,
+        "failedFiles": 6,
+        "loadFailures": [
+          "firewall-r07.test.tsx: Failed to resolve import \"shivax/security\" from \"src/test/firewall-r07.test.tsx\". Does the file exist?",
+          "firewall.test.tsx: Failed to resolve import \"shivax/security\" from \"src/test/firewall.test.tsx\". Does the file exist?",
+          "learning-dashboard.test.tsx: Failed to resolve import \"../../../shivax/dist/sdk/learning-node.esm.js\" from \"src/test/learning-dashboard.test.tsx\". Does the file exist?",
+          "learning-registry.test.tsx: Failed to resolve import \"shivax/core\" from \"src/test/learning-registry.test.tsx\". Does the file exist?",
+          "learning-review.test.tsx: Failed to resolve import \"shivax/learning\" from \"src/test/learning-fixtures.ts\". Does the file exist?",
+          "shivax-demo.test.tsx: Failed to resolve import \"shivax/diagnostics\" from \"src/pages/ShivaxDemoPage.tsx\". Does the file exist?"
+        ],
+        "tests": 218,
+        "pass": 218,
+        "fail": 0,
+        "skipped": 0,
+        "ms": 43727,
+        "failures": [],
+        "log": "visynq-all-as-is.log"
+      }
+    },
+    "installed": {
+      "inspectra-engine": "1.1.0",
+      "shivax": "0.2.0"
+    }
+  },
+  "finished": "2026-11-09T06:06:15.628Z"
+}
