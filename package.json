@@ -254,7 +254,7 @@
     "@changesets/cli": "^3.0.3",
     "eslint": "^10.14.0",
     "prettier": "^3.9.10",
-    "rollup": "^4.68.2",
+    "rollup": "^4.63.6",
     "typescript": "^7.0.2"
   }
 }

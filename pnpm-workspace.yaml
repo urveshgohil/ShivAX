@@ -1,3 +1,7 @@
 allowBuilds:
   '@parcel/watcher': false
   unrs-resolver: false
+overrides:
+  # Use Rollup's WebAssembly build: Windows Application Control blocks the unsigned native
+  # @rollup/rollup-win32-x64-msvc binary (ERR_DLOPEN_FAILED).
+  rollup: npm:@rollup/wasm-node@^4.68.2
