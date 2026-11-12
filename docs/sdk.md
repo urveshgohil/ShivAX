@@ -1,10 +1,10 @@
 # ShivAX SDK
 
-This guide covers version 0.2.0 NARASIMHA. Sections marked **New in 0.2.0** cover
+This guide covers version 0.3.0 SARASWATI. Sections marked **New in 0.2.0** cover
 APIs that are not in 0.1.3 or earlier. See `CHANGELOG.md`. For scope, trust
 boundaries and limits, read `docs/production.md` first.
 
-Root imports from `shivax` still work. All 12 public entry points ship ESM,
+Root imports from `shivax` still work. All 13 public entry points ship ESM,
 CommonJS and portable ES2020 type declarations.
 
 | Entry point | API |
@@ -15,10 +15,11 @@ CommonJS and portable ES2020 type declarations.
 | `shivax/bots` | The seven specialist bots and helpers to combine them |
 | `shivax/security` | Jay, Vijay, policies, tools and audit; managed firewall and management (new in 0.2.0) |
 | `shivax/models` | Model providers, neural, rules, Ollama and remote adapters, and SLM; guarded model gateway (new in 0.2.0) |
-| `shivax/memory` | Memory engine, storage and lifecycle hooks |
+| `shivax/memory` | Memory engine, storage and lifecycle hooks; opt-in ranked retrieval (`MemoryRanker`) and a local hashing embeddings adapter |
 | `shivax/integrations` | Portable inspection contracts, service and planner |
 | `shivax/adapters/inspectra` | Optional Inspectra adapter, loaded on first use |
-| `shivax/learning` | Feedback, evaluation, curated training and model or config rollback |
+| `shivax/learning` | Feedback, evaluation, reproducible benchmarks, curated training, model or config rollback, the durable model registry (approval, atomic activation, rollback), and shadow routing recommendations with promotable routing policies |
+| `shivax/learning/node` | Node.js only. `WorkerTrainingPool`, `trainOfflineCandidateInWorker` and `trainCuratedCandidateInWorker` train candidates in `worker_threads` without blocking the host (see `docs/learning-worker-training.md`). Not part of the root `shivax` import |
 | `shivax/diagnostics` | `toSDKDiagnostic` and `SDKDiagnostic` |
 | `shivax/licensing/server` | ServerLicenseGate, LicenseError and server license contracts |
 
@@ -563,3 +564,41 @@ host must provide and secure those. The source repository report
 `docs/audits/shivax-r07-management.md` (not in the npm package) covers the full
 store contract, how crashes and revocation behave, and what a production setup
 must still add.
+
+## Migrating to 0.3.0 SARASWATI
+
+SARASWATI - The Intelligence & Learning Release is unreleased. These notes
+describe the development branch.
+
+**Breaking change**
+
+- The code bot is `vishwakarma`, not `vishwakarm`.
+- `VishwakarmBot` remains a deprecated alias.
+- Update firewall `bots` lists, permission policies and routing expectations that
+  name the old id.
+
+**Everything else is additive**
+
+- No 0.2.0 export, signature or default behaviour changed.
+- `EvaluatedModelUpdates`, `evaluateDataset`, `MemoryEngine.search` and RUDRA's
+  deterministic routing behave as before.
+
+**New exports in existing entry points**
+
+| Entry | Additions |
+| --- | --- |
+| `shivax/learning` | Provenance and curation, benchmarks, model registry, routing advisor and policies, retrieval evaluation |
+| `shivax/memory` | `MemoryRanker`, `createHashingEmbeddings`, `MEMORY_RANKING_LIMITS` |
+| `shivax/rudra` | Types for the optional `routing` hook (`RudraRoutingHook`, `RoutingSelectionRequest`) |
+| `shivax/learning/node` | **New entry point (Node.js only):** worker training. Browser bundles must not import it |
+| `shivax` | Everything above except `shivax/learning/node` |
+
+**Adopting the new features**
+
+- Wrap existing v1 feedback explicitly with `createGovernedFeedback`. There is no
+  automatic migration.
+- Register your current model in a `createModelRegistry` store, then evaluate,
+  approve and activate it. There is no shortcut that marks a model active.
+- Start routing with an empty (deterministic) policy as the first active version,
+  so a rollback target exists.
+- Ranking, worker training and routing policies apply only where you opt in.

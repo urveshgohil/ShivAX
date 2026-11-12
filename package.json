@@ -1,6 +1,6 @@
 {
   "name": "shivax",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "ShivAX AI - Narasimha Release",
   "main": "dist/index.cjs",
   "module": "dist/index.esm.js",
@@ -96,6 +96,16 @@
         "default": "./dist/sdk/learning.cjs"
       }
     },
+    "./learning/node": {
+      "import": {
+        "types": "./dist/sdk/learning-node.d.ts",
+        "default": "./dist/sdk/learning-node.esm.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/sdk/learning-node.d.ts",
+        "default": "./dist/sdk/learning-node.cjs"
+      }
+    },
     "./diagnostics": {
       "import": {
         "types": "./dist/sdk/diagnostics.d.ts",
@@ -139,6 +149,13 @@
     "docs/sdk.md",
     "docs/production.md",
     "docs/release-readiness.md",
+    "docs/learning-evaluation.md",
+    "docs/learning-governance.md",
+    "docs/learning-benchmarks.md",
+    "docs/learning-worker-training.md",
+    "docs/learning-registry.md",
+    "docs/learning-routing.md",
+    "docs/memory-ranking.md",
     "examples/autonomous-workflow.mjs",
     "examples/sdk/README.md",
     "examples/sdk/registry.mjs",
@@ -147,6 +164,12 @@
     "examples/sdk/rudra.mjs",
     "examples/sdk/memory-persistence.mjs",
     "examples/sdk/firewall.mjs",
+    "examples/sdk/benchmark.mjs",
+    "examples/sdk/model-registry.mjs",
+    "examples/sdk/feedback-curation.mjs",
+    "examples/sdk/worker-training.mjs",
+    "examples/sdk/routing-shadow.mjs",
+    "examples/sdk/memory-ranking.mjs",
     "examples/sdk/inspectra.mjs"
   ],
   "scripts": {

@@ -265,7 +265,7 @@ bots implement `Bot`, declare 16 input schemas/capabilities and compose with
 RUDRA in `createSpecialistSystem`. Existing modules remain in place.
 
 Sanjay preserves supplied observations and supports an injected image adapter.
-Brihaspati validates explicit/provider-generated plans and provider decisions. Vishwakarm
+Brihaspati validates explicit/provider-generated plans and provider decisions. Vishwakarma
 reports source metadata and returns unapplied patches. Chitragupt accesses
 session memory through protected tools. Narad normalizes/compares supplied UI
 snapshots using the existing engine. Yudhishthir runs actual deterministic

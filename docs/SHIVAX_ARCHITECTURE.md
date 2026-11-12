@@ -158,7 +158,7 @@ The root additionally exports `toSDKDiagnostic` and the type `SDKDiagnostic`.
 | Autonomous workflows | `RudraWorkflowEngine`, `ToolRegistry`, `WorkflowError` |
 | Learning/evaluation | `EVALUATION_DOMAINS`, `learningFeedbackSchema`, `validateFeedback`, `storeLearningFeedback`, `validateEvaluationDataset`, `evaluateDataset`, `validateEvaluationRecord`, `exportTrainingData`, `validateTrainingExport`, `trainOfflineCandidate`, `trainCuratedCandidate`, `EvaluatedModelUpdates` |
 | Security | `Jay`, `Vijay`, `PermissionPolicyRegistry`, `ProtectedToolRegistry`, `SecurityAuditLog`, `SecurityError` |
-| Specialists | `SanjayBot`, `BrihaspatiBot`, `VishwakarmBot`, `ChitraguptBot`, `NaradBot`, `YudhishthirBot`, `EkalavyBot`, `createSpecialistBots`, `registerSpecialistBots`, `createSpecialistSystem`, `registerSpecialistServices`, `SessionMemoryStore`, `SessionFeedbackStore` |
+| Specialists | `SanjayBot`, `BrihaspatiBot`, `VishwakarmaBot`, `ChitraguptBot`, `NaradBot`, `YudhishthirBot`, `EkalavyBot`, `createSpecialistBots`, `registerSpecialistBots`, `createSpecialistSystem`, `registerSpecialistServices`, `SessionMemoryStore`, `SessionFeedbackStore` |
 
 ### Type-only exports: complete inventory
 
@@ -289,7 +289,7 @@ confidence or general intelligence.
 | RUDRA — orchestrator | Phase 01 registry, executor, context and validation | Implemented Phase 02: deterministic routing and bounded ordered workflows; optional model planner adapters remain future work |
 | Sanjay — Vision | Foundation JSON validation | Phase 07 adds estimated screenshot references and a structured vision-provider bridge; actual image understanding requires a configured image-capable backend/evaluation |
 | Brihaspati — Reasoning | RUDRA workflow validation; existing SLM interfaces remain usable by host adapters | Implemented Phase 04: explicit/provider-generated plans and replaceable decisions with capability, dependency and evidence-reference checks; missing provider returns unavailable |
-| Vishwakarm — Code | Foundation validation; no built-in code model | Implemented Phase 04: source metadata, explicit replacement artifacts and optional code-provider proposals; never applies or executes patches |
+| Vishwakarma — Code | Foundation validation; no built-in code model | Implemented Phase 04: source metadata, explicit replacement artifacts and optional code-provider proposals; never applies or executes patches |
 | Chitragupt — Memory | Jay/Vijay and protected tool boundary | Phase 04 legacy key/value memory remains; Phase 06 adds record CRUD/search/export/purge, retention, optional durable adapters and scoped lifecycle recall/capture. All content remains untrusted. |
 | Narad — Inspection | Existing `UISnapshot`, normalization and `analyzeUI` | Phase 07 adds protected inspection capture and normalized-observation comparison; separately maintained adapter delegates browser extraction to Inspectra |
 | Yudhishthir — Review | Foundation and existing scene validation | Phase 07 adds deterministic recomputation of inspection findings before they return to RUDRA; estimated data remains untrusted |
@@ -375,7 +375,7 @@ ShivAX/
     bots/
       sanjay/
       brihaspati/
-      vishwakarm/
+      vishwakarma/
       chitragupt/
       narad/
       yudhishthir/

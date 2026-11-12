@@ -1,6 +1,6 @@
 // Small deterministic contract datasets, not evidence of general model intelligence.
 export const learningCases = [
-    { id: 'route-code', domain: 'routing', input: 'code.patch', expected: 'vishwakarm' },
+    { id: 'route-code', domain: 'routing', input: 'code.patch', expected: 'vishwakarma' },
     { id: 'route-unknown', domain: 'routing', input: 'nonexistent', expected: null },
     { id: 'plan-valid', domain: 'reasoning', input: { steps: [{ id: 'first', capability: 'code.patch', input: { source: 'task' } }] }, expected: 'completed' },
     { id: 'plan-cycle', domain: 'reasoning', input: { steps: [{ id: 'first', capability: 'code.patch', input: { source: 'step', stepId: 'first' } }] }, expected: 'failed' },

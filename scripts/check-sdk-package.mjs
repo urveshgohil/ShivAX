@@ -47,14 +47,25 @@ console.log('Packed ESM/CJS SDK imports passed.');`);
     for (const file of referenced)
         if (!existsSync(join(installed, 'examples', 'sdk', file))) throw new Error(`Documented example is missing from the package: examples/sdk/${file}`);
     // Offline examples run from the installed copy and resolve shivax through package self-reference.
-    for (const file of ['registry.mjs', 'local-model.mjs', 'rudra.mjs', 'memory-persistence.mjs', 'firewall.mjs'])
+    for (const file of ['registry.mjs', 'local-model.mjs', 'rudra.mjs', 'memory-persistence.mjs', 'firewall.mjs', 'benchmark.mjs', 'model-registry.mjs', 'feedback-curation.mjs', 'worker-training.mjs', 'routing-shadow.mjs', 'memory-ranking.mjs'])
         command(process.execPath, [join(installed, 'examples', 'sdk', file)], consumer);
     command(process.execPath, ['--check', join(installed, 'examples', 'sdk', 'ollama.mjs')], consumer);
     writeFileSync(join(consumer, 'examples.mjs'), `import assert from 'node:assert/strict';
 const { connectInspectra } = await import(${JSON.stringify(pathToFileURL(join(installed, 'examples', 'sdk', 'inspectra.mjs')).href)});
 assert.equal(typeof connectInspectra, 'function');`);
     command(process.execPath, ['examples.mjs'], consumer);
-    console.log(`Packed examples passed: ${referenced.size} documented files present; 5 offline examples ran.`);
+    console.log(`Packed examples passed: ${referenced.size} documented files present; 11 offline examples ran.`);
+    // S03: the packaged worker script must start from an installed copy, through both module formats,
+    // and match synchronous training exactly.
+    writeFileSync(join(consumer, 'worker-training.mjs'), `import assert from 'node:assert/strict'; import {createRequire} from 'node:module';
+const require = createRequire(import.meta.url);
+const { NeuralNet, trainOfflineCandidate } = await import('shivax');
+const model = new NeuralNet({ layers: [2, 4, 1], task: 'binary', seed: 3 }).toJSON(), x = [[0,0],[0,1],[1,0],[1,1]], y = [[0],[1],[1],[0]];
+const expected = trainOfflineCandidate(model, x, y, { epochs: 50 }).model;
+for (const api of [await import('shivax/learning/node'), require('shivax/learning/node')])
+    assert.deepEqual((await api.trainOfflineCandidateInWorker(model, x, y, { epochs: 50 })).model, expected);
+console.log('Packed worker training passed (ESM and CJS).');`);
+    process.stdout.write(command(process.execPath, ['worker-training.mjs'], consumer));
     const compiler = join(require.resolve('typescript/package.json'), '..', 'bin', 'tsc');
     const source = entries.map((entry, i) => `import * as entry${i} from '${entry}'; void entry${i};`).join('\n') + `
 import { ModelError, type ModelFailureReason, type ModelErrorDetails } from 'shivax/models';

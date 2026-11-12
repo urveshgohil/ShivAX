@@ -161,7 +161,7 @@ an approved scope for the next phase.
 | RUDRA — orchestration | Structured inputs/results and provider injection patterns | Task contracts, bot registry, routing, lifecycle, cancellation/budget propagation and execution trace |
 | Sanjay — Vision | Scene validation, geometry, matching and UI analysis | Specialist adapter; general image understanding or a configured vision backend |
 | Brihaspati — Reasoning | Optional SLM provider/client and evidence validation | Specialist task/schema contracts and reasoning backend selection |
-| Vishwakarm — Code | TypeScript library/tooling only | Code generation backend, artifact contracts and permission-limited actions |
+| Vishwakarma — Code | TypeScript library/tooling only | Code generation backend, artifact contracts and permission-limited actions |
 | Chitragupt — Memory | Demo-only explicit model persistence | Scoped memory interface, retention, retrieval and storage adapters |
 | Narad — Inspection | Structured visual measurements and differences | Injection of a constrained Inspectra adapter and inspection task contract |
 | Yudhishthir — Review | Evidence-backed issues and review-required SLM advice | Specialist review rules and review result/lifecycle contracts |

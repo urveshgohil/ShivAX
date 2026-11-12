@@ -7,7 +7,7 @@ import { Vijay, type VijayOptions } from '../security/vijay.js';
 import { PermissionPolicyRegistry, ProtectedToolRegistry } from '../security/registry.js';
 import { SanjayBot } from './sanjay.js';
 import { BrihaspatiBot } from './brihaspati.js';
-import { VishwakarmBot } from './vishwakarm.js';
+import { VishwakarmaBot } from './vishwakarma.js';
 import { ChitraguptBot } from './chitragupt.js';
 import { NaradBot } from './narad.js';
 import { YudhishthirBot } from './yudhishthir.js';
@@ -44,7 +44,7 @@ export function createSpecialistBots(providers: SpecialistProviders = {}) {
     return Object.freeze([
         new SanjayBot(providers.vision),
         new BrihaspatiBot(providers.reasoning),
-        new VishwakarmBot(providers.code),
+        new VishwakarmaBot(providers.code),
         new ChitraguptBot(),
         new NaradBot(),
         new YudhishthirBot(providers.review),

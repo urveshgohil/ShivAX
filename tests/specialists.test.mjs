@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
     createSpecialistSystem, createSpecialistBots, registerSpecialistBots, BotRegistry, BotExecutor, createTaskContext,
-    SanjayBot, BrihaspatiBot, VishwakarmBot, ChitraguptBot, NaradBot, YudhishthirBot, EkalavyBot,
+    SanjayBot, BrihaspatiBot, VishwakarmaBot, ChitraguptBot, NaradBot, YudhishthirBot, EkalavyBot,
     SessionMemoryStore, SessionFeedbackStore, Jay, PermissionPolicyRegistry, SecurityAuditLog, analyzeUI, normalizeUISnapshot,
 } from 'shivax';
 import { createMockIdentityProvider } from './fixtures/mock-identity.mjs';
@@ -29,7 +29,7 @@ const explicitPlan = () => ({ steps: [ { id: 'one', capability: 'vision.observe'
 
 test('all seven specialists register with unique IDs and discoverable per-capability schemas', () => {
     const system = createSpecialistSystem();
-    assert.deepEqual(system.registry.list().map(bot => bot.id), ['sanjay', 'brihaspati', 'vishwakarm', 'chitragupt', 'narad', 'yudhishthir', 'ekalavy']);
+    assert.deepEqual(system.registry.list().map(bot => bot.id), ['sanjay', 'brihaspati', 'vishwakarma', 'chitragupt', 'narad', 'yudhishthir', 'ekalavy']);
     assert.equal(system.registry.listCapabilities().length, 29);
     for (const bot of system.registry.list()) for (const capability of bot.capabilities) {
         assert.equal(typeof capability.inputSchema, 'object'); assert.ok(Object.isFrozen(capability.inputSchema));
@@ -100,8 +100,14 @@ test('Brihaspati validates provider-generated plans against dependencies, step b
     assert.equal(Object.isFrozen(result.data.plan.steps), true);
 });
 
-test('Vishwakarm reports source metadata and produces unapplied exact replacement artifacts', async () => {
-    const bot = new VishwakarmBot(), source = file();
+test('deprecated VishwakarmBot alias is the renamed VishwakarmaBot with id vishwakarma', async () => {
+    const shivax = await import('../dist/index.esm.js');
+    assert.equal(shivax.VishwakarmBot, shivax.VishwakarmaBot);
+    assert.equal(new shivax.VishwakarmBot().id, 'vishwakarma');
+});
+
+test('Vishwakarma reports source metadata and produces unapplied exact replacement artifacts', async () => {
+    const bot = new VishwakarmaBot(), source = file();
     const summary = await execute(bot, 'code.summarize', { files: [source] });
     assert.equal(summary.status, 'completed'); assert.equal(summary.data.files[0].lines, 2); assert.equal(summary.data.files[0].characters, source.content.length);
     const patch = await execute(bot, 'code.patch', { files: [source], edits: [{ path: source.path, oldText: '= 1', newText: '= 2' }] });
@@ -111,11 +117,11 @@ test('Vishwakarm reports source metadata and produces unapplied exact replacemen
 });
 
 test('code artifacts reject ambiguous replacements, traversal paths and unprovided target files', async () => {
-    const bot = new VishwakarmBot(), source = file();
+    const bot = new VishwakarmaBot(), source = file();
     for (const path of ['../outside.ts', '/absolute.ts', 'C:/outside.ts', 'src\\outside.ts', 'src/./x.ts'])
         failed(await execute(bot, 'code.summarize', { files: [{ ...source, path }] }), 'invalid-input');
     failed(await execute(bot, 'code.patch', { files: [{ ...source, content: 'x x' }], edits: [{ path: source.path, oldText: 'x', newText: 'y' }] }), 'invalid-input');
-    failed(await execute(new VishwakarmBot({ id: 'bad-patch', suggest: () => ({ explanation: 'invalid target', patches: [{ path: 'other.ts', before: source.content, after: 'text' }] }) }), 'code.suggest', { files: [source], instruction: 'change value' }), 'invalid-output');
+    failed(await execute(new VishwakarmaBot({ id: 'bad-patch', suggest: () => ({ explanation: 'invalid target', patches: [{ path: 'other.ts', before: source.content, after: 'text' }] }) }), 'code.suggest', { files: [source], instruction: 'change value' }), 'invalid-output');
     failed(await execute(bot, 'code.suggest', { files: [source], instruction: 'change value' }), 'unavailable');
 });
 
@@ -123,7 +129,7 @@ test('code providers return validated artifacts without applying changes or repl
     const source = file(), provider = { id: 'code-fixture', suggest: () => ({ explanation: 'Explicit fixture suggestion', patches: [
         { path: source.path, before: source.content, after: 'export const value = 2;\n' },
     ] }) };
-    const bot = new VishwakarmBot(provider); provider.suggest = () => { throw Error('replaced method'); };
+    const bot = new VishwakarmaBot(provider); provider.suggest = () => { throw Error('replaced method'); };
     const result = await execute(bot, 'code.suggest', { files: [source], instruction: 'change the value' });
     assert.equal(result.status, 'completed'); assert.equal(result.data.applied, false); assert.equal(result.data.providerId, 'code-fixture');
     assert.equal(source.content, file().content);
@@ -303,5 +309,5 @@ test('specialist inputs and provider outputs reject executable or oversized data
     failed(await execute(new SanjayBot(), 'vision.observe', { observations: [{ label: 'x', confidence: 2 }] }), 'invalid-input');
     failed(await execute(new SanjayBot({ id: 'bad', analyze: () => ({ summary: 'x', observations: [], execute: () => true }) }), 'vision.analyze', { image: { mimeType: 'image/png', base64: 'aGVsbG8=' } }), 'invalid-output');
     const data = { files: [file()] };
-    failed(await execute(new VishwakarmBot(), 'code.summarize', data, { limits: { maxOutputBytes: 10 } }), 'invalid-output');
+    failed(await execute(new VishwakarmaBot(), 'code.summarize', data, { limits: { maxOutputBytes: 10 } }), 'invalid-output');
 });
