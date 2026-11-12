@@ -109,7 +109,7 @@ pass. Imported aggregate counts without underlying observations cannot establish
 the truth of external evaluations; host evaluators remain trusted. The existing
 in-memory rollback and cooperative cancellation limitations still apply.
 
-## SARASWATI additions (unreleased 0.3.0)
+## SARASWATI additions (new in 0.3.0)
 
 The 0.2.0 APIs above are unchanged. SARASWATI - The Intelligence & Learning
 Release adds:

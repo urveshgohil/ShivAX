@@ -11,13 +11,34 @@ name of their line. The npm version stays plain semantic versioning.
 | 0.2.x | NARASIMHA |
 | 0.3.x | SARASWATI - The Intelligence & Learning Release |
 
-## [Unreleased] - 0.3.0 SARASWATI - The Intelligence & Learning Release
+## [0.3.1] SARASWATI - The Intelligence & Learning Release
 
-Not published. `package.json` is set to 0.3.0. All additions are opt-in and
-additive; the only breaking change is the Vishwakarma bot id spelling (below).
-Migration notes: `docs/sdk.md`, section "Migrating to 0.3.0 SARASWATI". New
-offline examples (S07): `feedback-curation.mjs`, `worker-training.mjs`,
-`routing-shadow.mjs` and `memory-ranking.mjs` in `examples/sdk/`.
+Patch release. No ML, bot IDs, Jay/Vijay, learning, approval or rollback
+behavior changed.
+
+### Fixed
+
+- Widen the optional Inspectra peer from `1.0.4` to `^1.0.4` (SHIVAX-C01). In
+  0.3.0 and 0.2.0, installing ShivAX next to `inspectra-engine@1.1.0` or later
+  failed with `ERESOLVE`. Verified with clean npm, ESM/CommonJS, declaration, real
+  browser and security checks against 1.0.4 and 1.1.0, and with live ESM/CommonJS
+  capture, normalization, screenshot and cleanup checks against 1.2.0. Inspectra
+  remains optional and lazy-loaded. Errors now describe the required
+  `captureUIPage` API without naming one exact package version.
+
+### Added
+
+- `scripts/check-inspectra-matrix.mjs`: a reproducible packed-consumer
+  compatibility matrix for Inspectra releases.
+
+## [0.3.0] SARASWATI - The Intelligence & Learning Release - 2026-11-12
+
+All additions are opt-in and additive; the only breaking change is the
+Vishwakarma bot id spelling (below). Migration notes: `docs/sdk.md`, section
+"Migrating to 0.3.0 SARASWATI". New offline examples (S07):
+`feedback-curation.mjs`, `worker-training.mjs`, `routing-shadow.mjs` and
+`memory-ranking.mjs` in `examples/sdk/`. The optional Inspectra peer is pinned to
+exactly `1.0.4` in this version; use 0.3.1 with newer Inspectra releases.
 
 ### Added
 
@@ -42,8 +63,7 @@ offline examples (S07): `feedback-curation.mjs`, `worker-training.mjs`,
 
 ## [0.2.0] NARASIMHA - 2026-11-07
 
-Prepared on 2026-11-07 after the R10 checks. It is not on npm yet. The latest
-published version is 0.1.3. This release has two breaking changes, marked below.
+This release has two breaking changes, marked below.
 
 ### Added
 

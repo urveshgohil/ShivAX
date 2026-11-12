@@ -5,9 +5,12 @@ interface on top of Inspectra. It ships with ShivAX in ESM and CommonJS formats.
 The nested `@shivax/inspectra-adapter` manifest is private development metadata.
 It is not a separate published package.
 
-The optional peer is **inspectra-engine 1.0.4**, tested against the published npm
-package. The peer range `1.0.4` covers only that tested version. Earlier and later
-releases are not tested. Install it in your host application when you need live
+The optional peer is **inspectra-engine ^1.0.4** (stable >=1.0.4 <2.0.0). Versions
+1.0.4 and 1.1.0 are verified with clean npm installs and real offline browser
+captures, and 1.2.0 with live ESM and CommonJS capture, normalization, screenshot
+and cleanup checks. Future 1.x compatibility assumes the same
+`captureUIPage` and snapshot/metadata APIs; rerun the matrix for new releases.
+Prereleases and 2.x are outside this range. Install Inspectra when you need live
 capture. ShivAX does not require it, and the optional peer setting lets you leave
 it out. Package managers may still install it in ShivAX's own development
 checkout. Live capture needs Node 22.15+ and a Playwright browser and page set up
@@ -89,12 +92,24 @@ node adapters/inspectra/refresh-fixtures.mjs
 ```
 
 To check both built adapter formats with the default loader, build first. Then
-set `INSPECTRA_ROOT` to an installed `inspectra-engine@1.0.4` package folder and
+set `INSPECTRA_ROOT` to an installed `inspectra-engine` package folder in the supported range and
 run `node scripts/check-inspectra-package.mjs`. The check builds a separate
 package layout and checks imports and capture errors with Inspectra missing. It
 then links the installed provider and runs real Chromium capture, layout
 normalization, screenshots and page cleanup in ESM and CJS. It installs nothing,
 leaves the provider unchanged, and deletes its temporary layout when done.
+
+For the clean-install release matrix, run `node scripts/check-inspectra-matrix.mjs`
+after building. Set `SHIVAX_NPM_CLI` to the absolute npm CLI path,
+`PLAYWRIGHT_BROWSERS_PATH` to the installed browser cache, and optionally
+`INSPECTRA_CANDIDATE` to a local Inspectra directory or tarball. The check packs
+the candidate without running its scripts or editing its source. It creates fresh
+consumers under the OS temporary directory, installs with normal npm peer checks,
+runs `npm ls --all`, all ESM/CJS exports, five TypeScript modes, real offline
+capture and security/cancellation/cleanup probes, and 60 firewall/model regressions
+per consumer. Logs, tarballs and lockfiles are retained in the printed directory.
+No force or legacy-peer resolution flags are used. Missing-provider capture is
+expected to fail safely; browser capture is not applicable to that consumer.
 
 The last two commands need the sibling Inspectra checkout and an installed
 Playwright browser. `INSPECTRA_ROOT` can point to another checkout, and

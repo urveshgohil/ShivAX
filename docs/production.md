@@ -5,7 +5,7 @@ tested. Read it with the [SDK guide](sdk.md) and [SECURITY.md](../SECURITY.md).
 
 ## Status and version
 
-- This guide covers version **0.3.0 SARASWATI**. Its learning additions are marked *SARASWATI* below.
+- This guide covers version **0.3.1 SARASWATI**. Its learning additions are marked *SARASWATI* below.
 - New in 0.2.0, and not in 0.1.3 or earlier: exact model cost math, strict token
   usage checks, and the managed firewall. The usage checks are a breaking change
   for providers that report `null` token counts. Sections below mark these
@@ -30,7 +30,7 @@ JavaScript. There is no GPU, WebAssembly or native code.
 | Text features | `BagOfWords`: a capped Unicode vocabulary and normalized word counts. No tokenizer models or embeddings. |
 
 Large training runs block the thread they run on, so run them in a worker
-(SARASWATI, unreleased: `shivax/learning/node` provides one on Node.js). A
+(SARASWATI: `shivax/learning/node` provides one on Node.js). A
 failed run can keep the batch updates it made before the failure. The handwritten
 digit playground lives in the source repository. It is not in the npm package.
 
@@ -139,7 +139,7 @@ protected execution, the management API and audit records.
 | `shivax/models` | Model registry and router; neural, rules, Ollama and remote adapters; guarded gateway (new in 0.2.0) |
 | `shivax/memory` | Memory engine, with in-memory, Node file and IndexedDB storage |
 | `shivax/integrations` | UI inspection contracts, service and planner |
-| `shivax/adapters/inspectra` | Optional adapter. Needs the optional peer `inspectra-engine@1.0.4` and Node 22.15+ |
+| `shivax/adapters/inspectra` | Optional adapter. Needs the optional peer `inspectra-engine@^1.0.4` and Node 22.15+ |
 | `shivax/learning` | Feedback, evaluation, curated training, tested updates and rollback |
 | `shivax/diagnostics` | `toSDKDiagnostic` |
 | `shivax/licensing/server` | Server-side license check contracts |
@@ -177,7 +177,7 @@ paths inside `dist/` are not supported.
 See [release-readiness.md](release-readiness.md) for the latest test record,
 with the exact commands and results.
 
-## Learning and evaluation (SARASWATI, unreleased 0.3.0)
+## Learning and evaluation (SARASWATI, new in 0.3.0)
 
 SARASWATI - The Intelligence & Learning Release adds controlled learning around
 the ML core above. All of it is opt-in.

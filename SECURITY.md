@@ -14,8 +14,8 @@ browser.
 
 ## Supported versions
 
-This policy covers version 0.3.0 SARASWATI (on the development branch) and the
-published 0.2.0 NARASIMHA. The learning lifecycle controls described below are
+This policy covers the 0.3.x SARASWATI line (currently 0.3.1) and 0.2.0
+NARASIMHA. The learning lifecycle controls described below are
 new in 0.3.0. The managed firewall and the strict model usage checks are new in
 0.2.0. They are not in 0.1.3 or earlier. There is no support window or backport
 policy yet.
