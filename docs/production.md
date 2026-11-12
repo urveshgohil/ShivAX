@@ -5,7 +5,7 @@ tested. Read it with the [SDK guide](sdk.md) and [SECURITY.md](../SECURITY.md).
 
 ## Status and version
 
-- This guide covers version **0.2.0 NARASIMHA**.
+- This guide covers version **0.3.0 SARASWATI**. Its learning additions are marked *SARASWATI* below.
 - New in 0.2.0, and not in 0.1.3 or earlier: exact model cost math, strict token
   usage checks, and the managed firewall. The usage checks are a breaking change
   for providers that report `null` token counts. Sections below mark these

@@ -9,11 +9,11 @@ name of their line. The npm version stays plain semantic versioning.
 | --- | --- |
 | 0.1.x | BRAHMA |
 | 0.2.x | NARASIMHA |
-| 0.3.x | SARASWATI - The Intelligence & Learning Release (unreleased) |
+| 0.3.x | SARASWATI - The Intelligence & Learning Release |
 
 ## [Unreleased] - 0.3.0 SARASWATI - The Intelligence & Learning Release
 
-Not published. `package.json` still says 0.2.0. All additions are opt-in and
+Not published. `package.json` is set to 0.3.0. All additions are opt-in and
 additive; the only breaking change is the Vishwakarma bot id spelling (below).
 Migration notes: `docs/sdk.md`, section "Migrating to 0.3.0 SARASWATI". New
 offline examples (S07): `feedback-curation.mjs`, `worker-training.mjs`,

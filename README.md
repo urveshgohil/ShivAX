@@ -10,7 +10,7 @@ bots, a task runner, memory, model routing, UI checks and a firewall. RUDRA hand
 each task to the right bot. Jay checks who is calling, and Vijay checks what they
 may do. The firewall decides which actions can run.
 
-**Version:** 0.2.0 NARASIMHA · **Runs on:** Node.js 22+ and modern browsers · **License:** Apache-2.0
+**Version:** 0.3.0 SARASWATI · **Runs on:** Node.js 22+ and modern browsers · **License:** Apache-2.0
 
 The core has no runtime dependencies. You plug in your own browser automation,
 storage, sign-in and model backends when you need them.

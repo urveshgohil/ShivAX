@@ -1,6 +1,6 @@
 # ShivAX SDK
 
-This guide covers version 0.2.0 NARASIMHA. Sections marked **New in 0.2.0** cover
+This guide covers version 0.3.0 SARASWATI. Sections marked **New in 0.2.0** cover
 APIs that are not in 0.1.3 or earlier. See `CHANGELOG.md`. For scope, trust
 boundaries and limits, read `docs/production.md` first.
 

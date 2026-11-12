@@ -14,9 +14,11 @@ browser.
 
 ## Supported versions
 
-This policy covers version 0.2.0 NARASIMHA and the unreleased 0.3.0 SARASWATI additions on the development branch. The managed firewall and the strict
-model usage checks are new in 0.2.0. They are not in 0.1.3 or earlier. There is
-no support window or backport policy yet.
+This policy covers version 0.3.0 SARASWATI (on the development branch) and the
+published 0.2.0 NARASIMHA. The learning lifecycle controls described below are
+new in 0.3.0. The managed firewall and the strict model usage checks are new in
+0.2.0. They are not in 0.1.3 or earlier. There is no support window or backport
+policy yet.
 
 ## Reporting a vulnerability
 
@@ -97,7 +99,7 @@ policy storage, revocation across processes and stopping I/O that does not
 cooperate. A JavaScript library on npm cannot stop a malicious host from going
 around its code. Never pass admin capabilities or signed-in root objects to bots.
 
-## Learning lifecycle boundary (SARASWATI, unreleased)
+## Learning lifecycle boundary (new in 0.3.0 SARASWATI)
 
 - **Untrusted inputs.** Feedback, provenance, benchmark reports, routing
   evidence and memory metadata are untrusted claims. Verification comes only from
