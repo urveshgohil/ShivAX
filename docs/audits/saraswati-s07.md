@@ -90,11 +90,11 @@ The new examples are listed in `examples/sdk/README.md`.
 
 | File | Change |
 | --- | --- |
-| `README.md` | New section "Coming in 0.3.0 SARASWATI - The Intelligence & Learning Release (unreleased)" covering existing ML capability, controlled feedback learning, CPU training, evaluation, human-approved promotion, optional providers, firewall protections, shadow routing and memory relevance, and the fine-tuning limits. Features list updated |
+| `README.md` | New section "0.3.0 SARASWATI - The Intelligence & Learning Release" covering existing ML capability, controlled feedback learning, CPU training, evaluation, human-approved promotion, optional providers, firewall protections, shadow routing and memory relevance, and the fine-tuning limits. Features list updated |
 | `docs/production.md` | Worker note; new section "Learning and evaluation (SARASWATI)" with a capability-by-host-responsibility table, human approval, firewall, optional providers and limits |
 | `docs/learning-evaluation.md` | SARASWATI additions with links to every guide |
 | `SECURITY.md` | Scope note; new section "Learning lifecycle boundary" |
-| `CHANGELOG.md` | Release-line table entry `0.3.x SARASWATI - The Intelligence & Learning Release (unreleased)`; `[Unreleased]` heading with a status, migration pointer and examples |
+| `CHANGELOG.md` | Release-line table entry `0.3.x SARASWATI - The Intelligence & Learning Release`; `[0.3.0]` heading with a status, migration pointer and examples |
 | `docs/sdk.md` | New section "Migrating to 0.3.0 SARASWATI": the breaking bot-id change, additive exports per entry, adoption steps |
 
 The docs make no claim of autonomous intelligence growth. They state that LLM

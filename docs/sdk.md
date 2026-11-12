@@ -1,6 +1,6 @@
 # ShivAX SDK
 
-This guide covers version 0.3.0 SARASWATI. Sections marked **New in 0.2.0** cover
+This guide covers version 0.3.1 SARASWATI. Sections marked **New in 0.2.0** cover
 APIs that are not in 0.1.3 or earlier. See `CHANGELOG.md`. For scope, trust
 boundaries and limits, read `docs/production.md` first.
 
@@ -43,8 +43,8 @@ CommonJS and portable ES2020 type declarations.
 - **Nothing heavy on import:** importing ShivAX loads no model, React, browser
   engine or licensing service.
 - **Runtimes:** the core needs Node 22+. Running Inspectra needs Node 22.15+ and
-  an optional `inspectra-engine@1.0.4` installed by the host. That is the exact
-  optional peer version tested. Neither ShivAX nor its adapter loads Inspectra
+  an optional `inspectra-engine@^1.0.4` installed by the host. Versions 1.0.4,
+  1.1.0 and 1.2.0 are verified. Neither ShivAX nor its adapter loads Inspectra
   until it is needed. Both the ESM and CommonJS adapters use dynamic import for
   Inspectra's ESM-only `/node` API. If the provider is missing or its API does not
   match, the error gives fixed setup steps and hides the provider's exception.
@@ -484,7 +484,10 @@ enforce that signal's signed-in space and resource limits.
 Inspection services authorize each page again after the previous capture. They
 apply the host URL rule to every destination the provider checks. The optional
 Inspectra adapter still loads `inspectra-engine/node` on first use. It stays an
-optional peer at the tested version, 1.0.4.
+optional peer with range `^1.0.4` (stable versions >=1.0.4 <2.0.0). Versions
+1.0.4, 1.1.0 and 1.2.0 are verified. Prereleases and 2.x are outside the peer
+range. Future 1.x releases must preserve `captureUIPage`
+and its validated snapshot/metadata contract; rerun the matrix before deployment.
 
 In protected use, `openPage(request, context, security)` receives a fresh
 `InspectraPageSecurity` contract. Before it navigates, the trusted host must:
@@ -567,8 +570,9 @@ must still add.
 
 ## Migrating to 0.3.0 SARASWATI
 
-SARASWATI - The Intelligence & Learning Release is unreleased. These notes
-describe the development branch.
+These notes cover upgrading from 0.2.x to 0.3.x SARASWATI - The Intelligence &
+Learning Release. Use 0.3.1 or later if you also install `inspectra-engine` 1.1.0
+or newer.
 
 **Breaking change**
 

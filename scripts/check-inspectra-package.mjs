@@ -8,11 +8,13 @@ import { spawnSync } from 'node:child_process';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 if (!process.env.INSPECTRA_ROOT)
-    throw Error('Set INSPECTRA_ROOT to an installed inspectra-engine@1.0.4 package directory.');
+    throw Error('Set INSPECTRA_ROOT to an installed inspectra-engine package directory in the supported peer range.');
 const providerRoot = resolve(process.env.INSPECTRA_ROOT);
 const provider = JSON.parse(readFileSync(join(providerRoot, 'package.json'), 'utf8'));
 assert.equal(provider.name, 'inspectra-engine');
-assert.equal(provider.version, '1.0.4', 'Only Inspectra 1.0.4 is certified by this check.');
+const version = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(provider.version)?.slice(1).map(Number);
+assert.ok(version && version[0] === 1 && (version[1] > 0 || version[2] >= 4),
+    'This check supports stable Inspectra versions >=1.0.4 <2.0.0; prereleases require a separate candidate matrix.');
 const directory = mkdtempSync(join(tmpdir(), 'shivax-inspectra-check-'));
 try {
     // Mirror the shipped adapter/declaration layout, omitting its private nested manifest.
@@ -68,7 +70,7 @@ try {
         const work = provider.capture({ url: 'https://fixture.test/reference', viewport: { width: 800, height: 600 } },
             { session: { scope }, signal: new AbortController().signal });
         if (!installed) {
-            await assert.rejects(work, /Install optional peer inspectra-engine@1\\.0\\.4/);
+            await assert.rejects(work, /Install optional peer inspectra-engine in the supported peer range/);
             assert.equal(opens, 0);
             assert.equal(closes, 0);
         } else {
@@ -88,7 +90,7 @@ try {
             assert.equal(JSON.stringify(observation).includes(screenshotPath), false);
             assert.ok(statSync(screenshotPath).size > 0);
         }
-        console.log('PASS: ' + format + ' default lazy loader, Inspectra ' + (installed ? '1.0.4 live capture/normalization/screenshot/cleanup' : 'absent; all public imports work'));
+        console.log('PASS: ' + format + ' default lazy loader, Inspectra ' + (installed ? '${provider.version} live capture/normalization/screenshot/cleanup' : 'absent; all public imports work'));
     }
 } finally { await browser?.close(); }
 `);

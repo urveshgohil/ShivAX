@@ -28,7 +28,7 @@ for (const [format, api] of [['ESM', esm], ['CJS', require('shivax/adapters/insp
         });
         assert.equal(loads, 0);
         await assert.rejects(provider.capture({}, context()), error => {
-            assert.match(error.message, /Install optional peer inspectra-engine@1\.0\.4/);
+            assert.match(error.message, /Install optional peer inspectra-engine in the supported peer range/);
             assert.doesNotMatch(error.message, /PRIVATE_TOKEN|private/);
             assert.equal(error.cause, undefined);
             return true;

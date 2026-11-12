@@ -111,14 +111,14 @@ export class InspectraInspectionProvider {
             context.signal.throwIfAborted();
             checkDestination(request.url);
             failureMessage =
-                'Inspectra is unavailable. Install optional peer inspectra-engine@1.0.4 and its dependencies, or provide a compatible load function.';
+                'Inspectra is unavailable. Install optional peer inspectra-engine in the supported peer range and its dependencies, or provide a compatible load function exposing captureUIPage.';
             const api = await this.#load();
             failureMessage = 'Inspectra capture failed.';
             context.checkExecution?.();
             context.signal.throwIfAborted();
             if (typeof api?.captureUIPage !== 'function') {
                 failureMessage =
-                    'Incompatible Inspectra API: expected captureUIPage. Use inspectra-engine@1.0.4 or provide a compatible load function.';
+                    'Incompatible Inspectra API: expected captureUIPage(page, options) from inspectra-engine/node. Use a supported release or provide a compatible load function.';
                 throw new Error('Unsupported Inspectra API.');
             }
             // openPage must enforce allowed navigation, redirects and subresources, and clean up on rejection.

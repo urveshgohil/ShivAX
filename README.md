@@ -10,12 +10,12 @@ bots, a task runner, memory, model routing, UI checks and a firewall. RUDRA hand
 each task to the right bot. Jay checks who is calling, and Vijay checks what they
 may do. The firewall decides which actions can run.
 
-**Version:** 0.3.0 SARASWATI · **Runs on:** Node.js 22+ and modern browsers · **License:** Apache-2.0
+**Version:** 0.3.1 SARASWATI · **Runs on:** Node.js 22+ and modern browsers · **License:** Apache-2.0
 
 The core has no runtime dependencies. You plug in your own browser automation,
 storage, sign-in and model backends when you need them.
 
-## Coming in 0.3.0 SARASWATI - The Intelligence & Learning Release (unreleased)
+## 0.3.0 SARASWATI - The Intelligence & Learning Release
 
 SARASWATI adds controlled learning around the existing ML core. Nothing learns
 on its own: every step needs verified data, evidence, a trusted administrator and
@@ -94,7 +94,7 @@ Imports and entry points have not changed. See [CHANGELOG.md](CHANGELOG.md).
   policies, protected tools, approvals and audit records.
 - **Learning and evaluation:** store checked feedback, build curated datasets,
   run repeatable tests, and update or roll back a model only after it passes.
-  SARASWATI (unreleased) adds provenance, benchmarks, worker training, a durable
+  SARASWATI (0.3.x) adds provenance, benchmarks, worker training, a durable
   approval registry, shadow routing and memory ranking.
 
 ## Specialist bots
@@ -179,7 +179,7 @@ Every option is in the [SDK guide](docs/sdk.md#managed-firewall-core).
 | `shivax/learning` | Feedback, evaluation, training, durable model registry, rollback, shadow routing advice |
 | `shivax/learning/node` | Node.js only: non-blocking neural training in worker threads |
 | `shivax/diagnostics` | Error details that are safe to show users |
-| `shivax/adapters/inspectra` | Optional Inspectra adapter (`inspectra-engine@1.0.4`) |
+| `shivax/adapters/inspectra` | Optional Inspectra adapter (`inspectra-engine@^1.0.4`) |
 | `shivax/licensing/server` | Server-side license check |
 
 Each entry point ships ESM, CommonJS and TypeScript types. More examples are in

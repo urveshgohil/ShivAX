@@ -1,16 +1,16 @@
 # Release readiness
 
-> **Latest (2026-11-07): version bumped to 0.2.0 after R10.** 792/792 tests pass on
-> Node 22.23.2, 24.22.2 and 26.13.0 (Windows); `npm pack --dry-run` produces
-> `shivax-0.2.0.tgz` with 453 files. 0.2.0 is not published. Remaining pre-publish
-> step: a passing Linux/Windows CI run. The full report is
-> `docs/audits/shivax-r10-release.md` in the source repository (not included in the
-> npm package). Sections below are the R09 and earlier records.
+> **Latest (2026-11-12): version 0.3.1 SARASWATI.** 0.2.0 was published on
+> 2026-11-07 and 0.3.0 on 2026-11-12. 0.3.1 widens the optional Inspectra peer to
+> `^1.0.4` (verified against 1.0.4, 1.1.0 and 1.2.0). 897/897 tests pass on Node
+> 22.23.2 (Windows). The SARASWATI reports are in `docs/audits/` in the source
+> repository (not included in the npm package). Sections below are the R10, R09 and
+> earlier records, kept as written at the time.
 
 ## Status at R09 (2026-11-07, Asia/Calcutta)
 
 **Decision: R09 documentation and SDK packaging work is complete. Nothing was
-published.** Releasing the `Unreleased` changes still needs a version decision
+published.** Releasing these changes still needed a version decision
 and the open items below.
 
 ### Version and registry state
@@ -23,9 +23,9 @@ and the open items below.
   timestamp but is no longer listed.
 - The published 0.1.3 tarball was downloaded and inspected. It contains no
   `createShivaxFirewall`, no `usage-unverifiable` code and no internal cost module.
-  The R01, R02 and firewall (R04–R07) work in this source is therefore **unreleased**
-  and is recorded under `Unreleased` in `CHANGELOG.md`.
-- The unreleased changes include a breaking behaviour change (R02 fail-closed token
+  The R01, R02 and firewall (R04–R07) work was therefore not yet in a release
+  at R09. It shipped in 0.2.0 (see `CHANGELOG.md`).
+- These changes include a breaking behaviour change (R02 fail-closed token
   usage). Under 0.x semantic versioning, `^0.1.3` ranges would pick up a 0.1.x patch
   automatically, so the next release should be a minor version.
 
@@ -33,8 +33,8 @@ and the open items below.
 
 | Finding (Phase 10, 2026-10-29) | Status | Evidence |
 | --- | --- | --- |
-| P1: malformed output masks reported usage overrun (`ModelRouter`) | **Resolved in R02.** The overrun now fails with `usage-limit` (reason `token-limit-exceeded`), fallback never runs, and later calls are blocked. The original R00 reproduction passes 4/4 in the standard test gate. Unreleased. | [`docs/audits/shivax-r02.md`](audits/shivax-r02.md), `tests/model-safety.test.mjs`, `tests/router-audit.test.mjs` |
-| P2: fractional USD accumulation rejects an affordable call (`ModelRouter`) | **Resolved in R01.** Exact integer cost accounting: three $0.10 calls fit $0.30, the fourth is rejected; ten fit $1. Unreleased. | [`docs/audits/shivax-r01.md`](audits/shivax-r01.md), `tests/model-cost.test.mjs` |
+| P1: malformed output masks reported usage overrun (`ModelRouter`) | **Resolved in R02.** The overrun now fails with `usage-limit` (reason `token-limit-exceeded`), fallback never runs, and later calls are blocked. The original R00 reproduction passes 4/4 in the standard test gate. Released in 0.2.0. | [`docs/audits/shivax-r02.md`](audits/shivax-r02.md), `tests/model-safety.test.mjs`, `tests/router-audit.test.mjs` |
+| P2: fractional USD accumulation rejects an affordable call (`ModelRouter`) | **Resolved in R01.** Exact integer cost accounting: three $0.10 calls fit $0.30, the fourth is rejected; ten fit $1. Released in 0.2.0. | [`docs/audits/shivax-r01.md`](audits/shivax-r01.md), `tests/model-cost.test.mjs` |
 | P2: CommonJS TypeScript consumers fail with TS1479 | **Resolved in 0.1.3** (published). Conditional CommonJS declaration graph; checked in five consumer modes by `verify:package`. | [`docs/audits/build-stabilization-final.md`](audits/build-stabilization-final.md) |
 | Rollup private-field helper and unresolved optional Inspectra warnings | **Resolved in 0.1.3** (published). No build warnings in the R09 build. | `CHANGELOG.md` 0.1.3 |
 
@@ -80,7 +80,7 @@ included in the npm package.
 - `package.json`: added `repository`, `bugs` and `homepage` for the public GitHub
   repository; added `docs/production.md` and the examples to `files`.
 - New `docs/production.md`. Updated README, `docs/sdk.md`, SECURITY.md,
-  CHANGELOG (`Unreleased`), `examples/README.md` and the Inspectra adapter README.
+  CHANGELOG (0.2.0 section), `examples/README.md` and the Inspectra adapter README.
 
 Package metadata checked: Apache-2.0 license with `LICENSE` and `NOTICE` packed;
 `engines.node` `>=22` (the Inspectra adapter needs 22.15+, as documented);
@@ -235,7 +235,7 @@ It remains lazy in the output and the injected live adapter test passes.
 
 ### Release blockers reconfirmed
 
-> **Status (2026-11-07): both blockers below are resolved in unreleased source.**
+> **Status (2026-11-07): both blockers below are resolved and shipped in 0.2.0.**
 > Blocker 1 was fixed in R02 ([evidence](audits/shivax-r02.md)); blocker 2 was
 > fixed in R01 ([evidence](audits/shivax-r01.md)). The line numbers below refer to
 > the 2026-10-29 source.
