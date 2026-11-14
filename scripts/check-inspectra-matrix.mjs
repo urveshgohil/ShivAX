@@ -23,7 +23,14 @@ if (process.env.SHIVAX_INSPECTRA_PEER) manifest.peerDependencies['inspectra-engi
 writeFileSync(join(staging, 'package.json'), JSON.stringify(manifest, null, 2));
 const pack = JSON.parse(npm.run(['pack', '--ignore-scripts', '--json', '--pack-destination', directory], staging))[0];
 const tarball = join(directory, pack.filename);
-const cases = [['absent', null], ['1.0.4', 'inspectra-engine@1.0.4'], ['1.1.0', 'inspectra-engine@1.1.0']];
+const registryVersions = JSON.parse(npm.run(['view', 'inspectra-engine', 'versions', '--json'], directory));
+writeFileSync(join(directory, 'registry-versions.json'), JSON.stringify(registryVersions, null, 2));
+const stableVersions = registryVersions.filter(version => {
+    const parts = /^1\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(version);
+    return parts && (Number(parts[1]) > 0 || Number(parts[2]) >= 4);
+});
+assert.ok(stableVersions.includes('1.0.4') && stableVersions.includes('1.1.0'));
+const cases = [['absent', null], ...stableVersions.map(version => [version, `inspectra-engine@${version}`])];
 let candidateArtifact;
 if (process.env.INSPECTRA_CANDIDATE) {
     const candidate = resolve(process.env.INSPECTRA_CANDIDATE);
@@ -83,7 +90,7 @@ void provider;
         results.push({ name, result: 'FAIL', error: error.message }); console.error(`FAIL ${name}: ${error.message}`);
     }
 }
-writeFileSync(join(directory, 'results.json'), JSON.stringify({ node: process.version, peer: manifest.peerDependencies['inspectra-engine'], tarball,
+writeFileSync(join(directory, 'results.json'), JSON.stringify({ node: process.version, shivaxVersion: manifest.version, peer: manifest.peerDependencies['inspectra-engine'], tarball,
     sha256: createHash('sha256').update(readFileSync(tarball)).digest('hex'), candidateArtifact, results }, null, 2));
 if (results.some(r => r.result === 'FAIL')) process.exitCode = 1;
 // Preserve evidence and lockfiles for review. Only this script's fresh temp directory is written.

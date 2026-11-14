@@ -5,7 +5,7 @@ tested. Read it with the [SDK guide](sdk.md) and [SECURITY.md](../SECURITY.md).
 
 ## Status and version
 
-- This guide covers version **0.3.1 SARASWATI**. Its learning additions are marked *SARASWATI* below.
+- This guide covers version **0.3.2 SARASWATI**. Its learning additions are marked *SARASWATI* below.
 - New in 0.2.0, and not in 0.1.3 or earlier: exact model cost math, strict token
   usage checks, and the managed firewall. The usage checks are a breaking change
   for providers that report `null` token counts. Sections below mark these
@@ -146,6 +146,15 @@ protected execution, the management API and audit records.
 
 Each entry point ships ESM, CommonJS and TypeScript types. Imports from deep
 paths inside `dist/` are not supported.
+
+C01 verified SHIVAX 0.3.1 with no Inspectra, published Inspectra 1.0.4, 1.1.0 and
+1.2.0, and the local 1.2.1 candidate on Windows/Node 22.23.2. Every case used a
+fresh npm consumer outside the repositories, without peer-resolution bypasses.
+Integrated cases passed real Chromium captures against offline fixtures, with
+Jay/Vijay authorization, firewall enforce/lockdown, network and tenant denials,
+redirect restrictions, lease validation, cancellation and cleanup. Browser
+isolation, DNS/proxy restrictions and interception remain the trusted host's job.
+See the [adapter guide](../adapters/inspectra/README.md) for reproduction.
 
 ## Known limitations
 

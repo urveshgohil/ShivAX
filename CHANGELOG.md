@@ -11,6 +11,19 @@ name of their line. The npm version stays plain semantic versioning.
 | 0.2.x | NARASIMHA |
 | 0.3.x | SARASWATI - The Intelligence & Learning Release |
 
+
+## [0.3.2] SARASWATI - The Intelligence & Learning Release
+
+Patch release. No runtime behavior changed.
+
+### Maintenance
+
+- Complete SHIVAX-C01 verification on the current 0.3.1 source: standalone and
+  clean packed consumers with published Inspectra 1.0.4, 1.1.0 and 1.2.0, plus
+  the local 1.2.1 candidate. The matrix now discovers all stable 1.x releases
+  from 1.0.4 onward and records the registry list and SHIVAX version. Add the
+  C01 audit and update compatibility documentation; no runtime behavior changes.
+
 ## [0.3.1] SARASWATI - The Intelligence & Learning Release
 
 Patch release. No ML, bot IDs, Jay/Vijay, learning, approval or rollback

@@ -1,6 +1,6 @@
 # ShivAX SDK
 
-This guide covers version 0.3.1 SARASWATI. Sections marked **New in 0.2.0** cover
+This guide covers version 0.3.2 SARASWATI. Sections marked **New in 0.2.0** cover
 APIs that are not in 0.1.3 or earlier. See `CHANGELOG.md`. For scope, trust
 boundaries and limits, read `docs/production.md` first.
 
@@ -485,7 +485,8 @@ Inspection services authorize each page again after the previous capture. They
 apply the host URL rule to every destination the provider checks. The optional
 Inspectra adapter still loads `inspectra-engine/node` on first use. It stays an
 optional peer with range `^1.0.4` (stable versions >=1.0.4 <2.0.0). Versions
-1.0.4, 1.1.0 and 1.2.0 are verified. Prereleases and 2.x are outside the peer
+1.0.4, 1.1.0 and 1.2.0 are verified with the full clean-install C01 matrix, as is
+the local 1.2.1 candidate artifact tested on 2026-11-13. Prereleases and 2.x are outside the peer
 range. Future 1.x releases must preserve `captureUIPage`
 and its validated snapshot/metadata contract; rerun the matrix before deployment.
 

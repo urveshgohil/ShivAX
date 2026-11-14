@@ -10,7 +10,7 @@ bots, a task runner, memory, model routing, UI checks and a firewall. RUDRA hand
 each task to the right bot. Jay checks who is calling, and Vijay checks what they
 may do. The firewall decides which actions can run.
 
-**Version:** 0.3.1 SARASWATI · **Runs on:** Node.js 22+ and modern browsers · **License:** Apache-2.0
+**Version:** 0.3.2 SARASWATI · **Runs on:** Node.js 22+ and modern browsers · **License:** Apache-2.0
 
 The core has no runtime dependencies. You plug in your own browser automation,
 storage, sign-in and model backends when you need them.
@@ -184,6 +184,11 @@ Every option is in the [SDK guide](docs/sdk.md#managed-firewall-core).
 
 Each entry point ships ESM, CommonJS and TypeScript types. More examples are in
 [`examples/sdk/`](examples/sdk/README.md).
+
+SHIVAX-C01 verified standalone installs and integration with published Inspectra
+1.0.4, 1.1.0 and 1.2.0, plus the local 1.2.1 candidate. Inspectra remains optional;
+live capture needs a trusted browser host. See the
+[adapter guide](adapters/inspectra/README.md) for the contract and repeatable checks.
 
 ## Frequently asked questions
 

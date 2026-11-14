@@ -6,9 +6,11 @@ The nested `@shivax/inspectra-adapter` manifest is private development metadata.
 It is not a separate published package.
 
 The optional peer is **inspectra-engine ^1.0.4** (stable >=1.0.4 <2.0.0). Versions
-1.0.4 and 1.1.0 are verified with clean npm installs and real offline browser
-captures, and 1.2.0 with live ESM and CommonJS capture, normalization, screenshot
-and cleanup checks. Future 1.x compatibility assumes the same
+1.0.4, 1.1.0 and 1.2.0, plus the local 1.2.1 candidate, passed the full C01 matrix
+on 2026-11-13: clean npm installs, dependency trees, ESM/CommonJS, declarations,
+real offline browser capture, normalization, screenshots, firewall checks,
+cancellation and cleanup. Candidate results apply to the tested artifact, not an
+unpublished version in general. Future 1.x compatibility assumes the same
 `captureUIPage` and snapshot/metadata APIs; rerun the matrix for new releases.
 Prereleases and 2.x are outside this range. Install Inspectra when you need live
 capture. ShivAX does not require it, and the optional peer setting lets you leave
@@ -105,6 +107,8 @@ after building. Set `SHIVAX_NPM_CLI` to the absolute npm CLI path,
 `INSPECTRA_CANDIDATE` to a local Inspectra directory or tarball. The check packs
 the candidate without running its scripts or editing its source. It creates fresh
 consumers under the OS temporary directory, installs with normal npm peer checks,
+runs every published stable Inspectra 1.x version from 1.0.4 onward (recording the
+registry version list),
 runs `npm ls --all`, all ESM/CJS exports, five TypeScript modes, real offline
 capture and security/cancellation/cleanup probes, and 60 firewall/model regressions
 per consumer. Logs, tarballs and lockfiles are retained in the printed directory.

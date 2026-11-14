@@ -1,6 +1,26 @@
 # Release readiness
 
-> **Latest (2026-11-12): version 0.3.1 SARASWATI.** 0.2.0 was published on
+## SHIVAX-C01 compatibility gate (2026-11-13)
+
+**PASS for the current SHIVAX 0.3.1 source.** The task started on 0.3.0; the
+repository advanced to 0.3.1 before final verification. No version was changed
+by the completion run. All 897 regression tests pass. Lint, build, SDK package
+verification and `npm pack --dry-run` pass. Clean npm consumers pass with no
+Inspectra, published 1.0.4, 1.1.0 and 1.2.0, and the local 1.2.1 candidate,
+including ESM/CJS, five declaration modes, real offline Chromium capture and
+security/cancellation/cleanup checks. The optional peer remains `^1.0.4`.
+
+The complete evidence, artifact hashes and limits are in
+`docs/audits/shivax-inspectra-c01.md` in the source repository. This is a
+compatibility gate, not a new publication or a replacement for platform CI.
+No Inspectra or Visynq source was modified; nothing was pushed, tagged or published.
+The dated release records below are preserved.
+
+> **Current source: version 0.3.2 SARASWATI.** 0.3.2 is a maintenance patch
+> that adds the SHIVAX-C01 compatibility audit and matrix updates; no runtime
+> behavior changed from 0.3.1.
+>
+> **Previous (2026-11-12): version 0.3.1 SARASWATI.** 0.2.0 was published on
 > 2026-11-07 and 0.3.0 on 2026-11-12. 0.3.1 widens the optional Inspectra peer to
 > `^1.0.4` (verified against 1.0.4, 1.1.0 and 1.2.0). 897/897 tests pass on Node
 > 22.23.2 (Windows). The SARASWATI reports are in `docs/audits/` in the source
