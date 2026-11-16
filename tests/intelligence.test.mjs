@@ -649,11 +649,15 @@ test('cancellation propagates and retains busy ownership until ignored provider 
 
 test('timeouts are absolute, cover all fallbacks and retain pending work ownership', async () => {
     const pending = deferred();
-    let fallback = 0;
+    let fallback = 0,
+        entered = false;
+    // The deadline must leave room for synchronous admission under parallel test load;
+    // otherwise the router times out before dispatch and correctly holds no ownership.
     const r = router(
         [
             provider('a', {
                 infer: async () => {
+                    entered = true;
                     await pending.promise;
                     return { data: { answer: 42 }, usage: zero };
                 },
@@ -664,10 +668,11 @@ test('timeouts are absolute, cover all fallbacks and retain pending work ownersh
                 },
             }),
         ],
-        { timeoutMs: 15 }
+        { timeoutMs: 100 }
     );
     const result = await r.infer(request(), { allowFallback: true });
     fail(result, 'timeout');
+    assert.equal(entered, true, 'provider a must be dispatched before the deadline');
     fail(await r.infer(request()), 'busy');
     assert.equal(fallback, 0);
     pending.resolve();
