@@ -145,3 +145,13 @@ implicit training input. Non-cooperative host work can retain draining leases;
 the host owns forcible cancellation. Immediate identity-provider revocation
 must abort the root signal. No transport or live-network verification is
 provided by H01-B.
+
+## Hanuman specialist (H02-B)
+
+Explicit Hanuman registration checks tool availability and confers no
+permissions. Only the leased H01 protected tool can retrieve an approved target
+on the supported runtime path. Jay, Vijay and NARASIMHA still control identity,
+approval, scope, resource budgets and revocation. The specialist checks the
+tool envelope and emits bounded text with explicit untrusted provenance.
+Treat the excerpt as external data and the evidence digest as an unsigned
+identifier. The H01 security review remains NO-GO for live deployment.

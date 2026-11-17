@@ -170,6 +170,7 @@
     "examples/sdk/worker-training.mjs",
     "examples/sdk/routing-shadow.mjs",
     "examples/sdk/memory-ranking.mjs",
+    "examples/sdk/hanuman.mjs",
     "examples/sdk/inspectra.mjs"
   ],
   "scripts": {

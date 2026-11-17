@@ -40,6 +40,11 @@ console.log('Packed ESM/CJS SDK imports passed.');`);
     writeFileSync(join(consumer, 'hanuman-fetch.test.mjs'), readFileSync(join(root, 'tests', 'hanuman-fetch.test.mjs')));
     const fetchTests = command(process.execPath, ['--test', 'hanuman-fetch.test.mjs'], consumer);
     console.log(`Packed protected fetch passed: ${fetchTests.match(/^# tests (\d+)$/m)?.[1]} offline ESM/CJS tests.`);
+    writeFileSync(join(consumer, 'hanuman-bot.test.mjs'), readFileSync(join(root, 'tests', 'hanuman-bot.test.mjs')));
+    const hanumanTests = command(process.execPath, ['--test', 'hanuman-bot.test.mjs'], consumer);
+    const hanumanCount = Number(hanumanTests.match(/^# pass (\d+)$/m)?.[1]);
+    if (!(hanumanCount > 0)) throw new Error('No installed-package Hanuman tests passed.');
+    console.log(`Packed Hanuman bot passed: ${hanumanCount} offline ESM/CJS tests.`);
     // Every example named by shipped documentation must be present in the installed package.
     const installed = join(consumer, 'node_modules', 'shivax');
     const referenced = new Set();
@@ -51,14 +56,17 @@ console.log('Packed ESM/CJS SDK imports passed.');`);
     for (const file of referenced)
         if (!existsSync(join(installed, 'examples', 'sdk', file))) throw new Error(`Documented example is missing from the package: examples/sdk/${file}`);
     // Offline examples run from the installed copy and resolve shivax through package self-reference.
-    for (const file of ['registry.mjs', 'local-model.mjs', 'rudra.mjs', 'memory-persistence.mjs', 'firewall.mjs', 'benchmark.mjs', 'model-registry.mjs', 'feedback-curation.mjs', 'worker-training.mjs', 'routing-shadow.mjs', 'memory-ranking.mjs'])
+    const offlineExamples = ['registry.mjs', 'local-model.mjs', 'rudra.mjs', 'memory-persistence.mjs', 'firewall.mjs',
+        'benchmark.mjs', 'model-registry.mjs', 'feedback-curation.mjs', 'worker-training.mjs', 'routing-shadow.mjs',
+        'memory-ranking.mjs', 'hanuman.mjs'];
+    for (const file of offlineExamples)
         command(process.execPath, [join(installed, 'examples', 'sdk', file)], consumer);
     command(process.execPath, ['--check', join(installed, 'examples', 'sdk', 'ollama.mjs')], consumer);
     writeFileSync(join(consumer, 'examples.mjs'), `import assert from 'node:assert/strict';
 const { connectInspectra } = await import(${JSON.stringify(pathToFileURL(join(installed, 'examples', 'sdk', 'inspectra.mjs')).href)});
 assert.equal(typeof connectInspectra, 'function');`);
     command(process.execPath, ['examples.mjs'], consumer);
-    console.log(`Packed examples passed: ${referenced.size} documented files present; 11 offline examples ran.`);
+    console.log(`Packed examples passed: ${referenced.size} documented files present; ${offlineExamples.length} offline examples ran.`);
     // S03: the packaged worker script must start from an installed copy, through both module formats,
     // and match synchronous training exactly.
     writeFileSync(join(consumer, 'worker-training.mjs'), `import assert from 'node:assert/strict'; import {createRequire} from 'node:module';
@@ -117,6 +125,21 @@ firewall.runtime.setMode('monitor');
 const invalidMode: FirewallMode = 'disabled';
 void invalidMode;
 import { Tensor } from 'shivax/core';
+import { HanumanBot, registerHanumanBot, HANUMAN_FETCH_URL_CAPABILITY,
+    type HanumanFetchUrlInput, type HanumanEvidence, type RegisterHanumanBotOptions } from 'shivax/bots';
+import { BotRegistry, type BotValue } from 'shivax/rudra';
+declare const hanumanOptions: RegisterHanumanBotOptions;
+const hanuman: HanumanBot = registerHanumanBot(new BotRegistry(), hanumanOptions);
+const hanumanInput: HanumanFetchUrlInput = {
+    version: 1, operation: HANUMAN_FETCH_URL_CAPABILITY, request: { targetId: 'docs' },
+};
+void hanuman.validateInput({ capability: HANUMAN_FETCH_URL_CAPABILITY, data: hanumanInput });
+declare const hanumanEvidence: HanumanEvidence;
+const hanumanEvidenceData: BotValue = hanumanEvidence;
+void hanumanEvidenceData;
+// @ts-expect-error The host catalog is the only source of URLs.
+const invalidHanumanInput: HanumanFetchUrlInput = { ...hanumanInput, request: { targetId: 'docs', url: 'https://example.org/' } };
+void invalidHanumanInput;
 import { registerHanumanFetchService, HANUMAN_FETCH_TOOL_ID, type HanumanFetchTransport,
     type HanumanTransportRequest, type HanumanFetchResult } from 'shivax/integrations';
 import { ProtectedToolRegistry } from 'shivax/security';

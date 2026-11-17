@@ -614,8 +614,9 @@ or newer.
 `HANUMAN_FETCH_CAPABILITY` (`hanuman.fetch`), `HANUMAN_FETCH_TOOL_ID`
 (`shivax.hanuman.fetch`), and the `Hanuman*` transport, target, limit, input,
 result and event types. `HANUMAN_BOT_ID` is only a reserved identifier;
-H01-B supplies no Hanuman bot or transport implementation. Importing the entry
-point and creating the seven default specialists perform no retrieval.
+H01-B supplies the gateway contract and service. Hosts supply the transport.
+Importing the entry point and creating the seven default specialists perform
+no retrieval. H02-B adds opt-in specialist registration described below.
 
 Register a separate service in each trusted host composition:
 
@@ -706,3 +707,58 @@ Credentialed targets are outside this contract. The host must keep secrets out
 of registered targets and transport content; arbitrary public text cannot be
 proven free of credential-like strings. Downstream display, model use and
 SARASWATI ingestion require their own existing controls.
+
+## Registering the optional Hanuman specialist (H02-B)
+
+Import `HanumanBot` or `registerHanumanBot` from `shivax/bots`. The helper
+requires the H01 tool to be present in the supplied `ProtectedToolRegistry`.
+It registers the bot on the supplied `BotRegistry` and reports `unavailable`
+if the tool is absent or `duplicate-bot` if Hanuman is already registered.
+Hosts that call `registry.register(new HanumanBot())` directly skip the
+availability check. Execution still requires a leased tool client.
+
+1. Register the H01 service with the host's transport and scoped target
+   catalog. Call `registerHanumanBot(registry, { tools })` using that same
+   tool registry.
+2. Grant the authenticated caller the permissions required by the read-only
+   Vijay policies for capability `fetch.url` and tool `shivax.hanuman.fetch`.
+   Set `requiresApproval: true` on the tool policy when the host requires
+   approval. Supply the exact tool ID in the Jay task's tool grant.
+3. Bind NARASIMHA with `protectExecution: true`. Allow the workflow, bot and
+   tool operations for `fetch.url`. Declare `hanuman` on the bot and tool
+   operations, the tool's exact approved HTTPS origins in both its declaration
+   and the firewall policy, and at least three concurrent reservations.
+4. Submit the task through RUDRA with `allowedCapabilities: ['fetch.url']`,
+   `maxSteps: 1` and `maxRetries: 0`. Use the versioned input below.
+
+```js
+const taskInput = {
+    capability: 'fetch.url',
+    data: {
+        version: 1,
+        operation: 'fetch.url',
+        request: { targetId: 'demo-docs' },
+        options: { maxExcerptChars: 512 },
+    },
+};
+```
+
+The existing `hanuman.fetch` capability ID still applies to H01 workflow
+bindings. `fetch.api` and `research.search` are reserved until they have
+reviewed protected tool contracts. Caller input has no URL, headers,
+credentials, timeout or authority fields. The host catalog determines the
+destination, and existing host execution limits govern the timeout.
+
+Evidence has an opaque target reference, receipt timestamp, status, media
+type, full body byte count, bounded excerpt, truncation flag, and
+`trust: 'untrusted'`. The excerpt limit is measured in UTF-16 units, defaults
+to 4096, and can be lowered per call. Excerpts preserve whole surrogate pairs.
+A scope-bound SHA-256 digest identifies the full body and requires Web Crypto.
+The digest supports deduplication. Evidence is unsigned and remains untrusted,
+including text that resembles instructions or credentials. Render only as
+text and keep it outside approval, authorization and verified feedback paths.
+
+Run the complete offline recipe with `node examples/sdk/hanuman.mjs` after
+building. The recipe uses a fixture transport and demonstrates failure without
+registration or a task tool grant. Live deployment remains subject to the
+open H01 security review findings.

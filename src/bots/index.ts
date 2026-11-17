@@ -5,6 +5,18 @@ export { ChitraguptBot } from './chitragupt.js';
 export { NaradBot } from './narad.js';
 export { YudhishthirBot } from './yudhishthir.js';
 export { EkalavyBot } from './ekalavy.js';
+export {
+    HanumanBot,
+    registerHanumanBot,
+    HANUMAN_FETCH_URL_CAPABILITY,
+    HANUMAN_RESERVED_CAPABILITIES,
+} from './hanuman.js';
+export type {
+    HanumanBotOptions,
+    HanumanEvidence,
+    HanumanFetchUrlInput,
+    RegisterHanumanBotOptions,
+} from './hanuman.js';
 export { createSpecialistBots, registerSpecialistBots, createSpecialistSystem } from './system.js';
 export { registerSpecialistServices } from './services.js';
 export { SessionMemoryStore, SessionFeedbackStore } from './storage.js';
