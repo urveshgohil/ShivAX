@@ -175,15 +175,21 @@ Plan action IDs and literal data never appear in warnings: action subjects are `
 
 ## 6. Policy configuration
 
-`SafetyPolicy = { mode: 'disabled' | 'warn' | 'enforce', enforceRules?, blockUncertain? }`. The default mode is `warn`.
+`SafetyPolicy = { mode: 'disabled' | 'warn' | 'enforce', enforceRules?, relaxRules?, blockUncertain? }`. The default mode is `warn`. Abhimanyu also takes `requireDeclarations` (default `true`; see §12).
 
 | Mode | Abhimanyu | Ashwatthama |
 | --- | --- | --- |
 | `disabled` | No analysis | No dispositions (records still kept for `list`/`status`) |
 | `warn` | All findings reported; the decision is always `allow` | Reported only |
-| `enforce` | `blocked` only for enforced rules with `confirmed` certainty. `blockUncertain: true` lets a high-impact host also block potential and insufficient-metadata findings for enforced rules. The engine throws `preflight-blocked` before occupying itself and before any Jay, Vijay, firewall, approval or tool call. | Cooperative cancel for enforced rules, once |
+| `enforce` | `blocked` for enforced rules whose finding is `confirmed`, or rests on an omitted declaration whose least-safe value is confirmed. `blockUncertain: true` also blocks potential and insufficient-metadata findings for enforced rules. The engine throws `preflight-blocked` before occupying itself and before any Jay, Vijay, firewall, approval or tool call. | Cooperative cancel for enforced rules, once |
 
-`enforceRules` must name rules that belong to that validator. Warnings never grant or revoke authority. A passing preflight still goes through every existing Jay, Vijay and firewall check, and a warn-mode report never stops the existing allowlist denial (both are tested).
+The enforced set is the validator's defaults, **plus** `enforceRules`, **minus** `relaxRules`:
+- `enforceRules` only adds rules, so an empty or narrower list never removes a default.
+- `relaxRules` may name only default rules, and a rule cannot appear in both lists.
+- A relaxed rule is reported as `ABH_ENFORCEMENT_RELAXED` and listed in `report.relaxedRules`.
+- Every listed rule must belong to that validator, and duplicates are rejected (`invalid-policy`).
+
+Warnings never grant or revoke authority. A passing preflight still goes through every existing Jay, Vijay and firewall check, and a warn-mode report never stops the existing allowlist denial (both are tested).
 
 ## 7. Performance limits (`SAFETY_LIMITS`)
 
@@ -275,3 +281,44 @@ Development found one implementation gap: cancellation was not propagated to obs
 - **Live deployment: NO-GO** until H03C-01, H01D-02, H03C-03 and H03C-04 are resolved.
 
 Nothing was committed, pushed, tagged or published. Work stops after H04-A.
+
+## 12. Follow-up: misconfiguration fixes M1–M3
+
+The H04 Safety Warnings DX research plan reproduced three ways an ordinary configuration silently weakened enforce mode. All three are fixed on top of `200148a`. Warn-mode output is unchanged.
+
+| ID | Defect before the fix | Fix | Regression test |
+| --- | --- | --- | --- |
+| M1 | Omission beat honesty. `cancellation: 'ignored'` + `cleanup: 'none'` blocked, but the same profile with `cleanup` omitted was allowed. | In enforce mode, `requireDeclarations` (default `true`) analyzes each omitted field as its least-safe value: `cancellation: 'ignored'`, `cleanup`/`compensation: 'none'`, `resume: 'unsupported'`, `idempotent: false`, and `effect: 'state-changing'` when no binding states it. A finding that rests on an omission blocks when that least-safe value would be confirmed. The finding stays labelled honestly: its certainty is never raised to `confirmed`, and its evidence carries `assumedWorstCase: true`. | `M1 regression`: eight declared and omitted combinations, each giving the same decision as the honest least-safe declaration. Also covers omitted idempotency on a retried state change, unchanged warn mode, and validation of the option. |
+| M2 | An empty or missing profile passed enforce mode with only `ABH_MISSING_PROFILE`. | In enforce mode, an action without a profile is analyzed as a protected, state-changing action with every field at its least-safe value. `ABH_MISSING_PROFILE` is still reported, and `ABH_NO_EXIT_PATH` (assumed) blocks. | `M2 regression`: empty profiles, a profile for the wrong capability, one unprofiled action in a two-action plan (only that action blocks), a declared non-protected profile passes, and explicit `requireDeclarations: false` keeps the old advisory behavior. |
+| M3 | `enforceRules` replaced the defaults, so `[]` or a narrower list silently dropped `ABH_NO_EXIT_PATH` blocking. | `enforceRules` now adds to the defaults. The new `relaxRules` removes named defaults explicitly, and each removal emits the new `ABH_ENFORCEMENT_RELAXED` warning (catalog rule, version 1) and appears in `AbhimanyuReport.relaxedRules`. Unknown, duplicated, non-default or conflicting entries throw `invalid-policy`. The observer follows the same additive rule. | `M3 regression`: an empty, narrower or unrelated list still blocks; added rules enforce; a relaxed rule allows the plan but is reported first; five misuse cases are rejected; observer defaults survive a custom list. |
+
+**Changed files:**
+
+| Path | Change |
+| --- | --- |
+| `src/workflows/safety/schema.ts` | Additive `relaxRules`, the new rule, `ResolvedPolicy.relaxed` |
+| `src/workflows/safety/abhimanyu.ts` | `requireDeclarations`; least-safe analysis of omissions; `relaxedRules` in the report; the relaxed-enforcement warning |
+| `tests/workflow-safety.test.mjs` | Three new regression cases × ESM and CJS. One existing H04 assertion was updated: it asserted the old M1 behavior, where an omitted cleanup was allowed in enforce mode, and now asserts blocking plus the explicit lenient opt-out. |
+| This report | Updated |
+
+**Behavior changes for H04 adopters:**
+- **Enforce mode is stricter.** Hosts relying on omitted fields to pass must now declare them, or set `requireDeclarations: false` explicitly.
+- **`enforceRules` now adds rules.** It no longer narrows the defaults; use `relaxRules` for that.
+- **The catalog gained one rule.** `ABH_ENFORCEMENT_RELAXED` makes 23 rules in total.
+
+**Validation.** All commands ran offline; logs are in `node_modules/h04m-*.log`.
+
+| Command | Result |
+| --- | --- |
+| `node --test tests/workflow-safety.test.mjs` | **50 / 50** |
+| Mutation: omissions analyzed leniently (undoes M1/M2) | 6 targeted failures (the M1 and M2 regressions plus the updated assertion, ESM and CJS); all others pass |
+| Mutation: `enforceRules` replaces defaults (undoes M3) | 2 targeted failures (M3 regression, ESM and CJS) |
+| Focused: safety, workflows, RUDRA, Hanuman integration, package, SDK | 247 / 247 |
+| `pnpm lint` | PASS |
+| `pnpm test` | **1,325 / 1,325** (1,319 + 6) |
+| `pnpm build` | PASS |
+| `pnpm verify:package` | PASS (544 files) |
+
+The source was confirmed identical after the mutation runs, and `dist/` was rebuilt from clean source before the final gates.
+
+**Still open from the research matrix:** M4 (`blockUncertain` is ignored outside enforce mode), M5 (a disabled observer still warns), M6 (an overlong engine deadline leaves the run silently unobserved), M7 (guessable operation refs), M8 (warn-mode reports have no hook) and M9 (verification is an attestation only). The H03 NO-GO findings are unchanged.

@@ -58,6 +58,14 @@ export interface AbhimanyuOptions {
     /** Deadlines above this need `approvedLongRunning`. Default 15 min, cap 24 h. */
     readonly maxDeadlineMs?: number;
     readonly maxWarnings?: number;
+    /**
+     * Enforce mode only, default `true`: an omitted declaration is analyzed as its least-safe value
+     * (no profile = a protected, state-changing action; `cancellation` = `'ignored'`; `cleanup`,
+     * `compensation` = `'none'`; `resume` = `'unsupported'`; `idempotent` = `false`). Leaving a field out can
+     * then never pass a plan that the honest least-safe declaration would block. `false` restores lenient
+     * analysis explicitly.
+     */
+    readonly requireDeclarations?: boolean;
 }
 export interface AbhimanyuInput extends AbhimanyuOptions {
     /** An `AutonomousWorkflowPlan` (`actions`) or a RUDRA `WorkflowPlan` (`steps`). Copied, never mutated. */
@@ -85,6 +93,8 @@ export interface AbhimanyuReport {
     readonly depth: number;
     readonly warnings: readonly SafetyWarning[];
     readonly truncated: boolean;
+    /** Default enforced rules the host policy relaxed (also reported as `ABH_ENFORCEMENT_RELAXED`). */
+    readonly relaxedRules: readonly AbhimanyuRuleId[];
     readonly evaluatedAt: number | null;
 }
 
@@ -161,11 +171,13 @@ export interface PreparedAbhimanyu {
     readonly approvedLongRunning?: ApprovedLongRunning;
     readonly maxDeadlineMs: number;
     readonly maxWarnings: number;
+    readonly requireDeclarations: boolean;
 }
 /** Validates the host configuration once (used by the engine at construction). */
 export function prepareAbhimanyu(raw: unknown): PreparedAbhimanyu {
-    const v = plain(raw, ['profiles', 'policy', 'pausable', 'approvedLongRunning', 'maxDeadlineMs', 'maxWarnings'], 'invalid-input');
+    const v = plain(raw, ['profiles', 'policy', 'pausable', 'approvedLongRunning', 'maxDeadlineMs', 'maxWarnings', 'requireDeclarations'], 'invalid-input');
     if (v.pausable !== undefined && typeof v.pausable !== 'boolean') fail('invalid-input');
+    if (v.requireDeclarations !== undefined && typeof v.requireDeclarations !== 'boolean') fail('invalid-input');
     let approved: ApprovedLongRunning | undefined;
     if (v.approvedLongRunning !== undefined) {
         const a = plain(v.approvedLongRunning, ['maxDurationMs', 'approvalRef'], 'invalid-declaration');
@@ -179,6 +191,7 @@ export function prepareAbhimanyu(raw: unknown): PreparedAbhimanyu {
         ...(approved ? { approvedLongRunning: approved } : {}),
         maxDeadlineMs: v.maxDeadlineMs === undefined ? SAFETY_LIMITS.defaultMaxDeadlineMs : count(v.maxDeadlineMs, 1, SAFETY_LIMITS.maxDeadlineMs, 'invalid-input'),
         maxWarnings: v.maxWarnings === undefined ? SAFETY_LIMITS.defaultMaxWarnings : count(v.maxWarnings, 1, SAFETY_LIMITS.maxWarnings, 'invalid-input'),
+        requireDeclarations: v.requireDeclarations !== false,
     });
 }
 
@@ -222,13 +235,18 @@ export function analyzeWorkflow(
             depth,
             warnings: Object.freeze(warnings),
             truncated,
+            relaxedRules: prepared.policy.relaxed as readonly AbhimanyuRuleId[],
             evaluatedAt: timestamp,
         });
     if (mode === 'disabled') return report([], 0, 0, false);
 
-    const found: { id: AbhimanyuRuleId; certainty: SafetyCertainty; index: number | null; evidence: Record<string, string | number | boolean | null> }[] = [];
-    const add = (id: AbhimanyuRuleId, certainty: SafetyCertainty, index: number | null, evidence: Record<string, string | number | boolean | null> = {}) =>
-        found.push({ id, certainty, index, evidence });
+    type Evidence = Record<string, string | number | boolean | null>;
+    // `worstConfirmed`: the finding rests on an omitted declaration whose least-safe value makes it confirmed.
+    const found: { id: AbhimanyuRuleId; certainty: SafetyCertainty; index: number | null; evidence: Evidence; worstConfirmed: boolean }[] = [];
+    const add = (id: AbhimanyuRuleId, certainty: SafetyCertainty, index: number | null, evidence: Evidence = {}, worstConfirmed = false) =>
+        found.push({ id, certainty, index, evidence: worstConfirmed ? { ...evidence, assumedWorstCase: true } : evidence, worstConfirmed });
+    // M1/M2: in enforce mode, omissions are analyzed as their least-safe declaration.
+    const strict = mode === 'enforce' && prepared.requireDeclarations;
 
     // 1. Reuse the existing validators; Abhimanyu never re-implements plan structure checks.
     let nodes: Node[] = [];
@@ -279,44 +297,63 @@ export function analyzeWorkflow(
             add('ABH_UNREACHABLE_COMPLETION', 'confirmed', n.index, { capability: cap, reason: 'unbound' });
             continue;
         }
-        const profile = prepared.profiles.get(n.capability);
-        if (!profile) {
+        const declared = prepared.profiles.get(n.capability);
+        if (!declared) {
             add('ABH_MISSING_PROFILE', 'insufficient-metadata', n.index, { capability: cap });
-            continue;
+            // Lenient analysis stops here; strict analysis continues with the least-safe profile (M2).
+            if (!strict) continue;
         }
-        const effect = effectOf(n.capability, profile);
+        const profile: Profile = declared ?? { capability: n.capability, sideEffect: 'protected' };
+        const declaredEffect = effectOf(n.capability, declared);
+        const effect = declaredEffect ?? (strict ? 'state-changing' : undefined);
+        const effectAssumed = declaredEffect === undefined && strict;
         const engineRetries = effect === 'read-only' ? run.maxRetries : 0;
         if (profile.retries === 'unbounded') add('ABH_UNBOUNDED_RETRY', 'confirmed', n.index, { capability: cap, engineRetries });
         const internal = typeof profile.retries === 'number' ? profile.retries : 0;
-        if (effect === 'state-changing' && internal > 0 && profile.idempotent !== true)
-            add('ABH_RETRY_SIDE_EFFECT', profile.idempotent === false ? 'confirmed' : 'potential', n.index, { capability: cap, retries: internal });
+        if (effect === 'state-changing' && internal > 0 && profile.idempotent !== true) {
+            const assumed = effectAssumed || (strict && profile.idempotent === undefined);
+            add('ABH_RETRY_SIDE_EFFECT', profile.idempotent === false && !effectAssumed ? 'confirmed' : 'potential', n.index, { capability: cap, retries: internal }, assumed);
+        }
         duration.push(profile.maxDurationMs === undefined || profile.retries === 'unbounded' ? undefined : profile.maxDurationMs * (1 + engineRetries + internal));
         if (profile.sideEffect !== 'protected') continue;
 
         // Exit: cooperative cancellation or verified cleanup must exist once a protected action starts.
+        // Strict analysis fills omitted fields with their least-safe value (M1): omission never beats honesty.
+        const cancellation = profile.cancellation ?? (strict ? 'ignored' : undefined);
+        const cleanup = profile.cleanup ?? (strict ? 'none' : undefined);
+        const exitAssumed = strict && (profile.cancellation === undefined || profile.cleanup === undefined);
         let exitReported = false;
-        if (profile.cancellation === 'ignored' && profile.cleanup !== 'verified') {
-            add('ABH_NO_EXIT_PATH', profile.cleanup === 'none' ? 'confirmed' : 'potential', n.index, { capability: cap, cancellation: 'ignored', cleanup: profile.cleanup ?? null });
+        if (cancellation === 'ignored' && cleanup !== 'verified') {
+            const declaredConfirmed = profile.cancellation === 'ignored' && profile.cleanup === 'none';
+            add('ABH_NO_EXIT_PATH', declaredConfirmed ? 'confirmed' : profile.cancellation === 'ignored' ? 'potential' : 'insufficient-metadata', n.index,
+                { capability: cap, cancellation: profile.cancellation ?? null, cleanup: profile.cleanup ?? null }, exitAssumed && cleanup === 'none');
             exitReported = true;
         }
-        if (!exitReported && profile.cleanup !== 'verified')
-            add('ABH_MISSING_CLEANUP', profile.cleanup === 'none' ? 'confirmed' : 'insufficient-metadata', n.index, { capability: cap, cancellation: profile.cancellation ?? null });
-        if (effect === undefined && !exitReported)
+        if (!exitReported && cleanup !== 'verified')
+            add('ABH_MISSING_CLEANUP', profile.cleanup === 'none' ? 'confirmed' : 'insufficient-metadata', n.index,
+                { capability: cap, cancellation: profile.cancellation ?? null }, strict && profile.cleanup === undefined);
+        if (declared && declaredEffect === undefined && !exitReported)
             add('ABH_MISSING_PROFILE', 'insufficient-metadata', n.index, { capability: cap, field: 'effect' });
 
         // Compensation: a committed effect followed by work that can still fail leaves partial completion.
+        const compensation = profile.compensation ?? (strict ? 'none' : undefined);
         if (effect === 'state-changing' && n.index < nodes.length - 1) {
-            if (profile.compensation === undefined) add('ABH_MISSING_COMPENSATION', 'insufficient-metadata', n.index, { capability: cap, laterActions: nodes.length - 1 - n.index });
-            else if (profile.compensation === 'none') add('ABH_MISSING_COMPENSATION', 'potential', n.index, { capability: cap, laterActions: nodes.length - 1 - n.index });
-            else {
-                const comp = profile.compensation.capability;
+            const later = nodes.length - 1 - n.index;
+            const assumed = effectAssumed || (strict && profile.compensation === undefined);
+            if (profile.compensation === undefined && !strict) add('ABH_MISSING_COMPENSATION', 'insufficient-metadata', n.index, { capability: cap, laterActions: later });
+            else if (compensation === 'none')
+                add('ABH_MISSING_COMPENSATION', profile.compensation === 'none' && !effectAssumed ? 'potential' : 'insufficient-metadata', n.index, { capability: cap, laterActions: later }, assumed);
+            else if (compensation !== undefined) {
+                const comp = compensation.capability;
                 const usable = run.allowed.includes(comp) && prepared.profiles.has(comp) && (!context.tools || steps || context.tools.findByCapability(comp).length > 0);
                 if (!usable) add('ABH_INVALID_DECLARATION', 'confirmed', n.index, { capability: cap, compensation: comp, field: 'compensation' });
             }
         }
         // Pause/resume recovery for protected state changes.
-        if (prepared.pausable && effect === 'state-changing' && profile.resume !== 'verified')
-            add('ABH_RESUME_UNSAFE', profile.resume === 'unsupported' ? 'potential' : 'insufficient-metadata', n.index, { capability: cap });
+        if (prepared.pausable && effect === 'state-changing' && profile.resume !== 'verified') {
+            const assumed = effectAssumed || (strict && profile.resume === undefined);
+            add('ABH_RESUME_UNSAFE', profile.resume === 'unsupported' && !effectAssumed ? 'potential' : 'insufficient-metadata', n.index, { capability: cap }, assumed);
+        }
     }
 
     // 5. Deadline feasibility: sequential sum (engine default) or critical path when actions may overlap.
@@ -333,12 +370,23 @@ export function analyzeWorkflow(
     return finish(depth);
 
     function finish(graphDepth = 0): AbhimanyuReport {
+        // M3: relaxing a default enforced rule is never silent.
+        if (prepared.policy.relaxed.length) {
+            const evidence: Evidence = { relaxedCount: prepared.policy.relaxed.length, enforce: mode === 'enforce' };
+            prepared.policy.relaxed.slice(0, 6).forEach((id, i) => {
+                evidence[`rule${i + 1}`] = id;
+            });
+            found.unshift({ id: 'ABH_ENFORCEMENT_RELAXED', certainty: 'confirmed', index: null, evidence, worstConfirmed: false });
+        }
         const limit = prepared.maxWarnings;
         const truncated = found.length > limit;
         const kept = truncated ? found.slice(0, limit - 1) : found;
         const policy = prepared.policy;
         const warnings = kept.map((f) => {
-            const blocked = mode === 'enforce' && policy.enforce.has(f.id) && (f.certainty === 'confirmed' || policy.blockUncertain);
+            const blocked =
+                mode === 'enforce' &&
+                policy.enforce.has(f.id) &&
+                (f.certainty === 'confirmed' || f.worstConfirmed || policy.blockUncertain);
             const subject = f.index === null ? { kind: 'workflow' as const, ref: isRef(workflowRef) ? workflowRef : 'workflow', index: null } : { kind: 'action' as const, ref: `action-${f.index}`, index: f.index };
             return warning(f.id, f.certainty, subject, f.evidence, timestamp, blocked ? 'blocked' : 'reported');
         });
@@ -350,7 +398,7 @@ export function analyzeWorkflow(
 
 /** Public opt-in preflight. Validates inputs with the existing validators, then analyzes. */
 export function runAbhimanyuPreflight(input: AbhimanyuInput): AbhimanyuReport {
-    const v = plain(input, ['plan', 'capability', 'options', 'deadlineMs', 'tools', 'workflowRef', 'maxPlanBytes', 'now', 'profiles', 'policy', 'pausable', 'approvedLongRunning', 'maxDeadlineMs', 'maxWarnings'], 'invalid-input');
+    const v = plain(input, ['plan', 'capability', 'options', 'deadlineMs', 'tools', 'workflowRef', 'maxPlanBytes', 'now', 'profiles', 'policy', 'pausable', 'approvedLongRunning', 'maxDeadlineMs', 'maxWarnings', 'requireDeclarations'], 'invalid-input');
     if (!isRef(v.capability)) fail('invalid-input');
     if (v.workflowRef !== undefined && !isRef(v.workflowRef)) fail('invalid-input');
     if (v.now !== undefined && typeof v.now !== 'function') fail('invalid-input');
@@ -364,6 +412,7 @@ export function runAbhimanyuPreflight(input: AbhimanyuInput): AbhimanyuReport {
         ...(v.approvedLongRunning !== undefined ? { approvedLongRunning: v.approvedLongRunning } : {}),
         ...(v.maxDeadlineMs !== undefined ? { maxDeadlineMs: v.maxDeadlineMs } : {}),
         ...(v.maxWarnings !== undefined ? { maxWarnings: v.maxWarnings } : {}),
+        ...(v.requireDeclarations !== undefined ? { requireDeclarations: v.requireDeclarations } : {}),
     });
     // Options go through the same validator the target engine uses.
     let run: ResolvedRun;

@@ -26,6 +26,7 @@ export const ABHIMANYU_RULE_IDS = Object.freeze([
     'ABH_RESUME_UNSAFE',
     'ABH_INVALID_DECLARATION',
     'ABH_ANALYSIS_TRUNCATED',
+    'ABH_ENFORCEMENT_RELAXED',
 ] as const);
 export const ASHWATTHAMA_RULE_IDS = Object.freeze([
     'ASH_LEASE_EXPIRED',
@@ -68,6 +69,7 @@ export const SAFETY_WARNING_RULES: Readonly<Record<SafetyRuleId, SafetyRule>> = 
     ABH_RESUME_UNSAFE: rule('ABH_RESUME_UNSAFE', 'abhimanyu', 'medium', 'Declare verified resume recovery, or disable pausing for this workflow.'),
     ABH_INVALID_DECLARATION: rule('ABH_INVALID_DECLARATION', 'abhimanyu', 'high', 'Correct the host declaration: it references an unavailable or unallowlisted capability.'),
     ABH_ANALYSIS_TRUNCATED: rule('ABH_ANALYSIS_TRUNCATED', 'abhimanyu', 'medium', 'Reduce the plan or raise the warning limit; remaining checks were not reported.'),
+    ABH_ENFORCEMENT_RELAXED: rule('ABH_ENFORCEMENT_RELAXED', 'abhimanyu', 'medium', 'Default enforced rules were relaxed by host policy; confirm this is intended for this workflow.'),
     ASH_LEASE_EXPIRED: rule('ASH_LEASE_EXPIRED', 'ashwatthama', 'high', 'Renew the lease through the authorized path or cancel the operation.'),
     ASH_DEADLINE_EXCEEDED: rule('ASH_DEADLINE_EXCEEDED', 'ashwatthama', 'high', 'Cancel the operation cooperatively or record an approved deadline.'),
     ASH_HEARTBEAT_MISSED: rule('ASH_HEARTBEAT_MISSED', 'ashwatthama', 'medium', 'Check the worker; it declared heartbeats but stopped reporting progress.'),
@@ -156,30 +158,52 @@ export function count(value: unknown, min: number, max: number, code: SafetyErro
 
 export interface SafetyPolicy {
     readonly mode: SafetyMode;
-    /** Rules that may block (preflight) or request cooperative cancellation (runtime) in `enforce` mode. */
+    /**
+     * Extra rules to enforce, ADDED to the validator's defaults. Listing rules never removes a default:
+     * an empty or narrower list keeps every default rule enforced.
+     */
     readonly enforceRules?: readonly SafetyRuleId[];
+    /**
+     * Default rules to stop enforcing, named explicitly. Each must be a default rule; relaxing is reported
+     * (Abhimanyu emits `ABH_ENFORCEMENT_RELAXED`) so it is never silent.
+     */
+    readonly relaxRules?: readonly SafetyRuleId[];
     /** High-impact hosts: also block enforced rules whose certainty is not `confirmed`. Preflight only. */
     readonly blockUncertain?: boolean;
 }
 export interface ResolvedPolicy {
     readonly mode: SafetyMode;
     readonly enforce: ReadonlySet<SafetyRuleId>;
+    /** Default rules the host explicitly relaxed, in catalog order. */
+    readonly relaxed: readonly SafetyRuleId[];
     readonly blockUncertain: boolean;
 }
+function ruleList(raw: unknown, validator: SafetyValidator): SafetyRuleId[] {
+    if (!Array.isArray(raw) || raw.length > 64) fail('invalid-policy');
+    const out = (raw as unknown[]).map((id) => {
+        if (typeof id !== 'string' || !Object.prototype.hasOwnProperty.call(SAFETY_WARNING_RULES, id)) fail('invalid-policy');
+        if (SAFETY_WARNING_RULES[id as SafetyRuleId].validator !== validator) fail('invalid-policy');
+        return id as SafetyRuleId;
+    });
+    if (new Set(out).size !== out.length) fail('invalid-policy');
+    return out;
+}
 export function resolvePolicy(raw: unknown, validator: SafetyValidator, defaults: readonly SafetyRuleId[]): ResolvedPolicy {
-    const value = plain(raw ?? { mode: 'warn' }, ['mode', 'enforceRules', 'blockUncertain'], 'invalid-policy');
+    const value = plain(raw ?? { mode: 'warn' }, ['mode', 'enforceRules', 'relaxRules', 'blockUncertain'], 'invalid-policy');
     if (!['disabled', 'warn', 'enforce'].includes(value.mode as string)) fail('invalid-policy');
     if (value.blockUncertain !== undefined && typeof value.blockUncertain !== 'boolean') fail('invalid-policy');
-    let rules = defaults;
-    if (value.enforceRules !== undefined) {
-        if (!Array.isArray(value.enforceRules) || value.enforceRules.length > 64) fail('invalid-policy');
-        rules = (value.enforceRules as unknown[]).map((id) => {
-            const known = SAFETY_WARNING_RULES[id as SafetyRuleId];
-            if (typeof id !== 'string' || !known || known.validator !== validator) fail('invalid-policy');
-            return id as SafetyRuleId;
-        });
-    }
-    return Object.freeze({ mode: value.mode as SafetyMode, enforce: new Set(rules), blockUncertain: value.blockUncertain === true });
+    const added = value.enforceRules === undefined ? [] : ruleList(value.enforceRules, validator);
+    const relaxed = value.relaxRules === undefined ? [] : ruleList(value.relaxRules, validator);
+    // Relaxing is explicit and narrow: only defaults can be relaxed, and never while also being added.
+    if (relaxed.some((id) => !defaults.includes(id) || added.includes(id))) fail('invalid-policy');
+    const enforce = new Set([...defaults, ...added].filter((id) => !relaxed.includes(id)));
+    const order = Object.keys(SAFETY_WARNING_RULES) as SafetyRuleId[];
+    return Object.freeze({
+        mode: value.mode as SafetyMode,
+        enforce,
+        relaxed: Object.freeze(order.filter((id) => relaxed.includes(id))),
+        blockUncertain: value.blockUncertain === true,
+    });
 }
 
 /** Builds a warning from the catalog; evidence is bounded and must already be nonsecret. */

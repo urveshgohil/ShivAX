@@ -66,14 +66,109 @@ for (const [format, api] of [['ESM', await import('shivax')], ['CJS', require('s
         const enforce = pre({ profiles: noExit, policy: { mode: 'enforce' } });
         assert.equal(enforce.decision, 'block');
         assert.equal(find(enforce, 'ABH_NO_EXIT_PATH').disposition, 'blocked');
-        // Unknown cleanup is only potential: the host adapter may clean up where the validator cannot see.
-        const unknown = pre({ profiles: [{ ...safeRead, cancellation: 'ignored', cleanup: undefined }], policy: { mode: 'enforce' } });
+        // Unknown cleanup is reported as potential: the host adapter may clean up where the validator cannot see.
+        const unknownProfile = [{ ...safeRead, cancellation: 'ignored', cleanup: undefined }];
+        assert.equal(find(pre({ profiles: unknownProfile, policy: { mode: 'warn' } }), 'ABH_NO_EXIT_PATH').certainty, 'potential');
+        // ...but in enforce mode the omission is analyzed as the least-safe declaration (M1), so it blocks.
+        const unknown = pre({ profiles: unknownProfile, policy: { mode: 'enforce' } });
         assert.equal(find(unknown, 'ABH_NO_EXIT_PATH').certainty, 'potential');
-        assert.equal(unknown.decision, 'allow');
-        // High-impact hosts can make uncertain enforced rules mandatory.
-        assert.equal(pre({ profiles: [{ ...safeRead, cancellation: 'ignored', cleanup: undefined }], policy: { mode: 'enforce', blockUncertain: true } }).decision, 'block');
+        assert.equal(find(unknown, 'ABH_NO_EXIT_PATH').evidence.assumedWorstCase, true);
+        assert.equal(unknown.decision, 'block');
+        // Lenient analysis is available only by saying so explicitly.
+        assert.equal(pre({ profiles: unknownProfile, policy: { mode: 'enforce' }, requireDeclarations: false }).decision, 'allow');
+        // High-impact hosts can make uncertain enforced rules mandatory even in lenient analysis.
+        assert.equal(pre({ profiles: unknownProfile, policy: { mode: 'enforce', blockUncertain: true }, requireDeclarations: false }).decision, 'block');
         // Verified cleanup is a valid exit even when cancellation is ignored.
         assert.deepEqual(ids(pre({ profiles: [{ ...safeRead, cancellation: 'ignored' }] })), []);
+    });
+    check('M1 regression: omitting a declaration never passes a plan the honest least-safe declaration blocks', () => {
+        const enforce = { mode: 'enforce' };
+        const { cleanup, cancellation, ...bare } = safeRead;
+        // Every combination of omitted and declared-unsafe exit fields gets the same decision.
+        const cases = [
+            [{ ...bare, cancellation: 'ignored', cleanup: 'none' }, 'block'],
+            [{ ...bare, cancellation: 'ignored' }, 'block'],
+            [{ ...bare, cleanup: 'none' }, 'block'],
+            [bare, 'block'],
+            [{ ...bare, cancellation: 'cooperative' }, 'allow'],
+            [{ ...bare, cancellation: 'cooperative', cleanup: 'none' }, 'allow'],
+            [{ ...bare, cleanup: verified }, 'allow'],
+            [{ ...bare, cancellation: 'ignored', cleanup: verified }, 'allow'],
+        ];
+        for (const [profile, decision] of cases)
+            assert.equal(pre({ profiles: [profile], policy: enforce }).decision, decision, JSON.stringify(profile));
+        // The omission is labelled honestly: never reported as a confirmed finding.
+        const omitted = find(pre({ profiles: [bare], policy: enforce }), 'ABH_NO_EXIT_PATH');
+        assert.deepEqual([omitted.certainty, omitted.disposition, omitted.evidence.assumedWorstCase, omitted.evidence.cancellation, omitted.evidence.cleanup], ['insufficient-metadata', 'blocked', true, null, null]);
+        // Omitted idempotency on a retried state change is treated as non-idempotent.
+        const write = { capability: 'read', sideEffect: 'protected', effect: 'state-changing', cancellation: 'cooperative', cleanup: verified, retries: { max: 2 } };
+        assert.equal(pre({ profiles: [{ ...write, idempotent: false }], policy: enforce }).decision, 'block');
+        assert.equal(pre({ profiles: [write], policy: enforce }).decision, 'block');
+        assert.equal(pre({ profiles: [{ ...write, idempotent: true }], policy: enforce }).decision, 'allow');
+        // Warn mode is unchanged: findings are reported, never assumed, never blocked.
+        const warn = pre({ profiles: [bare], policy: { mode: 'warn' } });
+        assert.equal(warn.decision, 'allow');
+        assert.ok(warn.warnings.every((w) => w.evidence.assumedWorstCase === undefined));
+        assert.throws(() => pre({ requireDeclarations: 'yes' }), (e) => e.code === 'invalid-input');
+    });
+    check('M2 regression: missing or empty profiles cannot pass enforce mode', () => {
+        const enforce = { mode: 'enforce' };
+        for (const profiles of [[], [{ ...safeRead, capability: 'unrelated' }]]) {
+            const report = pre({ profiles, policy: enforce });
+            assert.equal(report.decision, 'block', JSON.stringify(profiles));
+            assert.deepEqual(ids(report).slice(0, 2), ['ABH_MISSING_PROFILE', 'ABH_NO_EXIT_PATH']);
+            assert.equal(find(report, 'ABH_MISSING_PROFILE').disposition, 'reported');
+            assert.equal(find(report, 'ABH_NO_EXIT_PATH').disposition, 'blocked');
+        }
+        // A declared non-protected profile is enough; nothing protected is assumed for it.
+        assert.equal(pre({ profiles: [{ capability: 'read', sideEffect: 'none', effect: 'read-only' }], policy: enforce }).decision, 'allow');
+        // One unprofiled action blocks the whole plan, not only its own step.
+        const mixed = pre({ plan: plan(action('a'), action('b', 'other')), options: { allowedCapabilities: ['read', 'other'] }, policy: enforce });
+        assert.equal(mixed.decision, 'block');
+        assert.deepEqual(mixed.warnings.filter((w) => w.disposition === 'blocked').map((w) => w.subject.index), [1]);
+        // Explicitly lenient analysis keeps the old advisory behavior.
+        assert.equal(pre({ profiles: [], policy: enforce, requireDeclarations: false }).decision, 'allow');
+        assert.equal(pre({ profiles: [], policy: { mode: 'warn' } }).decision, 'allow');
+    });
+    check('M3 regression: enforceRules adds to defaults; relaxing defaults is explicit and reported', () => {
+        const noExit = [{ ...safeRead, cancellation: 'ignored', cleanup: 'none' }];
+        // An empty or narrower list no longer removes default enforcement.
+        for (const enforceRules of [[], ['ABH_MISSING_CLEANUP'], ['ABH_DEADLINE_INFEASIBLE']]) {
+            const report = pre({ profiles: noExit, policy: { mode: 'enforce', enforceRules } });
+            assert.equal(report.decision, 'block', JSON.stringify(enforceRules));
+            assert.equal(find(report, 'ABH_NO_EXIT_PATH').disposition, 'blocked');
+            assert.deepEqual(report.relaxedRules, []);
+        }
+        // Added rules now enforce on top of the defaults.
+        const { cleanup, ...noCleanup } = safeRead;
+        const added = pre({ profiles: [{ ...noCleanup, cleanup: 'none' }], policy: { mode: 'enforce', enforceRules: ['ABH_MISSING_CLEANUP'] } });
+        assert.equal(find(added, 'ABH_MISSING_CLEANUP').disposition, 'blocked');
+        // Relaxing a default must be named and is always visible.
+        const relaxed = pre({ profiles: noExit, policy: { mode: 'enforce', relaxRules: ['ABH_NO_EXIT_PATH'] } });
+        assert.equal(relaxed.decision, 'allow');
+        assert.deepEqual(relaxed.relaxedRules, ['ABH_NO_EXIT_PATH']);
+        const notice = find(relaxed, 'ABH_ENFORCEMENT_RELAXED');
+        assert.deepEqual([notice.certainty, notice.disposition, notice.subject.kind, notice.evidence.rule1, notice.evidence.relaxedCount], ['confirmed', 'reported', 'workflow', 'ABH_NO_EXIT_PATH', 1]);
+        assert.equal(relaxed.warnings[0].ruleId, 'ABH_ENFORCEMENT_RELAXED', 'reported first');
+        assert.equal(find(relaxed, 'ABH_NO_EXIT_PATH').disposition, 'reported');
+        assert.ok(find(pre({ profiles: noExit, policy: { mode: 'warn', relaxRules: ['ABH_NO_EXIT_PATH'] } }), 'ABH_ENFORCEMENT_RELAXED'));
+        // Misuse is rejected instead of silently ignored.
+        for (const policy of [
+            { mode: 'enforce', relaxRules: ['ABH_MISSING_CLEANUP'] },
+            { mode: 'enforce', enforceRules: ['ABH_NO_EXIT_PATH'], relaxRules: ['ABH_NO_EXIT_PATH'] },
+            { mode: 'enforce', relaxRules: ['ABH_NO_EXIT_PATH', 'ABH_NO_EXIT_PATH'] },
+            { mode: 'enforce', enforceRules: ['ABH_MISSING_CLENUP'] },
+            { mode: 'enforce', relaxRules: ['ASH_LEASE_EXPIRED'] },
+        ])
+            assert.throws(() => pre({ profiles: noExit, policy }), (e) => e.code === 'invalid-policy', JSON.stringify(policy));
+        // The observer follows the same rule: its defaults survive a custom list.
+        const clock = { t: 0 };
+        let cancels = 0;
+        const o = api.createAshwatthamaObserver({ now: () => clock.t, policy: { mode: 'enforce', enforceRules: ['ASH_CANCEL_STUCK'] } });
+        o.begin({ kind: 'tool', scope: TENANT, timeoutMs: 1000, cancel: () => cancels++ });
+        clock.t = 2000;
+        assert.equal(o.scan(TENANT)[0].disposition, 'cancellation-requested');
+        assert.equal(cancels, 1);
     });
     check('Abhimanyu: missing cleanup declaration is insufficient metadata, explicit none is confirmed', () => {
         const { cleanup, ...noCleanup } = safeRead;
