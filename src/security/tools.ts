@@ -115,7 +115,8 @@ export class ToolLease {
                 this.#controller.signal,
                 async (_policy, identity, authorizedSignal, checkAuthorized) => {
                     const checkpoint = () => {
-                        this.#check();
+                        // Retained callbacks must also observe tool removal/replacement.
+                        ensure();
                         checkAuthorized?.();
                     };
                     checkpoint();

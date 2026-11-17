@@ -607,3 +607,102 @@ or newer.
 - Start routing with an empty (deterministic) policy as the first active version,
   so a rollback target exists.
 - Ranking, worker training and routing policies apply only where you opt in.
+
+## Protected external retrieval (H01-B)
+
+`shivax/integrations` exports `registerHanumanFetchService`, `HanumanFetchError`,
+`HANUMAN_FETCH_CAPABILITY` (`hanuman.fetch`), `HANUMAN_FETCH_TOOL_ID`
+(`shivax.hanuman.fetch`), and the `Hanuman*` transport, target, limit, input,
+result and event types. `HANUMAN_BOT_ID` is only a reserved identifier;
+H01-B supplies no Hanuman bot or transport implementation. Importing the entry
+point and creating the seven default specialists perform no retrieval.
+
+Register a separate service in each trusted host composition:
+
+```ts
+import { ProtectedToolRegistry } from 'shivax/security';
+import { registerHanumanFetchService } from 'shivax/integrations';
+import type { HanumanFetchTransport } from 'shivax/integrations';
+
+function registerRetrieval(transport: HanumanFetchTransport) {
+    const tools = new ProtectedToolRegistry();
+    registerHanumanFetchService(tools, {
+        transport,
+        targets: [{
+            id: 'public-docs',
+            url: 'https://docs.example.org/',
+            issuer: 'host',
+            scope: { kind: 'company', id: 'tenant' },
+            mediaTypes: ['text/plain', 'application/json'],
+            maxResponseBytes: 32768,
+        }],
+        limits: { maxResponseBytes: 32768, maxChunks: 4096, maxAddresses: 16, timeoutMs: 10000 },
+    });
+    return tools;
+}
+```
+
+Registration grants no authority. Before execution the host must configure:
+
+1. Jay-authenticated context with the exact tool grant, matching issuer and
+   tenant, and the permission named in the host's policies.
+2. Vijay capability and tool policies with `read-only` effect, input validation
+   and the required permissions. Set `requiresApproval: true` on the tool policy
+   when approval is required; the host approver must return literal `true`.
+3. NARASIMHA with `protectExecution: true`, a matching workflow operation and
+   tool operation, and the exact origin in both the tool's `networkOrigins`
+   and policy's `network.origins`. Declare empty file resources. Allow the
+   registered operations and `hanuman.fetch`; provision at least three
+   concurrent reservations for a workflow/tool call. Keep existing admin
+   authorization and approval separately configured.
+4. For a host-owned workflow, bind the protected tool using
+   `new ToolRegistry(tools).bind({ id: HANUMAN_FETCH_TOOL_ID,
+   capability: HANUMAN_FETCH_CAPABILITY, effect: 'read-only' })`, then use the
+   existing `RudraWorkflowEngine`. Use one action, `allowedCapabilities:
+   ['hanuman.fetch']`, `maxSteps: 1` and `maxRetries: 0`. Input is exactly
+   `{ targetId: 'public-docs' }`. No caller URLs, headers, methods or credentials
+   are accepted. The offline fixture in `tests/hanuman-fetch.test.mjs` shows
+   the complete host composition.
+
+The result is `{ version: 1, targetId, status: 200, mediaType, bytes, body,
+trust: 'untrusted' }`. `targetId` is opaque provenance into the frozen host
+catalog; URLs, headers, peer addresses and transport exceptions are not returned.
+JSON is validated and returned as text. Overflow fails without truncation.
+Existing root and firewall output budgets also apply to the full envelope,
+including JSON escaping. Host observers receive only registered target IDs,
+lifecycle states and fixed error codes. Vijay and RUDRA keep their existing
+sanitized failure contracts; service details are available to the host observer.
+
+The host implements `HanumanFetchTransport.resolve()` followed by `request()`.
+The SDK validates every reported DNS address and passes a frozen permitted set
+into a GET-only request. It verifies the reported peer is in that set and
+rejects redirects. This is a contract with trusted code, not proof of where an
+arbitrary callback connected. Host obligations R-H1 through R-H8 are:
+
+- Parse the exact canonical HTTPS URL with WHATWG semantics; never rewrite it.
+- Pin the actual socket to the permitted addresses, preserve hostname/SNI and
+  verify TLS certificates for that hostname; report the actual peer.
+- Reject every redirect without following it. Send no credentials, cookies,
+  authorization, client certificates or forwarded headers. Do not retry.
+- Enforce wire and buffering limits before delivering chunks; do not decompress.
+- Honor cancellation and deadlines through DNS, connect, TLS, headers and body;
+  call the supplied checkpoint before dispatch and after async checkpoints.
+  `close()` must release the connection/stream and settle after abort.
+- Isolate connection pools across tenants, pin sets and service instances.
+- Apply equivalent destination restrictions at any proxy that performs DNS.
+- Apply OS/proxy/sandbox egress controls for deployments serving untrusted users.
+
+The SDK rechecks current policy after resolution, headers, each streamed chunk
+and cleanup. Mandatory checks also run in monitor mode; lockdown blocks new
+retrieval. Revocation cannot undo a request already sent. An uncooperative host
+can retain a draining lease indefinitely: the SDK cannot terminate arbitrary
+JavaScript or sockets. Host identity-provider revocation must abort the root
+signal for immediate effect; synchronous checkpoints check minted identity,
+expiry and policy, while asynchronous provider validation runs at admission.
+
+Fetched text is always untrusted data. Never use it as instructions, grants,
+verified feedback, approval, executable code or automatic learning input.
+Credentialed targets are outside this contract. The host must keep secrets out
+of registered targets and transport content; arbitrary public text cannot be
+proven free of credential-like strings. Downstream display, model use and
+SARASWATI ingestion require their own existing controls.

@@ -342,7 +342,11 @@ export class Vijay {
                 reason: 'authorized',
             });
             admitted = true;
+            const admittedPolicy = policy;
             const value = await work(policy, identity, signal, () => {
+                // Parent hooks can call this checkpoint; invoking ensure here would recurse.
+                lease?.check();
+                this.#assert(root, admittedPolicy, input, signal);
                 lease?.check();
             });
             if (lease) {

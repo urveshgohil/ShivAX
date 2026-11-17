@@ -36,6 +36,10 @@ assert.throws(() => api.createShivaxFirewall(), error => error.code === 'invalid
 }
 console.log('Packed ESM/CJS SDK imports passed.');`);
     process.stdout.write(command(process.execPath, ['verify.mjs'], consumer));
+    // H01-B: exercise the opt-in service from the installed package, with mock transports only.
+    writeFileSync(join(consumer, 'hanuman-fetch.test.mjs'), readFileSync(join(root, 'tests', 'hanuman-fetch.test.mjs')));
+    const fetchTests = command(process.execPath, ['--test', 'hanuman-fetch.test.mjs'], consumer);
+    console.log(`Packed protected fetch passed: ${fetchTests.match(/^# tests (\d+)$/m)?.[1]} offline ESM/CJS tests.`);
     // Every example named by shipped documentation must be present in the installed package.
     const installed = join(consumer, 'node_modules', 'shivax');
     const referenced = new Set();
@@ -113,6 +117,21 @@ firewall.runtime.setMode('monitor');
 const invalidMode: FirewallMode = 'disabled';
 void invalidMode;
 import { Tensor } from 'shivax/core';
+import { registerHanumanFetchService, HANUMAN_FETCH_TOOL_ID, type HanumanFetchTransport,
+    type HanumanTransportRequest, type HanumanFetchResult } from 'shivax/integrations';
+import { ProtectedToolRegistry } from 'shivax/security';
+declare const fetchTransport: HanumanFetchTransport;
+registerHanumanFetchService(new ProtectedToolRegistry(), { transport: fetchTransport, targets: [] });
+declare const fetchRequest: HanumanTransportRequest;
+const fetchMethod: 'GET' = fetchRequest.method;
+fetchRequest.checkExecution();
+declare const fetchResult: HanumanFetchResult;
+const fetchTrust: 'untrusted' = fetchResult.trust;
+// @ts-expect-error The protected transport is GET-only.
+const postRequest: HanumanTransportRequest = { ...fetchRequest, method: 'POST' };
+// @ts-expect-error Service registration always requires an explicit host transport.
+registerHanumanFetchService(new ProtectedToolRegistry(), { targets: [] });
+void HANUMAN_FETCH_TOOL_ID; void fetchMethod; void fetchTrust; void postRequest;
 import { Jay } from 'shivax/security';
 import type { Tensor as RootTensor, Jay as RootJay, InspectionProvider } from 'shivax';
 import { InspectraInspectionProvider } from 'shivax/adapters/inspectra';

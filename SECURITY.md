@@ -117,3 +117,31 @@ around its code. Never pass admin capabilities or signed-in root objects to bots
   automatically, and repeated retrieval never raises a record's trust.
 - **Firewall coupling.** Lockdown blocks approval, activation and (by default)
   rollback, and freezes routing to deterministic.
+
+## Opt-in protected retrieval (H01-B)
+
+The `shivax/integrations` fetch service requires explicit host registration,
+Jay/Vijay authorization and a bound NARASIMHA resource boundary. It contains no
+HTTP client or global fetch fallback and does not add a default bot. Mandatory
+scope, URL, reported-address, size, cancellation and policy checks apply in
+monitor mode as well as enforce mode. Lockdown prevents new retrieval.
+
+The two-phase host transport is trusted security code. It must bind DNS results
+to permitted sockets, verify TLS and hostname/SNI, reject every redirect, omit
+credentials and cookies, enforce wire/buffering limits without decompression,
+honor checkpoints and cancellation, and close streams on all exits. Proxies
+must apply the destination policy themselves. Connection pools must be scoped
+to tenants and pin sets. OS/proxy/sandbox egress restrictions remain necessary;
+validating a reported address does not attest an arbitrary callback's behavior.
+See [the SDK contract](docs/sdk.md#protected-external-retrieval-h01-b) for
+R-H1 through R-H8 and host composition requirements.
+
+Results carry opaque registered-target provenance and `trust: 'untrusted'`.
+Response headers, URLs, transport exceptions and host credentials are not
+projected into the result. The body remains untrusted external text, not a
+secret-scanning guarantee or authenticated evidence. Do not turn it into grants,
+admin instructions, executable code, verified feedback, model approval or
+implicit training input. Non-cooperative host work can retain draining leases;
+the host owns forcible cancellation. Immediate identity-provider revocation
+must abort the root signal. No transport or live-network verification is
+provided by H01-B.
