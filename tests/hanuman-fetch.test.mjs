@@ -163,6 +163,18 @@ for (const [format, root, integration] of [['ESM', rootESM, fetchESM], ['CJS', r
         assert.equal(tool.validateOutput({...result,headers:{Authorization:'secret'}}),false);
         assert.equal(tool.validateOutput({...result,bytes:999}),false);
     });
+    check('missing host transport is rejected at registration', () => {
+        assert.throws(() => api.registerHanumanFetchService(new api.ProtectedToolRegistry(), { targets: [target] }),
+            error => error.code === 'invalid-input');
+    });
+    check('transport exception secrets never reach the result or observer', async () => {
+        const secret = 'Authorization: bearer fixture-secret';
+        const f = await fixture(api, { request: () => { throw new Error(secret); } });
+        const result = await f.run();
+        assert.notEqual(result.status, 'completed');
+        assert.equal(f.counters.request, 1);
+        assert.ok(!JSON.stringify([result, f.events, f.firewall.runtime.audit()]).includes(secret));
+    });
     check('saved checkpoint expires and observer failures stay isolated',async()=>{
         let saved;
         const f=await fixture(api,{request:r=>{saved=r.checkExecution;},observe:()=>Promise.reject(new Error('secret'))});
