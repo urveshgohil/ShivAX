@@ -7,7 +7,10 @@ import type { Vijay } from '../security/vijay.js';
 import { WorkflowError } from './errors.js';
 import { ToolRegistry } from './registry.js';
 import { plan, settings } from './validation.js';
+import { analyzeWorkflow, prepareAbhimanyu, type AbhimanyuReport, type PreparedAbhimanyu } from './safety/abhimanyu.js';
+import { isAshwatthamaObserver, type AshwatthamaObserver, type LifecycleOperationHandle } from './safety/ashwatthama.js';
 import type {
+    WorkflowSafetyOptions,
     WorkflowOptions,
     WorkflowOutput,
     WorkflowRun,
@@ -26,9 +29,25 @@ export class RudraWorkflowEngine {
     #occupied = false;
     #disposed = false;
     #cancel?: () => void;
-    constructor(tools: ToolRegistry, security: Vijay) {
+    readonly #preflight?: PreparedAbhimanyu;
+    readonly #lifecycle?: AshwatthamaObserver;
+    /** `safety` is optional and opt-in (H04). Without it the engine behaves exactly as before. */
+    constructor(tools: ToolRegistry, security: Vijay, safety?: WorkflowSafetyOptions) {
         this.#tools = tools;
         this.#security = security;
+        if (safety !== undefined) {
+            try {
+                const keys = safety && typeof safety === 'object' ? Object.keys(safety) : null;
+                if (!keys || keys.some((key) => key !== 'preflight' && key !== 'lifecycle')) throw 0;
+                if (safety.preflight !== undefined) this.#preflight = prepareAbhimanyu(safety.preflight);
+                if (safety.lifecycle !== undefined) {
+                    if (!isAshwatthamaObserver(safety.lifecycle)) throw 0;
+                    this.#lifecycle = safety.lifecycle;
+                }
+            } catch {
+                throw new WorkflowError('invalid-options');
+            }
+        }
     }
     dispose(): void {
         this.#disposed = true;
@@ -46,6 +65,17 @@ export class RudraWorkflowEngine {
         const config = settings(options, task.input.capability);
         if (this.#disposed || this.#occupied)
             throw new WorkflowError(this.#disposed ? 'disposed' : 'busy');
+        // H04 Abhimanyu: static, side-effect free; runs before any lifecycle, security or tool call.
+        let preflight: AbhimanyuReport | undefined;
+        if (this.#preflight && this.#preflight.policy.mode !== 'disabled') {
+            preflight = analyzeWorkflow(
+                this.#preflight,
+                proposal,
+                { allowed: config.allowed, maxRetries: config.maxRetries, maxParallel: config.maxParallel, maxSteps: config.maxSteps },
+                { deadlineMs: task.limits.timeoutMs, tools: this.#tools, maxPlanBytes: task.limits.maxInputBytes }
+            );
+            if (preflight.decision === 'block') throw new WorkflowError('preflight-blocked');
+        }
         const now =
             typeof globalThis.performance?.now === 'function'
                 ? globalThis.performance.now.bind(globalThis.performance)
@@ -78,7 +108,19 @@ export class RudraWorkflowEngine {
         let wake: (() => void) | undefined;
         const pauseWaiters: ((value: WorkflowSnapshot) => void)[] = [];
         const pending = new Set<Promise<unknown>>();
+        // H04 Ashwatthama: nonsecret lifecycle metadata only. Observer faults never affect execution.
+        const observe = (callback: () => void) => {
+            try {
+                callback();
+            } catch {
+                /* Isolated observer. */
+            }
+        };
+        let life: LifecycleOperationHandle | undefined;
+        const lifecycle = this.#lifecycle;
+        const children = new Set<LifecycleOperationHandle>();
         const emit = (entry: Omit<WorkflowTrace, 'sequence' | 'taskId'>) => {
+            if (life) observe(() => life!.progress());
             if (ended) return;
             traces.push(Object.freeze({ ...entry, sequence: ++sequence, taskId: task.taskId }));
             if (traces.length > 1024) traces.shift();
@@ -86,6 +128,7 @@ export class RudraWorkflowEngine {
         const state = (value: WorkflowStatus) => {
             if (status !== value && !ended) {
                 status = value;
+                if (life) observe(() => (value === 'paused' ? life!.pause() : life!.resume()));
                 emit({ type: 'state', status });
             }
         };
@@ -114,6 +157,24 @@ export class RudraWorkflowEngine {
         };
         const cancel = () => controller.abort(new WorkflowError('cancelled'));
         this.#cancel = cancel;
+        if (lifecycle)
+            observe(() => {
+                life = lifecycle.begin({
+                    kind: 'workflow',
+                    scope: { kind: task.security.scope.kind, id: task.security.scope.id },
+                    timeoutMs: task.limits.timeoutMs,
+                    cancel,
+                });
+            });
+        if (life)
+            controller.signal.addEventListener(
+                'abort',
+                () => {
+                    observe(() => life!.requestCancellation());
+                    for (const child of children) observe(() => child.requestCancellation());
+                },
+                { once: true }
+            );
         const aborted = new Promise<never>((_, reject) => {
             controller.signal.addEventListener(
                 'abort',
@@ -217,6 +278,39 @@ export class RudraWorkflowEngine {
                         modelTokens += route.model.tokens;
                         modelCostUnits += route.model.costUnits;
                     }
+                    let child: LifecycleOperationHandle | undefined;
+                    let toolTracked = false;
+                    if (life && lifecycle)
+                        observe(() => {
+                            child = lifecycle.begin({
+                                kind: 'action',
+                                scope: { kind: task.security.scope.kind, id: task.security.scope.id },
+                                timeoutMs: Math.max(1, Math.floor(task.limits.timeoutMs - (now() - started))),
+                                parent: life,
+                            });
+                            if (child.ref !== 'untracked') children.add(child);
+                        });
+                    const trackTool = <T>(callback: () => T | Promise<T>): Promise<T> => {
+                        const promise = track(callback);
+                        if (child) {
+                            toolTracked = true;
+                            // Cleanup is acknowledged only when the actual tool work settles.
+                            const done = () => {
+                                observe(() => child!.cleanup(true));
+                                children.delete(child!);
+                            };
+                            void promise.then(done, done);
+                        }
+                        return promise;
+                    };
+                    const settleChild = (outcome: 'completed' | 'failed') => {
+                        if (!child) return;
+                        observe(() => child!.complete(outcome));
+                        if (!toolTracked) {
+                            observe(() => child!.cleanup(true));
+                            children.delete(child);
+                        }
+                    };
                     try {
                         const output = await this.#security.executeTool(
                             context,
@@ -227,7 +321,7 @@ export class RudraWorkflowEngine {
                             {
                                 onApproval,
                                 checkExecution: check,
-                                trackTool: track,
+                                trackTool,
                                 onEffect: () =>
                                     emit({
                                         type: 'action',
@@ -244,6 +338,7 @@ export class RudraWorkflowEngine {
                                 readOnly: route.effect === 'read-only',
                             }
                         );
+                        settleChild('completed');
                         check();
                         const entry: WorkflowOutput = Object.freeze({
                             actionId: action.id,
@@ -271,6 +366,7 @@ export class RudraWorkflowEngine {
                         });
                         return;
                     } catch (failure) {
+                        settleChild('failed');
                         check();
                         emit({
                             type: 'action',
@@ -341,6 +437,7 @@ export class RudraWorkflowEngine {
             firewallLease?.close();
             this.#occupied = false;
             this.#cancel = undefined;
+            if (life) observe(() => life!.cleanup(true));
         };
         const result = (async () => {
             try {
@@ -368,12 +465,21 @@ export class RudraWorkflowEngine {
                     /* Host cleanup. */
                 }
                 for (const resolve of pauseWaiters.splice(0)) resolve(snapshot());
+                if (life)
+                    observe(() =>
+                        life!.complete(
+                            status === 'completed' || status === 'denied' || status === 'cancelled'
+                                ? status
+                                : 'failed'
+                        )
+                    );
                 void release();
             }
             return snapshot();
         })();
         return Object.freeze({
             context,
+            ...(preflight ? { preflight } : {}),
             get snapshot() {
                 return snapshot();
             },

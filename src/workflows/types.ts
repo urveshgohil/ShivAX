@@ -74,7 +74,9 @@ export type WorkflowErrorCode =
     | 'tool-failed'
     | 'busy'
     | 'disposed'
-    | 'invalid-state';
+    | 'invalid-state'
+    /** H04 Abhimanyu enforce mode refused the plan before any lifecycle, security or tool call. */
+    | 'preflight-blocked';
 export interface WorkflowTrace {
     readonly sequence: number;
     readonly taskId: string;
@@ -107,9 +109,21 @@ export interface WorkflowSnapshot {
     };
     readonly error?: { readonly code: WorkflowErrorCode; readonly message: string };
 }
+/**
+ * Optional, opt-in H04 safety checks for `RudraWorkflowEngine`. Neither check changes Jay, Vijay or firewall
+ * decisions; enforce-mode preflight can only refuse to start, and the observer can only request the run's own
+ * cooperative cancellation.
+ */
+export interface WorkflowSafetyOptions {
+    readonly preflight?: import('./safety/abhimanyu.js').AbhimanyuOptions;
+    /** An observer from `createAshwatthamaObserver`. */
+    readonly lifecycle?: import('./safety/ashwatthama.js').AshwatthamaObserver;
+}
 /** Host-only control handle. Not serializable and never provided to tools or model providers. */
 export interface WorkflowRun {
     readonly context: TaskContext;
+    /** Abhimanyu preflight report when the engine was configured with `preflight` (warn or enforce mode). */
+    readonly preflight?: import('./safety/abhimanyu.js').AbhimanyuReport;
     readonly snapshot: WorkflowSnapshot;
     readonly result: Promise<WorkflowSnapshot>;
     /** Resolves at a quiescent action boundary or terminal result. Does not replay active work. */

@@ -15,4 +15,6 @@ export type {
     WorkflowOutput,
     WorkflowSnapshot,
     WorkflowRun,
+    WorkflowSafetyOptions,
 } from './types.js';
+export * from './safety/index.js';

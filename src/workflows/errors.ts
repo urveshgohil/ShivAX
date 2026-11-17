@@ -16,6 +16,7 @@ const messages: Record<WorkflowErrorCode, string> = {
     busy: 'Workflow engine is occupied.',
     disposed: 'Workflow engine is disposed.',
     'invalid-state': 'Workflow is not paused.',
+    'preflight-blocked': 'Workflow safety preflight blocked this plan.',
 };
 export class WorkflowError extends Error {
     constructor(readonly code: WorkflowErrorCode) {
