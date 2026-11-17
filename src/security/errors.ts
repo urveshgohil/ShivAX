@@ -35,13 +35,33 @@ export class SecurityError extends Error {
         this.name = 'SecurityError';
     }
 }
+/**
+ * Registry-wide symbol (shared across ESM/CJS bundles) a protected tool sets as an own data
+ * property on a thrown error to declare a deterministic failure. Retrying it would repeat the
+ * same side effect, so retry loops must not re-dispatch. It never changes the error code.
+ */
+export const NON_RETRYABLE: unique symbol = Symbol.for('shivax.security.nonRetryable') as never;
+/** True only for an own data property; never invokes host getters. */
+export function isNonRetryable(error: unknown): boolean {
+    try {
+        if ((typeof error !== 'object' && typeof error !== 'function') || error === null)
+            return false;
+        const descriptor = Object.getOwnPropertyDescriptor(error, NON_RETRYABLE);
+        return !!descriptor && 'value' in descriptor && descriptor.value === true;
+    } catch {
+        return false;
+    }
+}
 export function securityError(error: unknown, fallback: SecurityErrorCode): SecurityError {
     const descriptor =
         error instanceof SecurityError ? Object.getOwnPropertyDescriptor(error, 'code') : undefined;
     const code = descriptor && 'value' in descriptor ? descriptor.value : undefined;
-    return new SecurityError(
+    const result = new SecurityError(
         typeof code === 'string' && Object.prototype.hasOwnProperty.call(messages, code)
             ? (code as SecurityErrorCode)
             : fallback
     );
+    // Sanitization must not turn a declared deterministic failure into a retryable one.
+    if (isNonRetryable(error)) Object.defineProperty(result, NON_RETRYABLE, { value: true });
+    return result;
 }

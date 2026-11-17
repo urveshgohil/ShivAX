@@ -167,3 +167,17 @@ Initial scratch-runner setup had generation syntax, test-file discovery under `n
 Baseline compatibility validation is **PASS**. The H03-A implementation gate is **FAIL / BLOCKED**, and live deployment remains **NO-GO**. No H03 production integration, new eligibility API, new permanent focused integration suite, transport implementation or wire-level security claim is delivered by this audit. Existing test success does not demonstrate those missing features.
 
 Required next action: complete and review the outstanding H01 corrections and transport, correct the H02 clock retry defect, then explicitly resume H03-A against that reviewed baseline. This report neither waives prerequisites nor starts their implementation or H03-B automatically.
+
+## 9. Prerequisite follow-up (same day)
+
+Two of the three blocking defects have been corrected in a separate change; the gate is still **BLOCKED** on H01D-02.
+
+| Finding | Correction | Evidence |
+| --- | --- | --- |
+| H01D-01 | `HanumanFetchError` marks every code except `timeout` and `transport-error` as deterministic using a registry symbol (`Symbol.for('shivax.security.nonRetryable')`, own data property, safe across ESM/CJS bundles). `securityError()` carries the marker through sanitization without changing the public code. `RudraWorkflowEngine` skips the retry when the marker is present. Workflow status (`failed` / `tool-failed`) and observer codes are unchanged. Other tools can opt in the same way; the marker can only remove retries. | `tests/hanuman-fetch.test.mjs`: a 302, 404, wrong media type, oversized response or loopback address with `maxRetries: 3` produces exactly one approval and at most one request and close, with zero retry events. A transient `transport-error` still retries once, with fresh approval. |
+| H02D-01 | `HanumanBot` validates the injected clock (a throw, non-number, non-finite value or out-of-range value) before `toolCall` and again at receipt. Both failures use `unavailable`, not `bot-error`. The H02-A schema error table has been amended. | `tests/hanuman-bot.test.mjs`: NaN, Infinity, 9e15, a non-number or a throwing clock gives zero resolve/request/approval/close calls. A clock that fails after retrieval gives one request and zero retries. |
+| H01D-02 | **Still open.** No reviewed Node DNS-pinned/TLS transport exists. | — |
+
+Against the unfixed source, 22 of the 24 new ESM/CJS cases fail; the 2 transient-retry guard cases pass on both versions. With the fix: `pnpm lint` PASS; `pnpm test` **1,167 / 1,167**; `pnpm verify:package` PASS (packed **182** gateway + **88** bot tests, 532 files). The scratch probes `h03a-fetch-probe.mjs` and `h03a-bot-probe.mjs` now pass 2/2 each.
+
+Next gate: implement and review the H01D-02 transport, then re-review H01 before resuming H03-A.

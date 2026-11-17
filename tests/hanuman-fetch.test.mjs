@@ -248,7 +248,30 @@ for (const [format, root, integration] of [['ESM', rootESM, fetchESM], ['CJS', r
         registered.url = 'https://evil.example/'; registered.scope.id = 'other';
         assert.equal((await f.run()).status, 'completed');
     });
+    // H01D-01: deterministic gateway denials must not be re-dispatched by workflow retries.
+    const retrying = (f, maxRetries = 3) => f.engine.start(f.context, { actions: [{ id: 'fetch', capability: 'hanuman.fetch', input: { source: 'task' } }] },
+        { allowedCapabilities: ['hanuman.fetch'], maxRetries }).result;
+    for (const [name, response] of [['redirect', { status: 302 }], ['status', { status: 404 }], ['media', { contentType: 'text/html' }], ['length', { contentLength: 1000000 }]])
+        check(`deterministic ${name} denial is not retried`, async () => {
+            let approvals = 0;
+            const f = await fixture(api, { response, approve: () => { approvals++; return true; } });
+            const result = await retrying(f);
+            assert.equal(result.status, 'failed'); assert.equal(result.error.code, 'tool-failed');
+            assert.deepEqual({ ...f.counters, approvals }, { resolve: 1, request: 1, close: 1, approvals: 1 });
+            assert.equal(result.trace.filter(e => e.type === 'retry').length, 0);
+        });
+    check('deterministic pre-dispatch denial is not retried', async () => {
+        let approvals = 0;
+        const f = await fixture(api, { resolve: async () => [{ family: 4, address: '127.0.0.1' }], approve: () => { approvals++; return true; } });
+        const result = await retrying(f);
+        assert.equal(result.status, 'failed'); assert.deepEqual({ ...f.counters, approvals }, { resolve: 1, request: 0, close: 0, approvals: 1 });
+    });
+    check('transient transport errors keep the bounded re-authorized retry', async () => {
+        let approvals = 0;
+        const f = await fixture(api, { response: { contentLength: 1 }, approve: () => { approvals++; return true; } });
+        const result = await retrying(f, 1);
+        assert.equal(result.status, 'failed'); assert.equal(approvals, 2);
+        assert.equal(f.counters.request, 2); assert.equal(f.counters.close, 2);
+        assert.equal(result.trace.filter(e => e.type === 'retry').length, 1);
+    });
 }
-
-
-

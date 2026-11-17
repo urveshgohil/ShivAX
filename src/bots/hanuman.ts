@@ -131,6 +131,18 @@ function fetchBody(
     return { body, bytes, mediaType };
 }
 
+function clock(now: () => number): number {
+    let value: unknown;
+    try {
+        value = now();
+    } catch {
+        throw new BotError('unavailable');
+    }
+    if (typeof value !== 'number' || !Number.isFinite(value) || Math.abs(value) > 8.64e15)
+        throw new BotError('unavailable');
+    return value;
+}
+
 function retrieval(options: Required<HanumanBotOptions>): Operation {
     return {
         description: 'Retrieve bounded untrusted evidence from a host-registered target.',
@@ -152,6 +164,8 @@ function retrieval(options: Required<HanumanBotOptions>): Operation {
             const { targetId } = input.request;
             const subtle = globalThis.crypto?.subtle;
             if (typeof subtle?.digest !== 'function') throw new BotError('unavailable');
+            // Fail before retrieval when the host clock is unusable: no fetch, no approval.
+            clock(options.now);
             const raw = await toolCall(context, HANUMAN_FETCH_TOOL_ID, { targetId });
             if (context.task.signal.aborted) throw new BotError('cancelled');
             const { body, bytes, mediaType } = fetchBody(
@@ -159,9 +173,8 @@ function retrieval(options: Required<HanumanBotOptions>): Operation {
                 targetId,
                 context.task.limits.maxOutputBytes
             );
-            const received = options.now();
-            if (!Number.isFinite(received) || Math.abs(received) > 8.64e15)
-                throw new BotError('bot-error');
+            // A post-fetch clock failure is non-retryable: `bot-error` would repeat the fetch.
+            const received = clock(options.now);
 
             let end = Math.min(
                 body.length,

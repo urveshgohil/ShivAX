@@ -2,7 +2,7 @@ import { snapshotContext } from '../agents/context.js';
 import { snapshotValue } from '../agents/validation.js';
 import type { BotValue, TaskContext } from '../agents/types.js';
 import type { ProtectedLease } from '../security/firewall/binding.js';
-import { SecurityError } from '../security/errors.js';
+import { SecurityError, isNonRetryable } from '../security/errors.js';
 import type { Vijay } from '../security/vijay.js';
 import { WorkflowError } from './errors.js';
 import { ToolRegistry } from './registry.js';
@@ -287,6 +287,7 @@ export class RudraWorkflowEngine {
                         if (
                             failure instanceof SecurityError &&
                             failure.code === 'tool-error' &&
+                            !isNonRetryable(failure) &&
                             route.effect === 'read-only' &&
                             attempt <= config.maxRetries
                         ) {

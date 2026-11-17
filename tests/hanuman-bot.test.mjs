@@ -90,7 +90,7 @@ async function fixture(api, options = {}) {
     }
     const bot = api.registerHanumanBot(registry, {
         tools,
-        now: () => now,
+        now: options.now ?? (() => now),
         maxExcerptChars: options.maxExcerptChars,
     });
     const identity = {
@@ -224,7 +224,11 @@ async function fixture(api, options = {}) {
             { signal: controller.signal, toolPermissions: grants, limits }
         );
     const runContext = (task, maxRetries = 0) =>
-        rudra.run(task, { allowedCapabilities: [capability], maxSteps: 1, maxRetries });
+        rudra.run(task, {
+            allowedCapabilities: [capability],
+            maxSteps: options.maxSteps ?? 1,
+            maxRetries,
+        });
     return {
         bot,
         counts,
@@ -704,5 +708,34 @@ for (const [format, root, bots, integration] of [
         assert.deepEqual(result.outputs, []);
         assert.deepEqual(f.counts, { resolve: 1, request: 0, approval: 1, close: 0 });
         assert.ok(f.events.some((event) => event.code === 'timeout'));
+    });
+    // H02D-01: an unusable host clock must never replay a protected retrieval.
+    for (const [name, clock] of [
+        ['NaN', () => NaN],
+        ['Infinity', () => Infinity],
+        ['out-of-range', () => 9e15],
+        ['non-number', () => '2026'],
+        [
+            'throwing',
+            () => {
+                throw new Error('clock-secret');
+            },
+        ],
+    ])
+        check(`invalid ${name} clock fails before retrieval without retry`, async () => {
+            const f = await fixture(api, { now: clock, maxSteps: 4 });
+            const result = await f.run(undefined, undefined, 3);
+            assert.equal(result.status, 'failed');
+            assert.equal(result.trace.filter((event) => event.type === 'retry').length, 0);
+            assert.deepEqual(f.counts, { resolve: 0, request: 0, approval: 0, close: 0 });
+            assert.ok(!JSON.stringify(result).includes('clock-secret'));
+        });
+    check('clock failure after retrieval is non-retryable', async () => {
+        let calls = 0;
+        const f = await fixture(api, { now: () => (calls++ === 0 ? now : NaN), maxSteps: 4 });
+        const result = await f.run(undefined, undefined, 3);
+        assert.equal(result.status, 'failed');
+        assert.equal(result.trace.filter((event) => event.type === 'retry').length, 0);
+        assert.deepEqual(f.counts, { resolve: 1, request: 1, approval: 1, close: 1 });
     });
 }

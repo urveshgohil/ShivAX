@@ -117,7 +117,7 @@ export interface HanumanEvidence {
 | --- | --- |
 | `evidenceId` | `sha256(canonical JSON { v: 1, scopeKind, scopeId, targetId, mediaType, body })` via `globalThis.crypto.subtle`. If that is unavailable, the bot fails with `unavailable`; there is no weak fallback. Including the scope prevents cross-tenant correlation of identical content. The ID is deterministic, so identical evidence de-duplicates within a tenant. |
 | Source URL or origin | **Omitted on purpose.** H01 keeps URLs out of results, traces and audit (I-9, I-13). `targetId` is the reference into the host catalog, which the host can resolve for display. A future option to project a host-approved display label requires a new review (see unresolved risks). |
-| `retrievedAt` | `new Date(now()).toISOString()`. `now` must return a finite number in the valid `Date` range, otherwise `bot-error`. It records the bot's receipt time, not the transport's server time. |
+| `retrievedAt` | `new Date(now()).toISOString()`. `now` must return a finite number in the valid `Date` range. It is checked once before retrieval and again at receipt; a throwing or invalid clock fails with non-retryable `unavailable` (amended for H02D-01; `bot-error` would replay the fetch). It records the bot's receipt time, not the transport's server time. |
 | `excerpt` / `truncated` | The bot excerpts the already validated, inert body. H01 still fails closed on oversize transport bodies; truncation here only bounds what downstream steps see. Truncation backs off one unit if it would split a surrogate pair. A truncated JSON excerpt is text, not parseable data. |
 | Error classification | Failures are `BotResult` failures with existing `BotErrorCode`s, so no evidence object is emitted on failure. `toolCall` deliberately collapses tool failures to `tool-not-allowed`. Fine-grained H01 codes reach only the host observer (`HanumanFetchEvent`). An `error` field on evidence would always be null, so it is omitted rather than faked. |
 | Excluded | API keys, `Authorization`, cookies, session IDs, principal IDs, response headers, peer addresses, raw URLs, raw exceptions, HTML and full unbounded bodies. H01 admits only `text/plain` and `application/json`. |
@@ -235,7 +235,7 @@ policies.register({ kind: 'tool', id: 'shivax.hanuman.fetch', effect: 'read-only
    5. Compute the digest. Throw `unavailable` if `crypto.subtle` is missing.
    6. Build and return the evidence.
 
-   Throw only `BotError` (`invalid-output`, `unavailable`, or `bot-error` for an invalid clock). Do not wrap `toolCall`'s `tool-not-allowed`.
+   Throw only `BotError` (`invalid-output` or `unavailable`, including an invalid clock; never `bot-error`, per H02D-01). Do not wrap `toolCall`'s `tool-not-allowed`.
 5. Validate `HanumanBotOptions` in the constructor with `record()` from `agents/validation.ts`: `maxExcerptChars` must be 1..8192 and `now` must be a function. Otherwise throw `BotError('invalid-input')`.
 6. Implement `registerHanumanBot(registry, options)` as in §4, in this order: validate options, check for a duplicate, check tool availability, construct, then `registry.register`. Return the instance.
 7. Add exports to `src/bots/index.ts`: `HanumanBot`, `registerHanumanBot`, `HANUMAN_FETCH_URL_CAPABILITY`, `HANUMAN_RESERVED_CAPABILITIES`, and the types `HanumanFetchUrlInput`, `HanumanEvidence`, `HanumanBotOptions` and `RegisterHanumanBotOptions`. Do not edit `system.ts`.
@@ -254,7 +254,7 @@ policies.register({ kind: 'tool', id: 'shivax.hanuman.fetch', effect: 'read-only
 | Missing Web Crypto, or tool unavailable at registration | `unavailable` |
 | Duplicate registration | `duplicate-bot` |
 | Abort or deadline | `cancelled` or `timed-out` (status) |
-| Invalid clock value | `bot-error` |
+| Invalid clock value | `unavailable` (before retrieval: zero tool calls; after: no retry). Amended by H02D-01. |
 
 ## 8. Test requirements for Sol Medium
 
