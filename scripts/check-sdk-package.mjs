@@ -3,6 +3,7 @@ import { isAbsolute, join, resolve, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
+import { rollup } from 'rollup';
 import { packageManager, runCommand } from './package-process.mjs';
 const require = createRequire(import.meta.url);
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -37,6 +38,9 @@ assert.throws(() => api.createShivaxFirewall(), error => error.code === 'invalid
 console.log('Packed ESM/CJS SDK imports passed.');`);
     process.stdout.write(command(process.execPath, ['verify.mjs'], consumer));
     // H01-B: exercise the opt-in service from the installed package, with mock transports only.
+    mkdirSync(join(consumer, 'fixtures'));
+    writeFileSync(join(consumer, 'fixtures', 'hanuman-transport.mjs'),
+        readFileSync(join(root, 'tests', 'fixtures', 'hanuman-transport.mjs')));
     writeFileSync(join(consumer, 'hanuman-fetch.test.mjs'), readFileSync(join(root, 'tests', 'hanuman-fetch.test.mjs')));
     const fetchTests = command(process.execPath, ['--test', 'hanuman-fetch.test.mjs'], consumer);
     console.log(`Packed protected fetch passed: ${fetchTests.match(/^# tests (\d+)$/m)?.[1]} offline ESM/CJS tests.`);
@@ -47,6 +51,28 @@ console.log('Packed ESM/CJS SDK imports passed.');`);
     console.log(`Packed Hanuman bot passed: ${hanumanCount} offline ESM/CJS tests.`);
     // Every example named by shipped documentation must be present in the installed package.
     const installed = join(consumer, 'node_modules', 'shivax');
+    const hanumanSource = readFileSync(join(root, 'src', 'bots', 'hanuman.ts'), 'utf8');
+    if (/\bfetch\s*\(|\b(?:node:)?(?:https?|net|dns|fs|child_process|playwright)(?:\/[^'"]*)?['"]/.test(hanumanSource))
+        throw new Error('Hanuman source must delegate retrieval to the protected tool.');
+    const browserBundle = await rollup({
+        input: ['dist/index.esm.js', 'dist/sdk/bots.esm.js', 'dist/sdk/integrations.esm.js']
+            .map(file => join(installed, file)),
+        onwarn(warning, warn) {
+            if (warning.code === 'UNRESOLVED_IMPORT') throw new Error(warning.message);
+            warn(warning);
+        },
+    });
+    try {
+        const { output } = await browserBundle.generate({ format: 'es' });
+        const chunks = new Set(output.map(file => file.fileName));
+        for (const file of output) {
+            if (file.type === 'chunk' && [...file.imports, ...file.dynamicImports].some(id => !chunks.has(id)))
+                throw new Error('Unexpected external module in browser-safe SDK graph: ' + file.fileName);
+        }
+        console.log('Packed browser-safe ESM graphs passed: root, bots and integrations.');
+    } finally {
+        await browserBundle.close();
+    }
     const referenced = new Set();
     for (const doc of ['README.md', 'docs/sdk.md', 'docs/production.md', 'docs/release-readiness.md', 'examples/sdk/README.md']) {
         const text = readFileSync(join(installed, doc), 'utf8');

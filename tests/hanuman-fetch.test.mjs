@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createRequire } from 'node:module';
+import { defer, mockResponse, peer } from './fixtures/hanuman-transport.mjs';
 const require = createRequire(import.meta.url);
 const previousFetch = globalThis.fetch;
 globalThis.fetch = () => { throw new Error('Unexpected network access'); };
@@ -9,8 +10,6 @@ const rootESM = await import('shivax');
 const fetchESM = await import('shivax/integrations');
 const scope = { kind: 'company', id: 'tenant' };
 const target = { id: 'docs', url: 'https://docs.example.org/', issuer: 'host', scope, mediaTypes: ['text/plain', 'application/json'] };
-const peer = { family: 4, address: '8.8.8.8' };
-const defer = () => { let resolve; const promise = new Promise(r => { resolve = r; }); return { promise, resolve }; };
 
 async function fixture(api, opt = {}) {
     const counters = { resolve: 0, request: 0, close: 0 };
@@ -26,11 +25,10 @@ async function fixture(api, opt = {}) {
             assert.ok(Object.isFrozen(request)); assert.ok(Object.isFrozen(request.addresses[0]));
             request.checkExecution();
             if (opt.request) await opt.request(request);
-            return { status: 200, contentType: 'text/plain', contentLength: null, contentEncoding: null, peer,
-                body: (async function* () { yield new TextEncoder().encode('hello'); })(),
+            return mockResponse({
                 ...opt.response,
                 async close() { counters.close++; if (opt.close) await opt.close(); },
-            };
+            });
         },
     };
     if (!opt.missing) api.registerHanumanFetchService(tools, {
