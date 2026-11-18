@@ -144,6 +144,8 @@ function scopeOf(raw: unknown): LifecycleScope {
     return Object.freeze({ kind: s.kind as LifecycleScope['kind'], id: s.id as string });
 }
 const keyOf = (scope: LifecycleScope) => `${scope.kind}:${scope.id}`;
+/** H04B-01: refs are tenant-local; the same host ref in two tenants never collides. */
+const slotOf = (scopeKey: string, ref: string) => JSON.stringify([scopeKey, ref]);
 
 export function createAshwatthamaObserver(options: AshwatthamaOptions = {}): AshwatthamaObserver {
     const o = plain(options, ['now', 'policy', 'maxOperations', 'maxHistory', 'maxWarnings', 'cancellationWindowMs', 'acknowledgementWindowMs', 'orphanWindowMs', 'maxCleanupFailures', 'maxDeadlineMs', 'onWarning'], 'invalid-input');
@@ -187,10 +189,10 @@ export function createAshwatthamaObserver(options: AshwatthamaOptions = {}): Ash
     });
     const settled = (s: State) => s.completedAt !== null && (!s.cleanupRequired || s.cleanupAcknowledgedAt !== null);
     const retire = (s: State) => {
-        if (!settled(s) || !active.has(s.ref)) return;
+        if (!settled(s) || active.get(slotOf(s.scopeKey, s.ref)) !== s) return;
         // Keep a parent while any tracked child still depends on it for orphan detection.
         for (const other of active.values()) if (other.parent === s && !settled(other)) return;
-        active.delete(s.ref);
+        active.delete(slotOf(s.scopeKey, s.ref));
         s.cancel = undefined;
         if (maxHistory > 0) {
             history.push(s);
@@ -253,8 +255,8 @@ export function createAshwatthamaObserver(options: AshwatthamaOptions = {}): Ash
             if (v.ref !== undefined && !isRef(v.ref)) fail('invalid-input');
             let parent: State | null = null;
             if (v.parent !== undefined) {
-                parent = active.get((v.parent as LifecycleOperationHandle)?.ref) ?? null;
-                if (!parent || handles.get(v.parent as object) !== parent || parent.scopeKey !== keyOf(scope)) fail('invalid-input');
+                parent = (v.parent && typeof v.parent === 'object' ? handles.get(v.parent as object) : undefined) ?? null;
+                if (!parent || active.get(slotOf(parent.scopeKey, parent.ref)) !== parent || parent.scopeKey !== keyOf(scope)) fail('invalid-input');
             }
             const scopeKey = keyOf(scope);
             if (active.size >= maxOperations) {
@@ -263,7 +265,8 @@ export function createAshwatthamaObserver(options: AshwatthamaOptions = {}): Ash
                 return inert;
             }
             const ref = (v.ref as string | undefined) ?? `op-${++sequence}`;
-            if (active.has(ref)) fail('invalid-input');
+            const slot = slotOf(scopeKey, ref);
+            if (active.has(slot)) fail('invalid-input');
             const at = now();
             const s: State = {
                 ref, kind: v.kind as State['kind'], scope, scopeKey, parent,
@@ -275,8 +278,8 @@ export function createAshwatthamaObserver(options: AshwatthamaOptions = {}): Ash
                 ...(v.cancel ? { cancel: v.cancel as () => void } : {}),
                 notified: new Set(),
             };
-            active.set(ref, s);
-            const live = () => !disposed && (active.get(ref) === s);
+            active.set(slot, s);
+            const live = () => !disposed && active.get(slot) === s;
             const handle: LifecycleOperationHandle = Object.freeze({
                 ref,
                 progress() {
@@ -300,7 +303,8 @@ export function createAshwatthamaObserver(options: AshwatthamaOptions = {}): Ash
                     }
                 },
                 requestCancellation() {
-                    if (live() && s.cancellationRequestedAt === null) s.cancellationRequestedAt = now();
+                    // H04B-04: a request after completion cannot be stuck; cleanup tracking still applies.
+                    if (live() && s.completedAt === null && s.cancellationRequestedAt === null) s.cancellationRequestedAt = now();
                 },
                 complete(status: LifecycleCompletion) {
                     if (!live() || s.completedAt !== null || !['completed', 'failed', 'cancelled', 'denied'].includes(status)) return;
@@ -323,11 +327,15 @@ export function createAshwatthamaObserver(options: AshwatthamaOptions = {}): Ash
         scan(rawScope) {
             const scope = scopeOf(rawScope);
             const key = keyOf(scope);
-            if (disposed) return Object.freeze([]);
+            // M5: a disabled observer evaluates nothing and requests no cancellation.
+            if (disposed || policy.mode === 'disabled') return Object.freeze([]);
             const at = now();
             const out: SafetyWarning[] = [];
+            // H04B-05: reserve the last slot so truncation never hides the tracking-limit signal.
+            const skipped = untrackedByScope.get(key);
+            const capacity = skipped ? maxWarnings - 1 : maxWarnings;
             const emit = (s: State, id: AshwatthamaRuleId, certainty: SafetyCertainty, evidence: Record<string, string | number | boolean | null>) => {
-                if (out.length >= maxWarnings) return;
+                if (out.length >= capacity) return;
                 let disposition: SafetyWarning['disposition'] = 'reported';
                 if (policy.mode === 'enforce' && policy.enforce.has(id) && s.completedAt === null && requestCancel(s, at)) disposition = 'cancellation-requested';
                 const w = warning(id, certainty, { kind: 'operation', ref: s.ref, index: null }, { kind: s.kind, ...evidence }, at, disposition);
@@ -364,8 +372,7 @@ export function createAshwatthamaObserver(options: AshwatthamaOptions = {}): Ash
                 if (s.cleanupFailures >= maxCleanupFailures)
                     emit(s, 'ASH_CLEANUP_FAILED_REPEATEDLY', 'confirmed', { failures: s.cleanupFailures });
             }
-            const skipped = untrackedByScope.get(key);
-            if (skipped && out.length < maxWarnings) {
+            if (skipped) {
                 out.push(warning('ASH_TRACKING_LIMIT', 'confirmed', { kind: 'workflow', ref: 'observer', index: null }, { untracked: skipped, maxOperations }, at, 'reported'));
                 untrackedByScope.delete(key);
             }
@@ -383,7 +390,7 @@ export function createAshwatthamaObserver(options: AshwatthamaOptions = {}): Ash
         },
         cancel(ref, rawScope) {
             const key = keyOf(scopeOf(rawScope));
-            const s = typeof ref === 'string' ? active.get(ref) : undefined;
+            const s = typeof ref === 'string' ? active.get(slotOf(key, ref)) : undefined;
             if (disposed || !s || s.scopeKey !== key || s.completedAt !== null) return false;
             return requestCancel(s, now());
         },

@@ -1,6 +1,6 @@
 // SHIVAX 0.4.0 HANUMAN · H04-B adversarial, negative and false-positive fixtures for Abhimanyu and Ashwatthama.
 // Offline and deterministic: injected clocks, fake hosts, mock identity. No network, no real timers beyond setImmediate.
-// Fixtures that expose a production defect keep their correct assertion and run as `todo` with the finding ID.
+// Fixtures that exposed H04-B defects (H04B-01..05, M5) keep their original assertions as regression tests.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -48,7 +48,6 @@ test.after(() => { process.kill = originalKill; assert.equal(killCalls, 0, 'no p
 
 for (const [format, api] of [['ESM', await import('shivax')], ['CJS', require('shivax')]]) {
     const check = (name, run) => test(`${format}: H04-B ${name}`, run);
-    const todo = (finding, name, run) => test(`${format}: H04-B ${name} [${finding}]`, { todo: finding }, run);
     const pre = (overrides = {}) =>
         api.runAbhimanyuPreflight({
             plan: plan(action('a')), capability: 'workflow', options: { allowedCapabilities: ['read', 'write', 'pure', 'undo'] },
@@ -147,13 +146,13 @@ for (const [format, api] of [['ESM', await import('shivax')], ['CJS', require('s
         expectWarning(warn.warnings[0], { ruleId: 'ABH_MISSING_CLEANUP', severity: 'medium', certainty: 'insufficient-metadata', disposition: 'reported', index: 0 });
         assert.equal(warn.warnings[0].evidence.assumedWorstCase, undefined, 'warn mode never assumes');
     });
-    todo('H04B-02', 'A-N11 a profile effect that contradicts the live binding is rejected', () => {
+    check('A-N11 a profile effect that contradicts the live binding is rejected [H04B-02 regression]', () => {
         const tools = { findByCapability: (c) => (c === 'write' ? [{ effect: 'state-changing' }] : [{ effect: 'read-only' }]) };
         const lie = { ...WRITE, effect: 'read-only', retries: { max: 3 } };
         const r = pre({ plan: plan(action('pay', 'write'), action('notify')), tools, profiles: [READ, lie], policy: { mode: 'enforce' } });
         expectWarning(one(r, 'ABH_INVALID_DECLARATION'), { ruleId: 'ABH_INVALID_DECLARATION', severity: 'high', certainty: 'confirmed', disposition: 'blocked', index: 0 });
     });
-    todo('H04B-03', 'A-N12 untrusted plan text is not echoed into warning evidence', () => {
+    check('A-N12 untrusted plan text is not echoed into warning evidence [H04B-03 regression]', () => {
         const r = pre({ plan: plan(action('a', 'sk-live-0123456789abcdef')), options: { allowedCapabilities: ['read'] } });
         assert.ok(!JSON.stringify(r).includes('sk-live-0123456789abcdef'));
     });
@@ -325,7 +324,7 @@ for (const [format, api] of [['ESM', await import('shivax')], ['CJS', require('s
         assert.equal(cancels, 0);
         assert.equal(o.scan(TENANT).length, 1);
     });
-    todo('H04B-01', 'W-N12b a ref used by one tenant does not fail or reveal anything to another tenant', () => {
+    check('W-N12b a ref used by one tenant does not fail or reveal anything to another tenant [H04B-01 regression]', () => {
         const { o } = observer();
         o.begin({ kind: 'tool', scope: TENANT, timeoutMs: 1000, ref: 'job-42' });
         assert.doesNotThrow(() => o.begin({ kind: 'tool', scope: OTHER, timeoutMs: 1000, ref: 'job-42' }));
@@ -414,7 +413,7 @@ for (const [format, api] of [['ESM', await import('shivax')], ['CJS', require('s
         assert.deepEqual(scan.map((w) => [w.ruleId, w.disposition]), [['ASH_DEADLINE_EXCEEDED', 'cancellation-requested'], ['ASH_HEARTBEAT_MISSED', 'reported']]);
         assert.deepEqual([mine, theirs, heartbeat], [1, 0, 0]);
     });
-    todo('M5', 'Policy: a disabled observer reports nothing', () => {
+    check('Policy: a disabled observer reports nothing [M5 regression]', () => {
         const { o, advance } = observer({ policy: { mode: 'disabled' } });
         o.begin({ kind: 'tool', scope: TENANT, timeoutMs: 1000 });
         advance(5000);
@@ -486,7 +485,7 @@ for (const [format, api] of [['ESM', await import('shivax')], ['CJS', require('s
         o.dispose();
         assert.equal(o.status().tracked, 0);
     });
-    todo('H04B-05', 'Data: a truncated scan still surfaces the tracking-limit signal', () => {
+    check('Data: a truncated scan still surfaces the tracking-limit signal [H04B-05 regression]', () => {
         const { o, advance } = observer({ maxOperations: 10, maxWarnings: 10 });
         for (let i = 0; i < 12; i++) o.begin({ kind: 'tool', scope: TENANT, timeoutMs: 1000 });
         advance(2000);
@@ -529,7 +528,7 @@ for (const [format, api] of [['ESM', await import('shivax')], ['CJS', require('s
         assert.deepEqual(o.scan(TENANT), []);
         assert.equal(o.history(TENANT)[0].completionStatus, 'cancelled');
     });
-    todo('H04B-04', 'Race: a cancellation requested after completion is not reported as stuck cancellation', () => {
+    check('Race: a cancellation requested after completion is not reported as stuck cancellation [H04B-04 regression]', () => {
         const { o, advance } = observer();
         const h = o.begin({ kind: 'tool', scope: TENANT, timeoutMs: 60_000 });
         h.complete('completed'); h.requestCancellation();

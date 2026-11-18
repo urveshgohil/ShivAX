@@ -284,11 +284,21 @@ export function analyzeWorkflow(
         add('ABH_UNBOUNDED_DEADLINE', 'potential', null, { deadlineMs: deadline, maxDeadlineMs: prepared.maxDeadlineMs, approved: false });
 
     // 4. Per-action exit analysis.
-    const effectOf = (capability: string, profile?: Profile) =>
-        profile?.effect ?? context.tools?.findByCapability(capability)[0]?.effect;
+    // H04B-02: the live binding is authoritative. A contradicting profile is an invalid declaration and the
+    // least-safe of the two effects is analyzed, so a dishonest profile cannot suppress later checks.
+    const effectOf = (capability: string, index: number, cap: string | null, profile?: Profile) => {
+        const bound = context.tools?.findByCapability(capability)[0]?.effect;
+        if (profile?.effect !== undefined && bound !== undefined && profile.effect !== bound) {
+            add('ABH_INVALID_DECLARATION', 'confirmed', index, { capability: cap, field: 'effect', declared: profile.effect, bound });
+            return 'state-changing' as const;
+        }
+        return profile?.effect ?? bound;
+    };
     const duration: (number | undefined)[] = [];
     for (const n of nodes) {
-        const cap = isRef(n.capability) ? n.capability : null;
+        // H04B-03: echo only host-known capability IDs; plan-supplied text never reaches evidence.
+        const known = run.allowed.includes(n.capability) || prepared.profiles.has(n.capability);
+        const cap = known && isRef(n.capability) ? n.capability : null;
         if (!run.allowed.includes(n.capability)) {
             add('ABH_UNREACHABLE_COMPLETION', 'confirmed', n.index, { capability: cap, reason: 'not-allowlisted' });
             continue;
@@ -304,7 +314,7 @@ export function analyzeWorkflow(
             if (!strict) continue;
         }
         const profile: Profile = declared ?? { capability: n.capability, sideEffect: 'protected' };
-        const declaredEffect = effectOf(n.capability, declared);
+        const declaredEffect = effectOf(n.capability, n.index, cap, declared);
         const effect = declaredEffect ?? (strict ? 'state-changing' : undefined);
         const effectAssumed = declaredEffect === undefined && strict;
         const engineRetries = effect === 'read-only' ? run.maxRetries : 0;

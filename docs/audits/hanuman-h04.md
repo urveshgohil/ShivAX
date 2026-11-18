@@ -1,6 +1,6 @@
 # SHIVAX 0.4.0 HANUMAN · H04 workflow safety warning checks (phase summary)
 
-Status as of 18 November 2026, HEAD `71954fc`: **implemented, tested and reviewed. H04 is NO-GO until H04C-01, H04B-02 and H04B-01 are fixed.** Warn-mode pilots are acceptable, with the constraints in the [H04-C review](hanuman-h04-review.md) §11.
+Status as of 18 November 2026, HEAD `71954fc`: **implemented, tested and reviewed. H04B-01/02/03/04/05 and M5 are fixed; H04 remains NO-GO until H04C-01 is fixed and H04-B/H04-C are re-run.** Warn-mode pilots are acceptable, with the constraints in the [H04-C review](hanuman-h04-review.md) §11.
 
 | Phase | Document | Outcome |
 | --- | --- | --- |
@@ -31,14 +31,22 @@ Neither check grants or removes permissions. Jay, Vijay and the NARASIMHA firewa
 | ID | Severity | Summary |
 | --- | --- | --- |
 | H04C-01 | **P1** | Engine preflight and execution snapshot the proposal separately; an inconsistent (Proxy) proposal executes a plan the preflight never saw |
-| H04B-02 | P2 | A profile `effect` that contradicts the live binding is trusted, which suppresses compensation and retry checks |
-| H04B-01 | P2 | Observer refs collide across tenants (existence oracle and blocking) |
 | H04C-02 | P3 | Observer `relaxRules` silently disables enforcement; observer `blockUncertain` is silently ignored |
 | H04C-04 | P3 | The per-scope untracked counter map is unbounded across many tenants |
-| H04B-03, H04B-04, H04B-05, M5 | P3 | Evidence echo, cancellation after completion, truncation signal, disabled-mode warnings |
 | H04C-05, M4, M9 | P3 | Report accuracy, warn-mode `blockUncertain`, attestation-only verification |
 
 Fixed in H04: M1 (omission beat honesty), M2 (empty profiles passed enforce mode) and M3 (`enforceRules` replaced the defaults).
+
+Fixed after H04-C (18 November 2026). The H04-B fixtures now run as ordinary regression tests with their original assertions.
+
+| ID | Fix |
+| --- | --- |
+| H04B-02 | A profile `effect` that contradicts the live binding raises `ABH_INVALID_DECLARATION` (blocked in enforce mode), and the least-safe effect is analyzed |
+| H04B-01 | Observer records are keyed by tenant scope and ref, so the same host ref in two tenants no longer collides |
+| H04B-03 | Warning evidence echoes only host-known capability IDs, never plan-supplied text |
+| H04B-04 | A cancellation requested after completion is ignored; cleanup tracking still applies |
+| H04B-05 | A full scan reserves its last slot for `ASH_TRACKING_LIMIT` |
+| M5 | A disabled observer's `scan` returns no warnings and requests no cancellation |
 
 ## Measured footprint (H04-C probe, indicative)
 
@@ -52,10 +60,10 @@ Fixed in H04: M1 (omission beat honesty), M2 (empty profiles passed enforce mode
 | Gate | Result |
 | --- | --- |
 | `pnpm lint` | PASS |
-| `pnpm test` | 1,417 pass, 0 fail, 12 todo |
+| `pnpm test` | 1,417 pass, 0 fail, 12 todo (after the H04B fixes: 1,429 pass, 0 fail, 0 todo) |
 | `pnpm build` | PASS |
 | `pnpm verify:package` | PASS (544 files) |
 
 ## Release position
 
-H04 is NO-GO as above. Separately, the H03 findings (H03C-01, H01D-02, H03C-03, H03C-04) keep SHIVAX 0.4.0 at NO-GO for live deployment.
+H04 is NO-GO until H04C-01 is fixed. Separately, the H03 findings (H03C-01, H01D-02, H03C-03, H03C-04) keep SHIVAX 0.4.0 at NO-GO for live deployment.
