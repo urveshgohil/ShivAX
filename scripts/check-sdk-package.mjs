@@ -93,6 +93,22 @@ const { connectInspectra } = await import(${JSON.stringify(pathToFileURL(join(in
 assert.equal(typeof connectInspectra, 'function');`);
     command(process.execPath, ['examples.mjs'], consumer);
     console.log(`Packed examples passed: ${referenced.size} documented files present; ${offlineExamples.length} offline examples ran.`);
+    // H06-B: run shipped offline host examples in the isolated installed consumer.
+    for (const file of ['documentation.mjs', 'rest.mjs', 'workflow.mjs', 'denials.mjs'])
+        command(process.execPath, [join(installed, 'examples', 'sdk', 'hanuman', file)], consumer);
+    writeFileSync(join(consumer, 'h06-check.mjs'), `import assert from 'node:assert/strict';
+import {createRequire} from 'node:module'; const require = createRequire(import.meta.url);
+for (const name of ['inspectra-engine', 'visynq']) assert.throws(() => require.resolve(name), {code:'MODULE_NOT_FOUND'});
+console.log('H06 consumer has no Inspectra or Visynq installation.');`);
+    process.stdout.write(command(process.execPath, ['h06-check.mjs'], consumer));
+    console.log('Packed H06 examples passed: 4 offline examples.');
+    writeFileSync(join(consumer, 'h06-examples.test.mjs'),
+        readFileSync(join(root, 'tests', 'hanuman-examples.test.mjs'), 'utf8')
+            .replaceAll('../examples/sdk/hanuman/', './node_modules/shivax/examples/sdk/hanuman/'));
+    const h06Tests = command(process.execPath, ['--test', 'h06-examples.test.mjs'], consumer);
+    if (Number(h06Tests.match(/^# pass (\d+)$/m)?.[1]) !== 13)
+        throw new Error('Installed H06 example tests did not all pass.');
+    console.log('Packed H06 integration tests passed: 13.');
     // S03: the packaged worker script must start from an installed copy, through both module formats,
     // and match synchronous training exactly.
     writeFileSync(join(consumer, 'worker-training.mjs'), `import assert from 'node:assert/strict'; import {createRequire} from 'node:module';

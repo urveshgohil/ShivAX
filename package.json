@@ -171,7 +171,8 @@
     "examples/sdk/routing-shadow.mjs",
     "examples/sdk/memory-ranking.mjs",
     "examples/sdk/hanuman.mjs",
-    "examples/sdk/inspectra.mjs"
+    "examples/sdk/inspectra.mjs",
+    "examples/sdk/hanuman"
   ],
   "scripts": {
     "example:core": "pnpm build && node --experimental-strip-types examples/core.ts",
