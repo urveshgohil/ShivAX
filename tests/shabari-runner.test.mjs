@@ -21,3 +21,11 @@ test('Shabari reports a timed-out child as a failure', async () => {
     assert.equal(result.status, 'fail');
     assert.equal(result.results[0].timedOut, true);
 });
+
+test('each response boundary selector runs its ESM and CommonJS case', async () => {
+    const selected = ['SHB-NET-12.6', 'SHB-NET-12.7'];
+    const report = await runCanaries({ selected });
+    assert.equal(report.status, 'pass');
+    assert.deepEqual(report.results.map(({ id, total, pass }) => ({ id, total, pass })),
+        selected.map(id => ({ id, total: 2, pass: 2 })));
+});

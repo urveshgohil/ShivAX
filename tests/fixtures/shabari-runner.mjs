@@ -3,13 +3,15 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const fixtures = Object.freeze({
-    examples: 'tests/hanuman-examples.test.mjs',
-    gateway: 'tests/hanuman-fetch.test.mjs',
-    bot: 'tests/hanuman-bot.test.mjs',
-    integration: 'tests/hanuman-integration.test.mjs',
-    firewall: 'tests/firewall-integration.test.mjs',
-    cost: 'tests/model-cost.test.mjs',
-    routing: 'tests/learning-routing.test.mjs',
+    examples: ['tests/hanuman-examples.test.mjs'],
+    gateway: ['tests/hanuman-fetch.test.mjs'],
+    bot: ['tests/hanuman-bot.test.mjs'],
+    integration: ['tests/hanuman-integration.test.mjs'],
+    firewall: ['tests/firewall-integration.test.mjs'],
+    cost: ['tests/model-cost.test.mjs'],
+    routing: ['tests/learning-routing.test.mjs'],
+    'SHB-NET-12.6': ['--test-name-pattern=SHB-NET-12[.]6 ', 'tests/hanuman-fetch.test.mjs'],
+    'SHB-NET-12.7': ['--test-name-pattern=SHB-NET-12[.]7 ', 'tests/hanuman-fetch.test.mjs'],
 });
 
 /** Opt-in offline test harness. Each named suite owns a child process and deadline. */
@@ -29,7 +31,7 @@ export async function runCanaries({ selected, concurrency = 1, deadlineMs = 3000
                 const env = { ...process.env };
                 delete env.NODE_TEST_CONTEXT;
                 const child = spawn(process.execPath, [
-                    '--test', '--experimental-test-isolation=none', fixtures[id],
+                    '--test', '--experimental-test-isolation=none', ...fixtures[id],
                 ], { cwd: root, env, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
                 let tail = '', expired = false, failed = false;
                 const append = (chunk) => { tail = (tail + chunk.toString()).slice(-16384); };

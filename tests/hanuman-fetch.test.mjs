@@ -150,6 +150,44 @@ for (const [format, root, integration] of [['ESM', rootESM, fetchESM], ['CJS', r
             assert.equal(returned,true); assert.equal(f.counters.close,1);
         }
     });
+    for (const [id, size] of [['SHB-NET-12.6', 512], ['SHB-NET-12.7', 513]]) {
+        check(`${id} streams ${size} bytes against a 512-byte limit`, async () => {
+            let pulledBytes = 0;
+            let finalized = 0;
+            async function* body() {
+                try {
+                    for (const length of [256, size - 256]) {
+                        pulledBytes += length;
+                        yield new Uint8Array(length).fill(97);
+                    }
+                    if (size > 512) assert.fail('Read continued past the response limit');
+                } finally {
+                    finalized++;
+                }
+            }
+            const f = await fixture(api, {
+                limits: { maxResponseBytes: 512, maxChunks: 16 },
+                response: { body: body() },
+            });
+            const result = await f.run();
+            assert.deepEqual(f.counters, { resolve: 1, request: 1, close: 1 });
+            assert.equal(finalized, 1);
+            assert.equal(pulledBytes, size);
+            assert.equal(f.firewall.runtime.status().active, 0);
+            if (size === 512) {
+                assert.equal(result.status, 'completed');
+                assert.equal(result.outputs.length, 1);
+                assert.deepEqual(result.outputs[0].data, {
+                    version: 1, targetId: 'docs', status: 200, mediaType: 'text/plain',
+                    bytes: 512, body: 'a'.repeat(512), trust: 'untrusted',
+                });
+            } else {
+                assert.equal(result.status, 'failed');
+                assert.deepEqual(result.outputs, []);
+                assert.ok(f.events.some(event => event.code === 'response-too-large'));
+            }
+        });
+    }
     check('cleanup failure is sanitized and invoked once', async()=>{
         const f=await fixture(api,{close:()=>{throw new Error('credential-secret');}});
         const result=await f.run();assert.equal(result.status,'failed');assert.equal(f.counters.close,1);
