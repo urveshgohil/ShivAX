@@ -155,3 +155,16 @@ approval, scope, resource budgets and revocation. The specialist checks the
 tool envelope and emits bounded text with explicit untrusted provenance.
 Treat the excerpt as external data and the evidence digest as an unsigned
 identifier. The H01 security review remains NO-GO for live deployment.
+
+## Hanuman offline examples (H06)
+
+The scripts in `examples/sdk/hanuman/` use only public SDK entry points and a
+fake in-memory transport. They do not show that a host transport is SSRF-safe,
+pins DNS or validates TLS. Their identity, approval and firewall-admin
+callbacks are fixtures: `authorizeAdmin` always returns `true`, and the demo
+user holds the admin permission. Do not copy these into a host. Keep firewall
+admin on a separate administrator role, with human approval, and out of every
+bot and tool context. SHIVAX has no native web search. `research.search` and
+`fetch.api` remain reserved and fail closed in RUDRA. Public RUDRA errors for
+gateway failures are generic by design. Use the gateway `observe` callback
+for host diagnostics.

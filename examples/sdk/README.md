@@ -27,6 +27,10 @@ From a checkout of the source repository, run `pnpm build` first. Then run
 | `routing-shadow.mjs` | Nothing | Two fake bots share a capability. RUDRA keeps its deterministic route while the Ekalavya advisor reports, from labelled evidence, which bot it would choose (S05). |
 | `memory-ranking.mjs` | Nothing | Ranks memory search results with trusted source quality and local hashing embeddings, and compares them with the default search on labelled demo queries (S06). |
 | `hanuman.mjs` | Nothing | Registers Hanuman and the H01 gateway explicitly, retrieves untrusted evidence through a mock transport, and verifies that missing registration or a missing tool grant fails. |
+| `hanuman/documentation.mjs` | Nothing | Retrieves one approved plain-text target as bounded, untrusted evidence through the shared mock host in `hanuman/host.mjs`. |
+| `hanuman/rest.mjs` | Nothing | Sends a GET to one approved JSON endpoint through `fetch.url`, checks a closed schema and prints only approved fields. `fetch.api` is reserved. |
+| `hanuman/workflow.mjs` | Nothing | Runs a fixed two-step RUDRA plan next to the seven default bots and keeps prompt-injection text as untrusted data. |
+| `hanuman/denials.mjs` | Nothing | Shows eight fail-closed cases: denied origin, missing tool, no permission, expired session, lockdown, timeout, cancellation and an oversized response. |
 | `ollama.mjs` | A local Ollama server with a model installed | Set `SHIVAX_OLLAMA_MODEL` to the model name. Without it, the script exits and tells you how to set it up. |
 | `inspectra.mjs` | Your own browser setup | A module, not a script. It exports `connectInspectra(tools, openPage, authorizeURL)`, which connects the optional Inspectra adapter to the pages and URL rules your host supplies. Live capture also needs the optional peer `inspectra-engine@1.0.4`. |
 
