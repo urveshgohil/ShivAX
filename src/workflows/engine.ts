@@ -65,12 +65,22 @@ export class RudraWorkflowEngine {
         const config = settings(options, task.input.capability);
         if (this.#disposed || this.#occupied)
             throw new WorkflowError(this.#disposed ? 'disposed' : 'busy');
+        // Copy untrusted proposals synchronously, exactly once; approval/authentication cannot race later
+        // mutation. H04C-01: preflight analyzes this same frozen snapshot that the run executes, so a proposal
+        // that changes between reads (getters, Proxy) cannot pass preflight with one plan and run another.
+        let validated: ReturnType<typeof plan> | undefined, proposalError: unknown;
+        try {
+            validated = plan(proposal, config.maxSteps, task.limits.maxInputBytes);
+        } catch (error) {
+            proposalError = error;
+        }
         // H04 Abhimanyu: static, side-effect free; runs before any lifecycle, security or tool call.
         let preflight: AbhimanyuReport | undefined;
         if (this.#preflight && this.#preflight.policy.mode !== 'disabled') {
             preflight = analyzeWorkflow(
                 this.#preflight,
-                proposal,
+                // An invalid proposal is never re-read: an empty record is reported as ABH_INVALID_PLAN.
+                validated ?? Object.freeze({}),
                 { allowed: config.allowed, maxRetries: config.maxRetries, maxParallel: config.maxParallel, maxSteps: config.maxSteps },
                 { deadlineMs: task.limits.timeoutMs, tools: this.#tools, maxPlanBytes: task.limits.maxInputBytes }
             );
@@ -82,13 +92,6 @@ export class RudraWorkflowEngine {
                 : Date.now;
         const started = now();
         this.#occupied = true;
-        // Copy untrusted proposals synchronously; approval/authentication cannot race later mutation.
-        let validated: ReturnType<typeof plan> | undefined, proposalError: unknown;
-        try {
-            validated = plan(proposal, config.maxSteps, task.limits.maxInputBytes);
-        } catch (error) {
-            proposalError = error;
-        }
         const controller = new AbortController();
         let firewallLease: ProtectedLease | undefined;
         const revokeFirewall = () => controller.abort(new SecurityError('permission-denied'));

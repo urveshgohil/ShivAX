@@ -198,6 +198,43 @@ for (const [format, api] of [['ESM', await import('shivax')], ['CJS', require('s
         assert.deepEqual(ids(run.preflight), []);
         assert.equal((await run.result).status, 'completed');
     });
+    check('A-N13 a proposal that changes between reads cannot pass preflight with one plan and run another [H04C-01 regression]', async () => {
+        // H04-C probe FLIP4: a Proxy shows `read` to the first N property reads and `risky` afterwards.
+        for (const flipAt of [1, 2, 3, 4, 5, 6, 8, 12]) {
+            const calls = { read: 0, risky: 0 };
+            const tools = new api.ToolRegistry()
+                .register({ id: 't.read', capability: 'read', effect: 'read-only', validateInput: () => true, validateOutput: () => true, execute: () => { calls.read++; return 1; } })
+                .register({ id: 't.risky', capability: 'risky', effect: 'read-only', validateInput: () => true, validateOutput: () => true, execute: () => { calls.risky++; return 1; } });
+            const provider = createMockIdentityProvider({ principal: { id: 'u', issuer: 'host', permissions: ['w'] }, session: { id: 's', principalId: 'u', issuedAt: 1, expiresAt: 1e12, scope: TENANT } });
+            const jay = new api.Jay(provider, { now: () => 2000 });
+            const policies = new api.PermissionPolicyRegistry();
+            for (const [kind, id] of [['capability', 'workflow'], ['capability', 'read'], ['capability', 'risky'], ['tool', 't.read'], ['tool', 't.risky']])
+                policies.register({ kind, id, effect: 'read-only', permissions: ['w'], validateInput: () => true });
+            const vijay = new api.Vijay(jay, policies, { tools: tools.protectedTools });
+            const risky = { capability: 'risky', sideEffect: 'protected', effect: 'read-only', cancellation: 'ignored', cleanup: 'none' };
+            const engine = new api.RudraWorkflowEngine(tools, vijay, { preflight: { profiles: [READ, risky], policy: { mode: 'enforce' } } });
+            const ctx = await jay.createContext({ id: 'task', input: { capability: 'workflow', data: 1 } }, { signal: new AbortController().signal, toolPermissions: ['t.read', 't.risky'] });
+            let reads = 0;
+            const value = () => (++reads >= flipAt ? 'risky' : 'read');
+            const flipping = new Proxy({ id: 'a', capability: 'read', input: { source: 'task' } }, {
+                getOwnPropertyDescriptor(target, key) { const d = Reflect.getOwnPropertyDescriptor(target, key); return key === 'capability' ? { ...d, value: value() } : d; },
+                get(target, key, receiver) { return key === 'capability' ? value() : Reflect.get(target, key, receiver); },
+            });
+            let run;
+            try {
+                run = engine.start(ctx, { actions: [flipping] }, { allowedCapabilities: ['read', 'risky'] });
+            } catch (error) {
+                assert.equal(error.code, 'preflight-blocked', `flip ${flipAt}`);
+            }
+            if (run) {
+                assert.equal(run.preflight.decision, 'allow', `flip ${flipAt}`);
+                assert.equal((await run.result).status, 'completed', `flip ${flipAt}`);
+            }
+            // Whatever the Proxy shows, preflight and execution saw the same snapshot: the blocked plan never runs.
+            assert.equal(calls.risky, 0, `flip ${flipAt}: risky tool executed after preflight`);
+            assert.equal(calls.read, run ? 1 : 0, `flip ${flipAt}`);
+        }
+    });
 
     /* ================================================== Ashwatthama negative fixtures */
     check('W-N1 expired lease', () => {
