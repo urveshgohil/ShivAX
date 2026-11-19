@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, writeFileSync, rmSync } from 'node:fs';
 import { isAbsolute, join, resolve, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
@@ -51,12 +51,23 @@ console.log('Packed ESM/CJS SDK imports passed.');`);
     console.log(`Packed Hanuman bot passed: ${hanumanCount} offline ESM/CJS tests.`);
     // Every example named by shipped documentation must be present in the installed package.
     const installed = join(consumer, 'node_modules', 'shivax');
+    const packageFiles = readdirSync(installed, { recursive: true });
+    for (const file of ['LICENSE', 'NOTICE', 'dist/types-cjs/package.json'])
+        if (!packageFiles.includes(file.replaceAll('/', process.platform === 'win32' ? '\\' : '/')))
+            throw new Error('Required package file missing: ' + file);
+    for (const file of packageFiles) {
+        if (/(?:^|[/\\])(?:\.env(?:\..*)?|tests|node_modules|\.git)(?:$|[/\\])|\.log$/i.test(file))
+            throw new Error('Unexpected private package file: ' + file);
+    }
     const hanumanSource = readFileSync(join(root, 'src', 'bots', 'hanuman.ts'), 'utf8');
     if (/\bfetch\s*\(|\b(?:node:)?(?:https?|net|dns|fs|child_process|playwright)(?:\/[^'"]*)?['"]/.test(hanumanSource))
         throw new Error('Hanuman source must delegate retrieval to the protected tool.');
+    const browserEntries = entries.filter(entry => ![
+        'shivax/learning/node', 'shivax/licensing/server', 'shivax/adapters/inspectra',
+    ].includes(entry));
     const browserBundle = await rollup({
-        input: ['dist/index.esm.js', 'dist/sdk/bots.esm.js', 'dist/sdk/integrations.esm.js']
-            .map(file => join(installed, file)),
+        input: browserEntries.map(entry => join(installed,
+            manifest.exports[entry === 'shivax' ? '.' : entry.replace('shivax/', './')].import.default)),
         onwarn(warning, warn) {
             if (warning.code === 'UNRESOLVED_IMPORT') throw new Error(warning.message);
             warn(warning);
@@ -69,7 +80,7 @@ console.log('Packed ESM/CJS SDK imports passed.');`);
             if (file.type === 'chunk' && [...file.imports, ...file.dynamicImports].some(id => !chunks.has(id)))
                 throw new Error('Unexpected external module in browser-safe SDK graph: ' + file.fileName);
         }
-        console.log('Packed browser-safe ESM graphs passed: root, bots and integrations.');
+        console.log('Packed browser-safe ESM graphs passed: ' + browserEntries.join(', ') + '.');
     } finally {
         await browserBundle.close();
     }
@@ -192,6 +203,12 @@ const fetchMethod: 'GET' = fetchRequest.method;
 fetchRequest.checkExecution();
 declare const fetchResult: HanumanFetchResult;
 const fetchTrust: 'untrusted' = fetchResult.trust;
+import { runAbhimanyuPreflight, createAshwatthamaObserver,
+    type AbhimanyuInput, type AbhimanyuReport, type AshwatthamaObserver } from 'shivax/rudra';
+declare const safetyInput: AbhimanyuInput;
+const preflight: AbhimanyuReport = runAbhimanyuPreflight(safetyInput);
+const lifecycle: AshwatthamaObserver = createAshwatthamaObserver();
+void preflight; void lifecycle;
 // @ts-expect-error The protected transport is GET-only.
 const postRequest: HanumanTransportRequest = { ...fetchRequest, method: 'POST' };
 // @ts-expect-error Service registration always requires an explicit host transport.
