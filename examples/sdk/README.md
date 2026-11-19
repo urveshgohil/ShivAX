@@ -34,6 +34,13 @@ From a checkout of the source repository, run `pnpm build` first. Then run
 | `ollama.mjs` | A local Ollama server with a model installed | Set `SHIVAX_OLLAMA_MODEL` to the model name. Without it, the script exits and tells you how to set it up. |
 | `inspectra.mjs` | Your own browser setup | A module, not a script. It exports `connectInspectra(tools, openPage, authorizeURL)`, which connects the optional Inspectra adapter to the pages and URL rules your host supplies. Live capture also needs the optional peer `inspectra-engine@1.0.4`. |
 
+Not available as examples: Jambavan (capability discovery) and Kubera (budget
+reporting) are not implemented in the SDK, so no example exists. Abhimanyu and
+Ashwatthama workflow warning checks have no shipped script. A short, tested
+snippet is in the "Workflow warning checks (HANUMAN)" section of
+`docs/sdk.md`. The Hanuman scripts use a fake in-memory transport and show
+nothing about real DNS, TLS or network isolation.
+
 The mock identities, approval callbacks and test data in these files are for
 local demos only. In production, your host must check real sessions on a trusted
 server or desktop process and ask a person to approve actions. Keep firewall

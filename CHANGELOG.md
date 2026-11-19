@@ -10,7 +10,85 @@ name of their line. The npm version stays plain semantic versioning.
 | 0.1.x | BRAHMA |
 | 0.2.x | NARASIMHA |
 | 0.3.x | SARASWATI - The Intelligence & Learning Release |
+| 0.4.x | HANUMAN - The Action & Automation Release (in preparation, not published) |
 
+
+## [Unreleased] v0.4.0 HANUMAN - The Action & Automation Release
+
+**Upcoming and not published.** `package.json` still says 0.3.3, and no version
+bump, tag or npm release has been made. Everything below is opt-in and additive.
+Nothing in this section changes the seven default specialists, their IDs (including
+`vishwakarma`), the Jay/Vijay authorization model, the NARASIMHA firewall, model
+budgets, SARASWATI training or model approval. No existing public export was
+removed. Pre-release security reviews still list open findings for live deployment
+(see `SECURITY.md`).
+
+### Added
+
+- **Protected retrieval gateway** (`shivax/integrations`).
+  `registerHanumanFetchService` registers one protected tool,
+  `shivax.hanuman.fetch`. A host supplies the transport and a catalog of
+  registered HTTPS targets bound to an issuer and tenant. Callers pass only a
+  target ID. The request is GET only, with no credentials, no redirects and no
+  compression. Reported addresses must be public, the reported peer must be one of
+  the permitted addresses, and byte, chunk, address and time limits apply. Results
+  are `trust: 'untrusted'`. Also exported: `HanumanFetchError` and the Hanuman
+  transport, target, limit, result and event types. ShivAX ships no HTTP client,
+  DNS or TLS code.
+- **Optional `HanumanBot`** (`shivax/bots`). `registerHanumanBot` registers the
+  `hanuman` bot with capability `fetch.url` only when the protected tool exists.
+  It returns bounded, untrusted evidence with fixed provenance and a scope-bound
+  digest. It is not in `createSpecialistBots()`. `fetch.api` and `research.search`
+  are reserved IDs and are not implemented.
+- **RUDRA and workflow integration.** Hanuman runs through the existing
+  `RudraOrchestrator` and `RudraWorkflowEngine` with the same Jay, Vijay and
+  firewall checks. Deterministic gateway denials are not retried.
+- **Abhimanyu** (`runAbhimanyuPreflight`, engine option `preflight`) and
+  **Ashwatthama** (`createAshwatthamaObserver`, engine option `lifecycle`):
+  advisory workflow preflight and lifecycle warning checks with a shared,
+  versioned warning schema and a 23-rule catalog. They are not bots and grant no
+  permissions. In `enforce` mode, Abhimanyu can refuse a workflow start and
+  Ashwatthama can request the run's own cooperative cancellation.
+- **Offline SDK examples** (`examples/sdk/hanuman.mjs` and four scripts in
+  `examples/sdk/hanuman/`): documentation retrieval, a bounded JSON GET, a RUDRA
+  evidence workflow, and eight fail-closed denial cases. They use a fake in-memory
+  transport and need no network, model provider, Inspectra or Visynq.
+- **Shabari canary tests** (repository only, not in the npm package). An opt-in
+  runner for selected offline suites plus boundary fixtures for the response size
+  limit. Shabari is a test harness, not a bot.
+- **Documentation.** README, SDK guide, production guide and `SECURITY.md` now
+  describe Hanuman, the bot roster, the utilities that are not bots, host
+  responsibilities and known limits.
+
+### Changed
+
+- `package.json` description now names the HANUMAN release. The version is
+  unchanged.
+- Security-denial error types can mark themselves non-retryable (internal), which
+  gateway denials use so workflows do not repeat them.
+- `RudraWorkflowEngine` validates and snapshots a proposal once, so a preflight
+  decision applies to the plan that actually runs.
+- Packaging checks (`pnpm verify:package`) now bundle the browser-safe entry
+  graphs from an installed tarball, check installed contents, and run the Hanuman
+  gateway, bot and example tests from the installed package without Inspectra or
+  Visynq.
+
+### Not included
+
+- **Jambavan** (authorized capability discovery) and **Kubera** (read-only budget
+  reporting) are designed but not implemented. There is no API, so budgets
+  continue to be enforced only by `ModelRouter` and the firewall.
+- Search, `fetch.api`, a reviewed host transport, and OS-level network isolation.
+
+### Known limitations
+
+- Wire-level SSRF and TLS properties depend entirely on a host transport that has
+  not been independently reviewed.
+- With no RUDRA options, the task's own capability is allowed; pass
+  `allowedCapabilities` explicitly. A bot ID that sorts before `hanuman` and offers
+  `fetch.url` is chosen first.
+- Session revocation at the identity provider does not stop a retrieval already
+  in flight, and a transport that ignores cancellation can hold firewall slots.
 
 ## [0.3.2] SARASWATI - The Intelligence & Learning Release
 

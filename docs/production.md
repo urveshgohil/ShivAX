@@ -5,7 +5,11 @@ tested. Read it with the [SDK guide](sdk.md) and [SECURITY.md](../SECURITY.md).
 
 ## Status and version
 
-- This guide covers version **0.3.2 SARASWATI**. Its learning additions are marked *SARASWATI* below.
+- This guide covers the package in this repository, version **0.3.3**, which is in the
+  **0.3.x SARASWATI** line. Its learning additions are marked *SARASWATI* below.
+- **v0.4.0 HANUMAN - The Action & Automation Release** is in preparation and is not
+  published. Its additions are marked *HANUMAN* below. They are opt-in. The
+  package version has not been changed yet.
 - New in 0.2.0, and not in 0.1.3 or earlier: exact model cost math, strict token
   usage checks, and the managed firewall. The usage checks are a breaking change
   for providers that report `null` token counts. Sections below mark these
@@ -51,6 +55,19 @@ its input and output against a fixed schema. No bot trains model weights.
 
 RUDRA (`shivax/rudra`) sends tasks to these bots by what they can do. It handles
 task order, approvals, retries, cancellation, step limits and traces.
+
+*HANUMAN:* an eighth bot, `hanuman` (approved external evidence retrieval,
+capability `fetch.url`), exists but is **not** one of the seven and is not
+returned by `createSpecialistBots()`. A host registers it with
+`registerHanumanBot` only after it has registered the protected fetch tool. See
+"Protected external retrieval (HANUMAN)" below.
+
+These names are **not** bots and are never registered in `BotRegistry`:
+Abhimanyu (workflow preflight warning checks) and Ashwatthama (runtime lifecycle
+warning checks) are implemented utilities in `shivax/rudra`. Shabari is a
+pre-release test harness in the source repository and is not in the npm package.
+Jambavan (authorized capability discovery) and Kubera (read-only budget
+reporting) are designed but **not implemented**, so no API for them exists.
 
 ## What needs Ollama or a remote model
 
@@ -127,18 +144,68 @@ Modes: `enforce` applies every rule. `monitor` relaxes only rules you mark
 [SDK guide](sdk.md#managed-firewall-core) covers every field, the model gateway,
 protected execution, the management API and audit records.
 
+## Protected external retrieval (HANUMAN)
+
+Hanuman lets agents retrieve evidence from targets that your host approved. It is
+off by default. ShivAX contains **no** HTTP client, global `fetch` use, crawler,
+browser or web search. The SDK enforces a fixed sequence of checks around a
+transport that **your host writes**. The step-by-step recipe, the limits and the
+transport obligations are in the [SDK guide](sdk.md#protected-external-retrieval-h01-b).
+
+What a production deployment needs before turning it on:
+
+1. A reviewed host transport that pins DNS to the addresses the SDK permits,
+   verifies TLS and the hostname, refuses redirects, sends no credentials or
+   cookies, enforces size limits without decompressing, and honors the abort
+   signal. ShivAX ships none and cannot verify one.
+2. Egress controls outside the process (a firewall, proxy or sandbox) that allow
+   only the approved destinations. The SDK cannot isolate the network, and
+   checking a URL or an address alone does not prevent SSRF.
+3. A small, reviewed target catalog with no secrets. Each target is bound to an
+   issuer and tenant.
+4. Vijay policies with `requiresApproval: true` on the fetch tool, per-task tool
+   grants, and an explicit `allowedCapabilities` option on every RUDRA run.
+5. A firewall policy that lists the exact origin and enough concurrent slots.
+6. A plan for evidence: treat it as untrusted text, neutralize invisible Unicode
+   before display or model input, and keep it away from approvals, permissions
+   and training.
+
+Open pre-release findings (no reviewed transport, implicit RUDRA capability
+allowlist, first-by-ID route choice, in-flight identity revocation, transports
+that ignore cancellation) are listed in [SECURITY.md](../SECURITY.md).
+
+## Who provides which control
+
+This table separates what the SDK checks from what your host must supply. "SDK"
+means the check runs when you route work through the relevant SDK path.
+
+| Area | SDK provides | Host must provide |
+| --- | --- | --- |
+| Authentication | `Jay` mints task contexts from your identity provider and checks session expiry and revocation at admission | A real identity provider, session storage and sign-in. Abort the root signal on immediate revocation |
+| Authorization | `Vijay` permission and tool-grant checks, literal-`true` approvals, effect classes | The policies, the approval handler (a person or reviewed service), and the permission names |
+| Trusted host registration | Registration APIs (`registerHanumanFetchService`, `registerHanumanBot`, tool and bot registries). Nothing is registered or granted by default | Deciding what to register, in which tenant, and keeping registries out of bots and browsers |
+| Approved network egress | The NARASIMHA exact-origin check for registered operations, in enforce and monitor mode | OS, proxy or sandbox rules that actually block other traffic. The SDK is not an isolation layer |
+| Origin and DNS checks | Exact registered target, a non-public address block list applied to reported addresses, peer-in-pin-set check, GET only, redirect refusal | A transport that connects only to the vetted addresses, verifies TLS, and refuses redirects on the wire |
+| Credential isolation | No credentials in the request frame, fixed error codes, no secrets in audit records | Secret storage, no credentials in catalogs or logs, no cookie jars or proxy credential injection in the transport |
+| Monitoring | Fixed-code audit records, bounded in-memory log, a `droppedAuditEvents` counter, an `observe` callback on the fetch service (IDs and codes only) | Collecting and alerting on those events, health checks, and noticing stuck work |
+| Cancellation and cleanup | `AbortSignal` propagation, checkpoints between steps, `close()` called once, lockdown revokes active leases | A transport that honors the signal and releases sockets. Forcible termination is not possible from the SDK |
+| Tenant isolation | Realm, issuer and scope checks in Jay, the firewall and the target catalog; tenant-keyed lifecycle records | Separate registrations and connection pools per tenant, tenant-scoped storage, and no shared mutable state between tenants |
+| Policy management | Versioned firewall policy, rollback, lockdown, admin approval | A durable policy store, administrator roles, change review, and a separate admin context that bots never see |
+| Resource limits | Input, output, concurrency, operation, token, cost, time, byte and chunk limits | Choosing values for your workload, and process-level memory and CPU limits |
+| Audit retention | A bounded in-memory log and an optional `auditSink` that can be required to acknowledge | Durable, access-controlled storage, retention periods and privacy review |
+
 ## Supported SDK imports
 
 | Import | Contents |
 | --- | --- |
 | `shivax` | Everything below in one import, except the Inspectra adapter and licensing |
 | `shivax/core` | Tensor, math, NeuralNet, BagOfWords, metrics |
-| `shivax/rudra` | Bot contracts, registry, executor, RUDRA, workflows |
-| `shivax/bots` | The seven specialist bots and helpers to combine them |
+| `shivax/rudra` | Bot contracts, registry, executor, RUDRA, workflows; `runAbhimanyuPreflight`, `createAshwatthamaObserver` and the safety warning schema (*HANUMAN*) |
+| `shivax/bots` | The seven specialist bots and helpers to combine them; the opt-in `HanumanBot` and `registerHanumanBot` (*HANUMAN*) |
 | `shivax/security` | Jay, Vijay, policies, protected tools, audit; firewall and management (new in 0.2.0) |
 | `shivax/models` | Model registry and router; neural, rules, Ollama and remote adapters; guarded gateway (new in 0.2.0) |
 | `shivax/memory` | Memory engine, with in-memory, Node file and IndexedDB storage |
-| `shivax/integrations` | UI inspection contracts, service and planner |
+| `shivax/integrations` | UI inspection contracts, service and planner; `registerHanumanFetchService` and its types (*HANUMAN*) |
 | `shivax/adapters/inspectra` | Optional adapter. Needs the optional peer `inspectra-engine@^1.0.4` and Node 22.15+ |
 | `shivax/learning` | Feedback, evaluation, curated training, tested updates and rollback |
 | `shivax/diagnostics` | `toSDKDiagnostic` |
@@ -178,6 +245,15 @@ See the [adapter guide](../adapters/inspectra/README.md) for reproduction.
   real invoices.
 - **ML scope.** Dense networks only, CPU only, training on the calling thread, and
   no pretrained models or datasets.
+- **HANUMAN transport (pre-release).** ShivAX ships no transport and no network
+  client. Wire-level SSRF and TLS properties are the host's job and have not been
+  independently verified. Transports that ignore cancellation can pin firewall
+  slots until the host restarts.
+- **HANUMAN routing (pre-release).** Pass `allowedCapabilities` explicitly. With no
+  options, RUDRA allows the task's own capability. If another bot offers
+  `fetch.url`, the first by ID is chosen.
+- **Unimplemented names.** Jambavan, Kubera, `fetch.api` and `research.search` do not
+  exist in the SDK.
 - **One maintainer, pre-1.0.** Public APIs can still change between minor
   versions. There is no promised response time for security reports.
 

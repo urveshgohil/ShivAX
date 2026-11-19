@@ -1,7 +1,10 @@
 # ShivAX SDK
 
-This guide covers version 0.3.2 SARASWATI. Sections marked **New in 0.2.0** cover
-APIs that are not in 0.1.3 or earlier. See `CHANGELOG.md`. For scope, trust
+This guide covers the package in this repository, version 0.3.3 (the 0.3.x
+SARASWATI line), plus the opt-in **0.4.0 HANUMAN** additions. HANUMAN is in
+preparation and is not published; its sections are marked *HANUMAN* or name the
+`H01`/`H02`/`H06` build phases. Sections marked **New in 0.2.0** cover APIs
+that are not in 0.1.3 or earlier. See `CHANGELOG.md`. For scope, trust
 boundaries and limits, read `docs/production.md` first.
 
 Root imports from `shivax` still work. All 13 public entry points ship ESM,
@@ -11,17 +14,31 @@ CommonJS and portable ES2020 type declarations.
 | --- | --- |
 | `shivax` | Everything in one import, as before |
 | `shivax/core` | Tensor, math, NeuralNet, text and evaluation metrics |
-| `shivax/rudra` | Bot contracts, registry, executor, RUDRA and controlled workflows |
-| `shivax/bots` | The seven specialist bots and helpers to combine them |
+| `shivax/rudra` | Bot contracts, registry, executor, RUDRA and controlled workflows; Abhimanyu preflight and Ashwatthama lifecycle warning checks (*HANUMAN*) |
+| `shivax/bots` | The seven specialist bots and helpers to combine them; the opt-in `HanumanBot` and `registerHanumanBot` (*HANUMAN*) |
 | `shivax/security` | Jay, Vijay, policies, tools and audit; managed firewall and management (new in 0.2.0) |
 | `shivax/models` | Model providers, neural, rules, Ollama and remote adapters, and SLM; guarded model gateway (new in 0.2.0) |
 | `shivax/memory` | Memory engine, storage and lifecycle hooks; opt-in ranked retrieval (`MemoryRanker`) and a local hashing embeddings adapter |
-| `shivax/integrations` | Portable inspection contracts, service and planner |
+| `shivax/integrations` | Portable inspection contracts, service and planner; the Hanuman protected fetch service `registerHanumanFetchService` (*HANUMAN*) |
 | `shivax/adapters/inspectra` | Optional Inspectra adapter, loaded on first use |
 | `shivax/learning` | Feedback, evaluation, reproducible benchmarks, curated training, model or config rollback, the durable model registry (approval, atomic activation, rollback), and shadow routing recommendations with promotable routing policies |
 | `shivax/learning/node` | Node.js only. `WorkerTrainingPool`, `trainOfflineCandidateInWorker` and `trainCuratedCandidateInWorker` train candidates in `worker_threads` without blocking the host (see `docs/learning-worker-training.md`). Not part of the root `shivax` import |
 | `shivax/diagnostics` | `toSDKDiagnostic` and `SDKDiagnostic` |
 | `shivax/licensing/server` | ServerLicenseGate, LicenseError and server license contracts |
+
+### Installation requirements
+
+- **Node.js 22 or later** (`engines.node` is `>=22`). Verified here on 22.23.2.
+  Running Inspectra needs Node.js 22.15 or later.
+- **No runtime dependencies.** `npm install shivax` is enough. Inspectra
+  (`inspectra-engine@^1.0.4`) is an optional peer and is not needed for any
+  Hanuman, firewall or workflow feature. Visynq is not a dependency.
+- **Imports.** Use the entry points in the table above, for example
+  `import { registerHanumanBot } from 'shivax/bots'` or
+  `const { Jay } = require('shivax/security')`. Deep imports into `dist/` are not
+  supported. Do not mix ESM and CommonJS copies in one host.
+- **Network.** Nothing here opens a connection by itself. Hanuman works only
+  through a transport you supply.
 
 ### Package layout and module formats
 
@@ -87,6 +104,20 @@ lists what each one needs.
 `pnpm verify:package` checks that every example named here is in the packed
 tarball. It also runs the offline ones from an installed copy.
 
+Which example shows which HANUMAN case:
+
+| Case | Example | Status |
+| --- | --- | --- |
+| Approved documentation retrieval | `examples/sdk/hanuman/documentation.mjs` | Exists |
+| Approved bounded REST API GET | `examples/sdk/hanuman/rest.mjs` (uses `fetch.url`) | Exists |
+| RUDRA and Hanuman evidence workflow | `examples/sdk/hanuman/workflow.mjs` | Exists |
+| Unauthorized destination denial | `examples/sdk/hanuman/denials.mjs`, case `deniedOrigin` | Exists |
+| Firewall lockdown | `examples/sdk/hanuman/denials.mjs`, case `lockdown`; `examples/sdk/firewall.mjs` | Exists |
+| Timeout and cancellation | `examples/sdk/hanuman/denials.mjs`, cases `timeout` and `cancel` | Exists |
+| Jambavan discovery | None | **Missing.** Jambavan is not implemented |
+| Kubera budget reporting | None | **Missing.** Kubera is not implemented |
+| Workflow warning checks | Snippet in "Workflow warning checks" below | Snippet only, no shipped script |
+
 No React example ships with ShivAX, and React is not a dependency. A React demo
 exists in the author's separate Visynq Workstation app, which does not ship with
 this package. In a browser UI, keep identity checks, approvals, provider keys and
@@ -99,6 +130,103 @@ prompts. See `docs/production.md`.
 `retryable` flag. It never copies raw exceptions, payloads, stacks, unknown codes
 or secrets. For detailed host diagnostics, use the existing capped RUDRA and
 security traces.
+
+## Workflow warning checks (HANUMAN)
+
+Two opt-in utilities in `shivax/rudra` (also exported from `shivax`) give
+advisory warnings. Neither is a bot. Neither grants or removes a permission:
+Jay, Vijay and the NARASIMHA firewall stay authoritative. Their default is no
+effect; you must call them or pass them to the workflow engine.
+
+- **Abhimanyu** is a static check on a plan before it runs. It uses profiles
+  that you write to describe each capability (side effect, cancellation,
+  cleanup, deadline, retries). `runAbhimanyuPreflight` returns a report with the
+  `warnings` and a `decision`. The decision is `block` only in `enforce` mode.
+  `RudraWorkflowEngine` accepts the same options as `preflight`.
+- **Ashwatthama** is an in-memory lifecycle observer. Your host calls
+  `begin`, then `scan` when it wants a check. There are no timers.
+  `RudraWorkflowEngine` accepts an observer as `lifecycle`. In `enforce` mode its
+  only action is to call the operation's own cooperative cancel once.
+
+```js
+import { runAbhimanyuPreflight, createAshwatthamaObserver } from 'shivax/rudra';
+
+const report = runAbhimanyuPreflight({
+    plan: { actions: [{ id: 'fetch', capability: 'read', input: { source: 'task' } }] },
+    capability: 'workflow',
+    options: { allowedCapabilities: ['read'] },
+    deadlineMs: 10_000,
+    policy: { mode: 'warn' },
+    profiles: [{ capability: 'read', sideEffect: 'protected', effect: 'read-only',
+        cancellation: 'ignored', cleanup: 'none' }],
+});
+console.log(report.decision, report.warnings.map((w) => w.ruleId)); // allow [ 'ABH_NO_EXIT_PATH' ]
+
+const tenant = { kind: 'company', id: 'tenant' };
+let now = 0;
+const observer = createAshwatthamaObserver({ now: () => now, policy: { mode: 'warn' } });
+const op = observer.begin({ kind: 'tool', scope: tenant, timeoutMs: 1000, ref: 'job-1' });
+now = 5000;
+console.log(observer.scan(tenant).map((w) => w.ruleId)); // [ 'ASH_DEADLINE_EXCEEDED' ]
+op.complete('completed');
+```
+
+The snippet is not a shipped script. It was run against the built package for
+this guide. Warnings use the `shivax-safety-warning` v1 format
+(`validateSafetyWarning`) with a fixed catalog of 23 rule IDs
+(`SAFETY_WARNING_RULES`). They contain host-known IDs and numbers only, never
+plan text.
+
+Limits: Abhimanyu relies on the profiles you declare, and an honest profile is
+your host's responsibility. Ashwatthama keeps bounded, in-memory, per-tenant
+records and loses them on restart. Neither can stop work that ignores
+cancellation.
+
+## Read-only utilities and the test harness
+
+- **Jambavan** (authorized capability discovery) and **Kubera** (read-only
+  budget reporting) are **not implemented**. There are no `createJambavanDiscovery`
+  or `createKuberaReporter` exports in any entry point, and no example. Budget
+  enforcement still happens in `ModelRouter` and the firewall.
+- **Shabari** is a test harness in the source repository
+  (`tests/fixtures/shabari-runner.mjs`). It runs selected offline test suites in
+  child processes. It is not a bot, is not exported, and is not in the npm
+  package.
+
+## Errors and cancellation
+
+RUDRA returns a result with a `status` and, on failure, a sanitized
+`error.code`. Gateway details are not exposed there on purpose, so a timeout and
+an oversized body can both appear as `bot-failed`. Use the `observe` callback of
+`registerHanumanFetchService` for host diagnostics. Functions that throw
+(for example `jay.createContext` with an already aborted signal) throw SDK error
+classes that `toSDKDiagnostic` turns into a fixed, user-safe object.
+
+```js
+import { toSDKDiagnostic } from 'shivax/diagnostics';
+
+const controller = new AbortController();
+try {
+    const context = await jay.createContext(task, {
+        toolPermissions: [HANUMAN_FETCH_TOOL_ID],
+        signal: controller.signal, // abort this on revocation, shutdown or user cancel
+    });
+    const pending = rudra.run(context, {
+        allowedCapabilities: ['fetch.url'], maxSteps: 1, maxRetries: 0,
+    });
+    // controller.abort() here makes the result { status: 'cancelled', ... }
+    const result = await pending;
+    if (result.status !== 'completed') console.log(result.status, result.error.code);
+} catch (error) {
+    console.log(toSDKDiagnostic(error)); // { code: 'cancelled', message: '…', retryable: false }
+}
+```
+
+Both outcomes were checked offline: aborting while a run is pending returns
+`cancelled` with no transport request, and an already aborted signal makes
+`createContext` throw an error that `toSDKDiagnostic` maps to `cancelled`. The
+`timeout` and `cancel` cases in `examples/sdk/hanuman/denials.mjs` show the same
+paths through a complete host.
 
 ## Server-verified licensing
 
@@ -616,10 +744,10 @@ or newer.
 `shivax/integrations` exports `registerHanumanFetchService`, `HanumanFetchError`,
 `HANUMAN_FETCH_CAPABILITY` (`hanuman.fetch`), `HANUMAN_FETCH_TOOL_ID`
 (`shivax.hanuman.fetch`), and the `Hanuman*` transport, target, limit, input,
-result and event types. `HANUMAN_BOT_ID` is only a reserved identifier;
-H01-B supplies the gateway contract and service. Hosts supply the transport.
-Importing the entry point and creating the seven default specialists perform
-no retrieval. H02-B adds opt-in specialist registration described below.
+result and event types. `HANUMAN_BOT_ID` (`hanuman`) is the ID of the optional specialist
+described below. This phase supplies the gateway contract and service. Hosts
+supply the transport. Importing the entry point and creating the seven default
+specialists perform no retrieval. Specialist registration is opt-in.
 
 Register a separate service in each trusted host composition:
 

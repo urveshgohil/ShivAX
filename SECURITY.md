@@ -4,8 +4,10 @@ ShivAX is a library. Its core provides CPU tensors, dense neural networks, text
 features, bot contracts, RUDRA task handling, Jay and Vijay sign-in and permission
 checks, scoped memory and model routing. The core makes no network requests,
 on import or by default. Some optional adapters that your host sets up can: the
-loopback Ollama adapter, remote model clients, embedding and storage adapters, and
-Inspectra page capture. ShivAX does not run an API or service. It has no
+loopback Ollama adapter, remote model clients, embedding and storage adapters,
+Inspectra page capture, and the transport that a host supplies to the opt-in
+Hanuman retrieval service. ShivAX itself contains no HTTP client and no
+operating-system network isolation. ShivAX does not run an API or service. It has no
 production dependencies and no install scripts for consumers. Dependency audits
 cover known published advisories. They are not a security certification.
 
@@ -14,11 +16,18 @@ browser.
 
 ## Supported versions
 
-This policy covers the 0.3.x SARASWATI line (currently 0.3.2) and 0.2.0
-NARASIMHA. The learning lifecycle controls described below are
+This policy covers the 0.3.x SARASWATI line (the package in this repository is
+0.3.3) and 0.2.0 NARASIMHA. The learning lifecycle controls described below are
 new in 0.3.0. The managed firewall and the strict model usage checks are new in
 0.2.0. They are not in 0.1.3 or earlier. There is no support window or backport
 policy yet.
+
+The 0.4.0 HANUMAN features (protected retrieval, the optional Hanuman bot,
+Abhimanyu and Ashwatthama warning checks) exist in this source tree but are
+**not a published release**. Treat them as pre-release. Their independent
+security reviews still list open findings, so live deployment is not
+recommended until those are closed. Those reports are in the repository's
+`docs/audits/` folder, which is not part of the npm package.
 
 ## Reporting a vulnerability
 
@@ -27,6 +36,8 @@ issue. Instead, open an issue at https://github.com/urveshgohil/ShivAX/issues
 titled "Security contact request", with no technical details. The maintainer will
 set up a private channel. Then send the affected version, the steps to reproduce
 it and its impact through that channel. There is no promised response time yet.
+Never include real credentials, tokens, customer data or private URLs in a
+report. Use synthetic values that show the problem.
 
 ## Development and releases
 
@@ -117,6 +128,96 @@ around its code. Never pass admin capabilities or signed-in root objects to bots
   automatically, and repeated retrieval never raises a record's trust.
 - **Firewall coupling.** Lockdown blocks approval, activation and (by default)
   rollback, and freezes routing to deterministic.
+
+## HANUMAN threat boundaries (0.4.0, unreleased)
+
+What the SDK checks, when a host registers and configures the protected
+retrieval path:
+
+- Jay identity, Vijay permissions, the per-task tool grant and approval;
+- the registered target catalog, bound to issuer and tenant, so callers cannot
+  supply a URL, method, header or credential;
+- the exact request origin against the NARASIMHA policy (also in monitor mode);
+- every address the host transport reports, against a built-in non-public
+  address list, and that the reported peer is one of the permitted addresses;
+- GET only, no redirects, no compression, response size, chunk, text and media
+  type checks, and a deadline;
+- cancellation, lockdown and policy changes between steps.
+
+What the SDK **cannot** do, and the host or deployment must:
+
+- **It provides no OS-level or network-level isolation.** It is a JavaScript
+  library. It cannot stop other code in the same process from opening sockets.
+- **It ships no transport.** DNS pinning, TLS and hostname verification,
+  redirect refusal at the wire, credential and cookie removal, connection pool
+  isolation and proxy behavior are all in code that your host writes. The SDK
+  trusts what that code reports. No reviewed transport exists yet.
+- **URL or address validation alone does not prevent SSRF.** Resolved addresses
+  can change between checks. Use a transport that connects only to the vetted
+  addresses, plus egress rules (firewall, proxy or sandbox) that allow only the
+  approved destinations.
+- **It cannot force a stuck transport to stop.** A transport that ignores the
+  abort signal can keep its resources, and its firewall slots stay in use until
+  your host cancels or restarts. Honor the `AbortSignal` everywhere.
+- **Revocation outside the SDK needs your help.** The SDK re-checks policy and
+  minted identity between steps. If the identity provider revokes a session,
+  abort the task's root signal so that an in-flight retrieval stops.
+
+### Trusted host responsibilities
+
+- Authenticate users, mint contexts through Jay, and keep root contexts and
+  firewall admin objects away from bots, tools, browsers and model output.
+- Write the Vijay policies. Require approval for the fetch tool (`requiresApproval:
+  true`). Approvers must return the literal `true`. Grant the tool per task.
+- Keep the target catalog small, reviewed and free of secrets. Each target is an
+  exact HTTPS URL with no user info, port or fragment.
+- Allow the origin in both the operation declaration and the firewall policy.
+- Allow RUDRA to run the capability explicitly with `allowedCapabilities`. The
+  current default (no options) admits the task's own capability, so pass the
+  option every time.
+- Do not copy the firewall-admin shortcuts in the example scripts into a
+  production host (see below).
+
+### Untrusted external content
+
+Fetched text is always `trust: 'untrusted'`. It carries a digest identifier, not
+a signature. Do not use it as an instruction, grant, approval, administrator
+request, verified feedback, executable code, model approval or automatic
+training input. Excerpts can contain invisible or bidirectional Unicode
+characters. Neutralize them before showing the text to a person or passing it to
+a model. SHIVAX never acts on retrieved content itself, and a regression suite
+checks that injected instructions do not change tools, targets or approvals.
+
+### Credential handling
+
+- Do not register targets that need credentials. Credentialed retrieval is
+  outside the current contract.
+- The request frame has `credentials: 'omit'` and only `accept` and
+  `accept-encoding` headers. The host transport must not add cookies,
+  authorization, client certificates or forwarded headers.
+- Keep keys, tokens and secrets in your host's secret store. Do not place them
+  in target URLs, catalogs, task input, logs or error messages. The SDK returns
+  fixed error codes and never copies transport exception text into results or
+  audit records, but it cannot know what your own code logs.
+- Scrub secrets before retrieved text is stored or shown. The SDK does no
+  secret detection on the body.
+
+### Known security limitations (pre-release)
+
+These are tracked in the repository's audit reports. They are listed here so
+that nobody relies on a property that is not provided:
+
+- No reviewed host transport (wire-level SSRF and TLS properties are unverified).
+- With no `allowedCapabilities` option, RUDRA allows the task's own capability.
+- If two bots offer `fetch.url`, RUDRA picks the first by ID, which might not be
+  Hanuman.
+- Revoking a session only at the identity provider does not stop a retrieval that
+  is already in flight.
+- A transport that ignores cancellation can leave leases in use.
+- `3fff::/20` (documentation addresses) is not on the address block list.
+- Jambavan and Kubera are not implemented. Abhimanyu and Ashwatthama give
+  warnings, and only `enforce` mode can refuse a workflow start or request
+  cooperative cancellation. They never grant or remove permissions.
 
 ## Opt-in protected retrieval (H01-B)
 
