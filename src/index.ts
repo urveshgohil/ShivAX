@@ -33,4 +33,4 @@ export * from './learning/retrieval.js';
 export { toSDKDiagnostic } from './sdk/diagnostics.js';
 export type { SDKDiagnostic } from './sdk/diagnostics.js';
 
-export const VERSION = '0.3.3';
+export const VERSION = '0.4.0';

@@ -5,11 +5,10 @@ tested. Read it with the [SDK guide](sdk.md) and [SECURITY.md](../SECURITY.md).
 
 ## Status and version
 
-- This guide covers the package in this repository, version **0.3.3**, which is in the
-  **0.3.x SARASWATI** line. Its learning additions are marked *SARASWATI* below.
+- This guide covers the package in this repository, version **0.4.0**. It builds on
+  the **0.3.x SARASWATI** line, whose learning additions are marked *SARASWATI* below.
 - **v0.4.0 HANUMAN - The Action & Automation Release** is in preparation and is not
-  published. Its additions are marked *HANUMAN* below. They are opt-in. The
-  package version has not been changed yet.
+  published. Its additions are marked *HANUMAN* below. They are opt-in.
 - New in 0.2.0, and not in 0.1.3 or earlier: exact model cost math, strict token
   usage checks, and the managed firewall. The usage checks are a breaking change
   for providers that report `null` token counts. Sections below mark these

@@ -1,7 +1,7 @@
 # ShivAX SDK
 
-This guide covers the package in this repository, version 0.3.3 (the 0.3.x
-SARASWATI line), plus the opt-in **0.4.0 HANUMAN** additions. HANUMAN is in
+This guide covers the package in this repository, version 0.4.0: the 0.3.x
+SARASWATI line plus the opt-in **0.4.0 HANUMAN** additions. HANUMAN is in
 preparation and is not published; its sections are marked *HANUMAN* or name the
 `H01`/`H02`/`H06` build phases. Sections marked **New in 0.2.0** cover APIs
 that are not in 0.1.3 or earlier. See `CHANGELOG.md`. For scope, trust

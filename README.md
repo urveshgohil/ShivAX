@@ -11,7 +11,7 @@ UI checks and a firewall. RUDRA hands each task to the right bot. Jay checks who
 is calling, and Vijay checks what they may do. The NARASIMHA firewall decides
 which registered actions can run.
 
-**Package version in this checkout:** 0.3.3 · **Release in preparation:**
+**Package version in this checkout:** 0.4.0 · **Release in preparation:**
 v0.4.0 HANUMAN, *The Action & Automation Release* (not published; see
 [CHANGELOG.md](CHANGELOG.md)) · **Runs on:** Node.js 22+ and modern browsers ·
 **License:** Apache-2.0
@@ -68,7 +68,7 @@ picture: the Inspectra adapter (`shivax/adapters/inspectra`), model providers
 HANUMAN adds one optional specialist and a protected gateway so that a trusted
 host can let agents retrieve *approved* external evidence. Everything is opt-in,
 additive and offline-testable. This section describes the source in this
-repository. v0.4.0 is **not published**, and the package version is still 0.3.3.
+repository. The package version is 0.4.0, but v0.4.0 is **not published**.
 
 - **Protected retrieval gateway.** `registerHanumanFetchService` (from
   `shivax/integrations`) registers one protected tool. It reads only from a

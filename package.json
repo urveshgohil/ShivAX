@@ -1,7 +1,7 @@
 {
   "name": "shivax",
-  "version": "0.3.3",
-  "description": "ShivAX AI v0.4.0 HANUMAN (unreleased): CPU neural networks, multi-agent orchestration, Jay/Vijay authorization, a NARASIMHA firewall and opt-in protected external retrieval for trusted hosts",
+  "version": "0.4.0",
+  "description": "ShivAX AI HANUMAN: CPU neural networks, multi-agent orchestration, Jay/Vijay authorization, a NARASIMHA firewall and opt-in protected external retrieval for trusted hosts",
   "main": "dist/index.cjs",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",

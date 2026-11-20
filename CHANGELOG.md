@@ -15,8 +15,8 @@ name of their line. The npm version stays plain semantic versioning.
 
 ## [Unreleased] v0.4.0 HANUMAN - The Action & Automation Release
 
-**Upcoming and not published.** `package.json` still says 0.3.3, and no version
-bump, tag or npm release has been made. Everything below is opt-in and additive.
+**Upcoming and not published.** `package.json` now says 0.4.0, but no tag or npm
+release has been made. Everything below is opt-in and additive.
 Nothing in this section changes the seven default specialists, their IDs (including
 `vishwakarma`), the Jay/Vijay authorization model, the NARASIMHA firewall, model
 budgets, SARASWATI training or model approval. No existing public export was
