@@ -1,0 +1,154 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -10,17 +10,16 @@
+ | 0.1.x | BRAHMA |
+ | 0.2.x | NARASIMHA |
+ | 0.3.x | SARASWATI - The Intelligence & Learning Release |
+-| 0.4.x | HANUMAN - The Action & Automation Release (in preparation, not published) |
++| 0.4.x | HANUMAN - The Action & Automation Release |
+ 
+ 
+-## [0.4.0] HANUMAN - The Action & Automation Release
++## [0.4.0] - YYYY-MM-DD HANUMAN - The Action & Automation Release
+ 
+-**Upcoming and not published.** `package.json` now says 0.4.0, but no tag or npm
+-release has been made. Everything below is opt-in and additive.
++Everything below is opt-in and additive.
+ Nothing in this section changes the seven default specialists, their IDs (including
+ `vishwakarma`), the Jay/Vijay authorization model, the NARASIMHA firewall, model
+ budgets, SARASWATI training or model approval. No existing public export was
+-removed. Pre-release security reviews still list open findings for live deployment
++removed. Independent security reviews list known limitations for live deployment
+ (see `SECURITY.md`).
+ 
+ ### Added
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -11,8 +11,7 @@
+ is calling, and Vijay checks what they may do. The NARASIMHA firewall decides
+ which registered actions can run.
+ 
+-**Package version in this checkout:** 0.4.0 · **Release in preparation:**
+-v0.4.0 HANUMAN, *The Action & Automation Release* (not published; see
++**Current release:** v0.4.0 HANUMAN, *The Action & Automation Release* (see
+ [CHANGELOG.md](CHANGELOG.md)) · **Runs on:** Node.js 22+ and modern browsers ·
+ **License:** Apache-2.0
+ 
+@@ -63,12 +62,11 @@
+ picture: the Inspectra adapter (`shivax/adapters/inspectra`), model providers
+ (Ollama or remote clients you supply), and storage adapters.
+ 
+-## 0.4.0 HANUMAN - The Action & Automation Release (in preparation)
++## 0.4.0 HANUMAN - The Action & Automation Release
+ 
+ HANUMAN adds one optional specialist and a protected gateway so that a trusted
+ host can let agents retrieve *approved* external evidence. Everything is opt-in,
+-additive and offline-testable. This section describes the source in this
+-repository. The package version is 0.4.0, but v0.4.0 is **not published**.
++additive and offline-testable.
+ 
+ - **Protected retrieval gateway.** `registerHanumanFetchService` (from
+   `shivax/integrations`) registers one protected tool. It reads only from a
+diff --git a/SECURITY.md b/SECURITY.md
+--- a/SECURITY.md
++++ b/SECURITY.md
+@@ -16,18 +16,18 @@
+ 
+ ## Supported versions
+ 
+-This policy covers the 0.3.x SARASWATI line and 0.2.0 NARASIMHA. The package in
+-this repository is versioned 0.4.0 but is unpublished; see below. The learning lifecycle controls described below are
+-new in 0.3.0. The managed firewall and the strict model usage checks are new in
+-0.2.0. They are not in 0.1.3 or earlier. There is no support window or backport
+-policy yet.
++This policy covers the 0.4.x HANUMAN line, the 0.3.x SARASWATI line and 0.2.0
++NARASIMHA. The HANUMAN features described below are new in 0.4.0. The learning
++lifecycle controls are new in 0.3.0. The managed firewall and the strict model
++usage checks are new in 0.2.0. They are not in 0.1.3 or earlier. There is no
++support window or backport policy yet.
+ 
+ The 0.4.0 HANUMAN features (protected retrieval, the optional Hanuman bot,
+-Abhimanyu and Ashwatthama warning checks) exist in this source tree but are
+-**not a published release**. Treat them as pre-release. Their independent
+-security reviews still list open findings, so live deployment is not
+-recommended until those are closed. Those reports are in the repository's
+-`docs/audits/` folder, which is not part of the npm package.
++Abhimanyu and Ashwatthama warning checks) are opt-in. Their independent
++security reviews list known limitations (see "Known security limitations"
++below), so do not rely on them for live deployment until those are closed.
++The reports are in the repository's `docs/audits/` folder, which is not part
++of the npm package.
+ 
+ ## Reporting a vulnerability
+ 
+@@ -129,7 +129,7 @@
+ - **Firewall coupling.** Lockdown blocks approval, activation and (by default)
+   rollback, and freezes routing to deterministic.
+ 
+-## HANUMAN threat boundaries (0.4.0, unreleased)
++## HANUMAN threat boundaries (0.4.0)
+ 
+ What the SDK checks, when a host registers and configures the protected
+ retrieval path:
+@@ -202,7 +202,7 @@
+ - Scrub secrets before retrieved text is stored or shown. The SDK does no
+   secret detection on the body.
+ 
+-### Known security limitations (pre-release)
++### Known security limitations
+ 
+ These are tracked in the repository's audit reports. They are listed here so
+ that nobody relies on a property that is not provided:
+diff --git a/docs/production.md b/docs/production.md
+--- a/docs/production.md
++++ b/docs/production.md
+@@ -7,8 +7,8 @@
+ 
+ - This guide covers the package in this repository, version **0.4.0**. It builds on
+   the **0.3.x SARASWATI** line, whose learning additions are marked *SARASWATI* below.
+-- **v0.4.0 HANUMAN - The Action & Automation Release** is in preparation and is not
+-  published. Its additions are marked *HANUMAN* below. They are opt-in.
++- **v0.4.0 HANUMAN - The Action & Automation Release** additions are marked
++  *HANUMAN* below. They are opt-in.
+ - New in 0.2.0, and not in 0.1.3 or earlier: exact model cost math, strict token
+   usage checks, and the managed firewall. The usage checks are a breaking change
+   for providers that report `null` token counts. Sections below mark these
+@@ -169,7 +169,7 @@
+    before display or model input, and keep it away from approvals, permissions
+    and training.
+ 
+-Open pre-release findings (no reviewed transport, implicit RUDRA capability
++Open findings (no reviewed transport, implicit RUDRA capability
+ allowlist, first-by-ID route choice, in-flight identity revocation, transports
+ that ignore cancellation) are listed in [SECURITY.md](../SECURITY.md).
+ 
+@@ -244,11 +244,11 @@
+   real invoices.
+ - **ML scope.** Dense networks only, CPU only, training on the calling thread, and
+   no pretrained models or datasets.
+-- **HANUMAN transport (pre-release).** ShivAX ships no transport and no network
++- **HANUMAN transport.** ShivAX ships no transport and no network
+   client. Wire-level SSRF and TLS properties are the host's job and have not been
+   independently verified. Transports that ignore cancellation can pin firewall
+   slots until the host restarts.
+-- **HANUMAN routing (pre-release).** Pass `allowedCapabilities` explicitly. With no
++- **HANUMAN routing.** Pass `allowedCapabilities` explicitly. With no
+   options, RUDRA allows the task's own capability. If another bot offers
+   `fetch.url`, the first by ID is chosen.
+ - **Unimplemented names.** Jambavan, Kubera, `fetch.api` and `research.search` do not
+diff --git a/docs/sdk.md b/docs/sdk.md
+--- a/docs/sdk.md
++++ b/docs/sdk.md
+@@ -1,8 +1,8 @@
+ # ShivAX SDK
+ 
+ This guide covers the package in this repository, version 0.4.0: the 0.3.x
+-SARASWATI line plus the opt-in **0.4.0 HANUMAN** additions. HANUMAN is in
+-preparation and is not published; its sections are marked *HANUMAN* or name the
++SARASWATI line plus the opt-in **0.4.0 HANUMAN** additions. HANUMAN
++sections are marked *HANUMAN* or name the
+ `H01`/`H02`/`H06` build phases. Sections marked **New in 0.2.0** cover APIs
+ that are not in 0.1.3 or earlier. See `CHANGELOG.md`. For scope, trust
+ boundaries and limits, read `docs/production.md` first.

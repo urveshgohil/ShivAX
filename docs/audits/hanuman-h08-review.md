@@ -156,7 +156,7 @@ Each claim was checked against code or a probe.
 
 | Claim (where) | Verdict | Evidence |
 | --- | --- | --- |
-| Codename and release identity "v0.4.0 HANUMAN - The Action & Automation Release", in preparation and not published (README, CHANGELOG `[Unreleased]`, production, SDK guide) | Accurate | `version` is 0.3.3; no tag |
+| Codename and release identity "v0.4.0 HANUMAN - The Action & Automation Release", in preparation and not published (README, CHANGELOG `[0.4.0]`, production, SDK guide) | Accurate | `version` is 0.3.3; no tag |
 | Package description | **Inaccurate at publish time** | It says "v0.4.0 HANUMAN (unreleased)" on a 0.3.3 manifest (H08C-03) |
 | Actual version 0.3.3 stated (README, SDK guide, production, SECURITY.md) | Accurate | `VERSION` and the manifest |
 | Seven bots with exact IDs and roles; only alias `VishwakarmBot`; `hanuman` optional and not in `createSpecialistBots()` (README, production) | Accurate | Runtime roster; `registerHanumanBot` throws `unavailable` without the tool |

@@ -10,7 +10,7 @@ Status as of 19 November 2026, Asia/Calcutta. This covers reviewed commit `1a027
 | Phase | Document | Outcome |
 | --- | --- | --- |
 | H08-A SDK and package preparation | [hanuman-h08-sdk.md](hanuman-h08-sdk.md) | Packaging checks expanded (10 browser graphs, installed-content checks, H04 declaration consumers). Gate recorded as FAIL / BLOCKED on upstream phases |
-| H08-B documentation, metadata and examples | [hanuman-h08-docs.md](hanuman-h08-docs.md) | Documentation PASS. README, SECURITY.md, production and SDK guides, CHANGELOG `[Unreleased]` and the description were updated; Jambavan and Kubera examples are marked missing |
+| H08-B documentation, metadata and examples | [hanuman-h08-docs.md](hanuman-h08-docs.md) | Documentation PASS. README, SECURITY.md, production and SDK guides, CHANGELOG `[0.4.0]` and the description were updated; Jambavan and Kubera examples are marked missing |
 | H08-C independent review | [hanuman-h08-review.md](hanuman-h08-review.md) | CONDITIONAL GO (scope) / NO-GO (publish). Findings H08C-01 to H08C-07 |
 
 ## Key results (H08-C, measured independently)

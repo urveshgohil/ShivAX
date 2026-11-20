@@ -40,13 +40,13 @@ The audit found these problems (Step 1):
 | `docs/production.md` | Version and status, Hanuman and utilities paragraph under the bots section, a "Protected external retrieval (HANUMAN)" section, a "Who provides which control" table covering 12 areas, import-table rows, and three limitations |
 | `docs/sdk.md` | Version intro, import-table rows, "Installation requirements", an example-coverage table, a "Workflow warning checks (HANUMAN)" section with a tested snippet, "Read-only utilities and the test harness", "Errors and cancellation" with a tested snippet, and the stale `HANUMAN_BOT_ID` sentence |
 | `examples/sdk/README.md` | One paragraph stating which examples do not exist |
-| `CHANGELOG.md` | New `[Unreleased] v0.4.0 HANUMAN` section and a release-line table row. Entries for 0.3.2 and earlier are byte-identical (checked) |
+| `CHANGELOG.md` | New `v0.4.0 HANUMAN` section and a release-line table row. Entries for 0.3.2 and earlier are byte-identical (checked) |
 
 ## 2. Release identity
 
 - **Name:** SHIVAX v0.4.0 - HANUMAN, *The Action & Automation Release*. It is used in the README, the CHANGELOG section title and the production guide.
-- **Status wording:** "in preparation", "upcoming and not published". The CHANGELOG section is labeled `[Unreleased]`.
-- **`package.json.description`:** `ShivAX AI v0.4.0 HANUMAN (unreleased): CPU neural networks, multi-agent orchestration, Jay/Vijay authorization, a NARASIMHA firewall and opt-in protected external retrieval for trusted hosts`
+- **Status wording:** "in preparation", "upcoming and not published". The CHANGELOG section is labeled `[0.4.0]`.
+- **`package.json.description`:** `ShivAX AI v0.4.0 HANUMAN: CPU neural networks, multi-agent orchestration, Jay/Vijay authorization, a NARASIMHA firewall and opt-in protected external retrieval for trusted hosts`
 - **`package.json.version`:** unchanged (0.3.3). No release decision was made. `dist-tags`, tags and the registry were not touched.
 
 ## 3. Bot name and role mapping

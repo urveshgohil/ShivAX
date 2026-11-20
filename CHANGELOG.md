@@ -13,7 +13,7 @@ name of their line. The npm version stays plain semantic versioning.
 | 0.4.x | HANUMAN - The Action & Automation Release (in preparation, not published) |
 
 
-## [Unreleased] v0.4.0 HANUMAN - The Action & Automation Release
+## [0.4.0] HANUMAN - The Action & Automation Release
 
 **Upcoming and not published.** `package.json` now says 0.4.0, but no tag or npm
 release has been made. Everything below is opt-in and additive.
